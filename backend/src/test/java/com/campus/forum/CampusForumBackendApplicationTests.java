@@ -1,13 +1,12 @@
-package com.example;
+package com.campus.forum;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BackendApplicationTests {
+class CampusForumBackendApplicationTests {
 
     @Test
     void contextLoads() {
     }
-
 }
