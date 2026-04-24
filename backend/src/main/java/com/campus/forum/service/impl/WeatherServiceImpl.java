@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
@@ -44,10 +45,12 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     private WeatherVO fetchFromCache(double longitude, double latitude) {
-        JSONObject geo = this.decompressStingToJson(rest.getForObject(
-                "https://geoapi.qweather.com/v2/city/lookup?location=" + longitude + "," + latitude + "&key=" + key, byte[].class));
+        JSONObject geo = this.fetchJson(
+                "https://geoapi.qweather.com/v2/city/lookup?location=" + longitude + "," + latitude + "&key=" + key);
         if (geo == null) return null;
-        JSONObject location = geo.getJSONArray("location").getJSONObject(0);
+        JSONArray locations = geo.getJSONArray("location");
+        if (locations == null || locations.isEmpty()) return null;
+        JSONObject location = locations.getJSONObject(0);
         int id = location.getInteger("id");
         String cacheKey = Const.FORUM_WEATHER_CACHE + id;
         String cache = template.opsForValue().get(cacheKey);
@@ -62,19 +65,31 @@ public class WeatherServiceImpl implements WeatherService {
     private WeatherVO fetchFromAPI(int id, JSONObject location) {
         WeatherVO vo = new WeatherVO();
         vo.setLocation(location);
-        JSONObject now = this.decompressStingToJson(rest.getForObject(
-                "https://devapi.qweather.com/v7/weather/now?location=" + id + "&key=" + key, byte[].class));
+        JSONObject now = this.fetchJson(
+                "https://devapi.qweather.com/v7/weather/now?location=" + id + "&key=" + key);
         if (now == null) return null;
         vo.setNow(now.getJSONObject("now"));
-        JSONObject hourly = this.decompressStingToJson(rest.getForObject(
-                "https://devapi.qweather.com/v7/weather/24h?location=" + id + "&key=" + key, byte[].class));
+        JSONObject hourly = this.fetchJson(
+                "https://devapi.qweather.com/v7/weather/24h?location=" + id + "&key=" + key);
         if (hourly == null) return null;
-        vo.setHourly(new JSONArray(hourly.getJSONArray("hourly").stream().limit(5).toList()));
+        JSONArray hourlyData = hourly.getJSONArray("hourly");
+        if (hourlyData == null || hourlyData.isEmpty()) return null;
+        vo.setHourly(new JSONArray(hourlyData.stream().limit(5).toList()));
         return vo;
+    }
+
+    private JSONObject fetchJson(String url) {
+        try {
+            return this.decompressStingToJson(rest.getForObject(url, byte[].class));
+        } catch (RestClientException e) {
+            log.warn("天气API请求失败，静默降级: {}", e.getMessage());
+            return null;
+        }
     }
 
     // 解压 GZIP 响应并解析为 JSON
     private JSONObject decompressStingToJson(byte[] data) {
+        if (data == null || data.length == 0) return null;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         try {
             GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(data));

@@ -2,7 +2,7 @@
     <div style="height: 160px" v-loading="!data.success"
          element-loading-text="正在加载天气信息...">
         <div style="display: flex;justify-content: space-between;margin: 10px 20px"
-             v-if="data.success">
+             v-if="data.success && data.now && data.now.temp">
             <div style="font-size: 45px;color: grey">
                 <i :class="`qi-${data.now.icon}-fill`"></i>
             </div>
@@ -15,8 +15,13 @@
                 <div style="font-size: 14px;color: grey">{{`${data.location.adm2} ${data.location.name}区`}}</div>
             </div>
         </div>
+        <div style="text-align: center;color: grey;padding-top: 30px"
+             v-if="data.success && !(data.now && data.now.temp)">
+            天气服务暂时不可用
+        </div>
         <el-divider style="margin: 10px 0"/>
-        <div style="display: grid;grid-template-columns: repeat(5, 1fr);text-align: center">
+        <div style="display: grid;grid-template-columns: repeat(5, 1fr);text-align: center"
+             v-if="data.success && data.hourly">
             <div v-for="item in data.hourly">
                 <div style="font-size: 13px">{{new Date(item.fxTime).getHours()}} 时</div>
                 <div style="font-size: 23px">

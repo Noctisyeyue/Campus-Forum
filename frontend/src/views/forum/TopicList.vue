@@ -206,14 +206,13 @@ navigator.geolocation.getCurrentPosition(position => {
     get(`/api/forum/weather?longitude=${longitude}&latitude=${latitude}`, data => {
         Object.assign(weather, data)
         weather.success = true
-    })
+    }, () => weather.success = true)
 }, error => {
     console.info(error)
-    ElMessage.warning('位置信息获取超时，请检测网络设置')
     get(`/api/forum/weather?longitude=116.40529&latitude=39.90499`, data => {
         Object.assign(weather, data)
         weather.success = true
-    })
+    }, () => weather.success = true)
 }, {
     timeout: 3000,
     enableHighAccuracy: true
