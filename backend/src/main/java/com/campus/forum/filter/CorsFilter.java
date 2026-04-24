@@ -29,16 +29,20 @@ public class CorsFilter extends HttpFilter {
     @Override
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         this.addCorsHeader(request, response);
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
         chain.doFilter(request, response);
     }
 
     // 添加所有跨域相关响应头
     private void addCorsHeader(HttpServletRequest request, HttpServletResponse response) {
-        response.addHeader("Access-Control-Allow-Origin", this.resolveOrigin(request));
-        response.addHeader("Access-Control-Allow-Methods", this.resolveMethod());
-        response.addHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+        response.setHeader("Access-Control-Allow-Origin", this.resolveOrigin(request));
+        response.setHeader("Access-Control-Allow-Methods", this.resolveMethod());
+        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
         if (credentials) {
-            response.addHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
         }
     }
 
