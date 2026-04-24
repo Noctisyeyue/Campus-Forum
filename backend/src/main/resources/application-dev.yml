@@ -1,12 +1,54 @@
+# 开发环境配置
 server:
   port: 8081
 
+springdoc:
+  paths-to-match: /api/**
+  swagger-ui:
+    operations-sorter: alpha
+
 spring:
+  mail:
+    host: smtp.163.com
+    username: javastudy111@163.com
+    password: QGLYGBVECIASGPWQ
+  rabbitmq:
+    addresses: localhost
+    username: admin
+    password: admin
+    virtual-host: /
   datasource:
     url: jdbc:mysql://localhost:3306/campus_forum?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  security:
+    jwt:
+      key: 'abcdefghijklmn'
+      expire: 72
+      limit:
+        base: 10
+        upgrade: 300
+        frequency: 30
+    filter:
+      order: -100
+  web:
+    verify:
+      mail-limit: 60
+    flow:
+      period: 3
+      limit: 50
+      block: 30
+    cors:
+      origin: '*'
+      credentials: false
+      methods: '*'
+  minio:
+    endpoint: 'http://localhost:9000'
+    username: 'minio'
+    password: 'password'
+  weather:
+    key: 7abbc24d3b4443b597a3b3c676e0f221
 
 mybatis-plus:
   configuration:
