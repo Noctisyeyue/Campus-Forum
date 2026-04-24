@@ -7,7 +7,7 @@ import { createPinia } from 'pinia'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/assets/quill.css'
 
-// 后端接口地址（新项目端口 8081）
+// 后端接口地址
 axios.defaults.baseURL = 'http://localhost:8081'
 
 const app = createApp(App)

@@ -46,7 +46,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
     @Override
     public void fetchImageFromMinio(OutputStream stream, String image) throws Exception {
         GetObjectArgs args = GetObjectArgs.builder()
-                .bucket("study")
+                .bucket("campus-forum")
                 .object(image)
                 .build();
         GetObjectResponse response = client.getObject(args);
@@ -65,7 +65,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
         Date date = new Date();
         imageName = "/cache/" + format.format(date) + "/" + imageName;
         PutObjectArgs args = PutObjectArgs.builder()
-                .bucket("study")
+                .bucket("campus-forum")
                 .stream(file.getInputStream(), file.getSize(), -1)
                 .object(imageName)
                 .build();
@@ -90,7 +90,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
         String imageName = UUID.randomUUID().toString().replace("-", "");
         imageName = "/avatar/" + imageName;
         PutObjectArgs args = PutObjectArgs.builder()
-                .bucket("study")
+                .bucket("campus-forum")
                 .stream(file.getInputStream(), file.getSize(), -1)
                 .object(imageName)
                 .build();
@@ -113,7 +113,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
     private void deleteOldAvatar(String avatar) throws Exception {
         if (avatar == null || avatar.isEmpty()) return;
         RemoveObjectArgs remove = RemoveObjectArgs.builder()
-                .bucket("study")
+                .bucket("campus-forum")
                 .object(avatar)
                 .build();
         client.removeObject(remove);
