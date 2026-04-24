@@ -6,12 +6,15 @@ import com.campus.forum.entity.dto.Account;
 import com.campus.forum.entity.dto.AccountDetails;
 import com.campus.forum.entity.dto.AccountPrivacy;
 import com.campus.forum.entity.vo.request.*;
+import com.campus.forum.entity.vo.response.AdminUserVO;
 import com.campus.forum.mapper.AccountDetailsMapper;
 import com.campus.forum.mapper.AccountMapper;
 import com.campus.forum.mapper.AccountPrivacyMapper;
 import com.campus.forum.service.AccountService;
 import com.campus.forum.utils.Const;
 import com.campus.forum.utils.FlowUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.beans.BeanUtils;
 import jakarta.annotation.Resource;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -210,5 +214,59 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     // 检查用户名是否已存在
     private boolean existsAccountByUsername(String username) {
         return this.baseMapper.exists(Wrappers.<Account>query().eq("username", username));
+    }
+
+    // ==================== 管理员方法 ====================
+
+    /**
+     * 分页查询用户列表，支持按用户名或邮箱搜索
+     * @param page 页码
+     * @param search 搜索关键词（可选）
+     * @return 用户列表
+     */
+    @Override
+    public List<AdminUserVO> adminListUsers(int page, String search) {
+        Page<Account> p = Page.of(page, 10);
+        if (search != null && !search.isBlank()) {
+            this.page(p, Wrappers.<Account>query()
+                    .like("username", search).or()
+                    .like("email", search)
+                    .orderByDesc("register_time"));
+        } else {
+            this.page(p, Wrappers.<Account>query().orderByDesc("register_time"));
+        }
+        return p.getRecords().stream().map(account -> {
+            AdminUserVO vo = new AdminUserVO();
+            BeanUtils.copyProperties(account, vo);
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 禁用用户
+     * @param id 用户ID
+     */
+    @Override
+    public void adminDisableUser(int id) {
+        this.update(Wrappers.<Account>update().eq("id", id).set("status", "disabled"));
+    }
+
+    /**
+     * 启用用户
+     * @param id 用户ID
+     */
+    @Override
+    public void adminEnableUser(int id) {
+        this.update(Wrappers.<Account>update().eq("id", id).set("status", "active"));
+    }
+
+    /**
+     * 重置用户密码为默认密码 123456
+     * @param id 用户ID
+     */
+    @Override
+    public void adminResetPassword(int id) {
+        String encoded = passwordEncoder.encode("123456");
+        this.update(Wrappers.<Account>update().eq("id", id).set("password", encoded));
     }
 }

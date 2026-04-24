@@ -13,6 +13,8 @@ import com.campus.forum.entity.vo.response.CommentVO;
 import com.campus.forum.entity.vo.response.TopicDetailVO;
 import com.campus.forum.entity.vo.response.TopicPreviewVO;
 import com.campus.forum.entity.vo.response.TopicTopVO;
+import com.campus.forum.entity.vo.response.AdminTopicVO;
+import com.campus.forum.entity.vo.response.AdminCommentVO;
 import com.campus.forum.mapper.*;
 import com.campus.forum.service.NotificationService;
 import com.campus.forum.service.TopicService;
@@ -415,5 +417,208 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             if (length > max) return false;
         }
         return true;
+    }
+
+    // ==================== 管理员方法 ====================
+
+    /**
+     * 管理员分页查询全部帖子（支持多条件筛选）
+     * @param page 页码
+     * @param status 帖子状态（可选）
+     * @param type 分类ID（可选）
+     * @param title 标题关键词（可选）
+     * @param author 作者用户名（可选）
+     * @return 帖子列表
+     */
+    @Override
+    public List<AdminTopicVO> adminListTopics(int page, String status, Integer type, String title, String author) {
+        Page<Topic> p = Page.of(page, 15);
+        var wrapper = Wrappers.<Topic>query();
+        if (status != null && !status.isBlank())
+            wrapper.eq("status", status);
+        if (type != null && type > 0)
+            wrapper.eq("type", type);
+        if (title != null && !title.isBlank())
+            wrapper.like("title", title);
+        if (author != null && !author.isBlank()) {
+            // 子查询匹配作者用户名
+            wrapper.inSql("uid", "select id from db_account where username like '%" + author + "%'");
+        }
+        wrapper.orderByDesc("time");
+        baseMapper.selectPage(p, wrapper);
+        return p.getRecords().stream().map(topic -> {
+            AdminTopicVO vo = new AdminTopicVO();
+            BeanUtils.copyProperties(topic, vo);
+            // 填充作者用户名
+            Account account = accountMapper.selectById(topic.getUid());
+            if (account != null) vo.setUsername(account.getUsername());
+            // 填充分类名称
+            TopicType topicType = mapper.selectById(topic.getType());
+            if (topicType != null) vo.setTypeName(topicType.getName());
+            // 评论数
+            vo.setCommentCount(commentMapper.selectCount(Wrappers.<TopicComment>query()
+                    .eq("tid", topic.getId())
+                    .eq("status", Const.COMMENT_STATUS_NORMAL)));
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 审核通过帖子
+     * @param tid 帖子ID
+     * @param adminId 审核人ID
+     */
+    @Override
+    public void adminApproveTopic(int tid, int adminId) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("status", Const.TOPIC_STATUS_PUBLISHED)
+                .set("review_time", new Date())
+                .set("review_by", adminId)
+                .set("review_reason", null));
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        // 通知作者审核通过
+        Topic topic = baseMapper.selectById(tid);
+        if (topic != null) {
+            notificationService.addNotification(topic.getUid(),
+                    "帖子审核通过",
+                    "您的帖子「" + topic.getTitle() + "」已通过审核，现在所有人都可以看到了！",
+                    "success", "/index/topic-detail/" + tid);
+        }
+    }
+
+    /**
+     * 审核拒绝帖子
+     * @param tid 帖子ID
+     * @param adminId 审核人ID
+     * @param reason 拒绝理由
+     */
+    @Override
+    public void adminRejectTopic(int tid, int adminId, String reason) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("status", Const.TOPIC_STATUS_REJECTED)
+                .set("review_time", new Date())
+                .set("review_by", adminId)
+                .set("review_reason", reason));
+        // 通知作者审核拒绝
+        Topic topic = baseMapper.selectById(tid);
+        if (topic != null) {
+            notificationService.addNotification(topic.getUid(),
+                    "帖子审核未通过",
+                    "您的帖子「" + topic.getTitle() + "」未通过审核，原因：" + (reason != null ? reason : "无") + "。可修改后重新提交。",
+                    "warning", "/index/topic-detail/" + tid);
+        }
+    }
+
+    /**
+     * 隐藏帖子（下架）
+     * @param tid 帖子ID
+     */
+    @Override
+    public void adminHideTopic(int tid) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("status", Const.TOPIC_STATUS_HIDDEN));
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+    }
+
+    /**
+     * 恢复已隐藏帖子
+     * @param tid 帖子ID
+     */
+    @Override
+    public void adminRestoreTopic(int tid) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("status", Const.TOPIC_STATUS_PUBLISHED));
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+    }
+
+    /**
+     * 管理员删除帖子（软删除）
+     * @param tid 帖子ID
+     * @param adminId 操作管理员ID
+     */
+    @Override
+    public void adminDeleteTopic(int tid, int adminId) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("status", Const.TOPIC_STATUS_DELETED)
+                .set("deleted_time", new Date())
+                .set("deleted_by", adminId));
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+    }
+
+    /**
+     * 置顶帖子
+     * @param tid 帖子ID
+     */
+    @Override
+    public void adminTopTopic(int tid) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("top", 1));
+    }
+
+    /**
+     * 取消置顶
+     * @param tid 帖子ID
+     */
+    @Override
+    public void adminUntopTopic(int tid) {
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("top", 0));
+    }
+
+    /**
+     * 管理员分页查询全部评论（支持帖子/用户筛选）
+     * @param page 页码
+     * @param tid 帖子ID（可选）
+     * @param uid 用户ID（可选）
+     * @return 评论列表
+     */
+    @Override
+    public List<AdminCommentVO> adminListComments(int page, Integer tid, Integer uid) {
+        Page<TopicComment> p = Page.of(page, 15);
+        var wrapper = Wrappers.<TopicComment>query().ne("status", Const.COMMENT_STATUS_DELETED);
+        if (tid != null && tid > 0)
+            wrapper.eq("tid", tid);
+        if (uid != null && uid > 0)
+            wrapper.eq("uid", uid);
+        wrapper.orderByDesc("time");
+        commentMapper.selectPage(p, wrapper);
+        return p.getRecords().stream().map(comment -> {
+            AdminCommentVO vo = new AdminCommentVO();
+            BeanUtils.copyProperties(comment, vo);
+            // 提取纯文本内容
+            try {
+                JSONObject json = JSONObject.parseObject(comment.getContent());
+                StringBuilder sb = new StringBuilder();
+                this.shortContent(json.getJSONArray("ops"), sb, ignore -> {});
+                vo.setContent(sb.length() > 200 ? sb.substring(0, 200) : sb.toString());
+            } catch (Exception e) {
+                vo.setContent(comment.getContent());
+            }
+            // 填充用户名
+            Account account = accountMapper.selectById(comment.getUid());
+            if (account != null) vo.setUsername(account.getUsername());
+            // 填充帖子标题
+            Topic topic = baseMapper.selectById(comment.getTid());
+            if (topic != null) vo.setTopicTitle(topic.getTitle());
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 管理员删除评论（软删除）
+     * @param id 评论ID
+     */
+    @Override
+    public void adminDeleteComment(int id) {
+        commentMapper.update(null, Wrappers.<TopicComment>update()
+                .eq("id", id)
+                .set("status", Const.COMMENT_STATUS_DELETED));
     }
 }
