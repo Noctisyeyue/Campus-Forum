@@ -13,7 +13,10 @@ const accessHeader = () => {
 const defaultError = (error) => {
     console.error(error)
     const status = error.response.status
-    if (status === 429) {
+    if (status === 403 && error.response.data?.message?.includes('禁用')) {
+        ElMessage.error('账号已被禁用，请联系管理员')
+        deleteAccessToken(true)
+    } else if (status === 429) {
         ElMessage.error(error.response.data.message)
     } else {
         ElMessage.error('发生了一些错误，请联系管理员')
