@@ -35,7 +35,7 @@
          v-loading="editor.uploading"
          element-loading-text="正在上传图片，请稍后...">
       <quill-editor v-model:content="editor.text" style="height: calc(100% - 45px)"
-                    content-type="delta" ref="refEditor"
+                    content-type="delta"
                     placeholder="今天想分享点什么呢？" :options="editorOption"/>
     </div>
     <div style="display: flex;justify-content: space-between;margin-top: 5px">
@@ -51,9 +51,8 @@
 
 <script setup>
 import {Check, Document} from "@element-plus/icons-vue";
-import {computed, reactive, ref} from "vue";
+import {computed, reactive} from "vue";
 import {Delta, Quill, QuillEditor} from "@vueup/vue-quill";
-import ImageResize from "quill-image-resize-vue";
 import { ImageExtend, QuillWatch } from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import axios from "axios";
@@ -99,19 +98,18 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'success'])
 
-const refEditor = ref()
 const editor = reactive({
     type: null,
     title: '',
-    text: '',
-    loading: false
+    text: new Delta(),
+    loading: false,
+    uploading: false
 })
 
 function initEditor() {
-    if(props.defaultText)
-        editor.text = new Delta(JSON.parse(props.defaultText))
-    else
-        refEditor.value.setContents('', 'user')
+    editor.text = props.defaultText
+        ? new Delta(JSON.parse(props.defaultText))
+        : new Delta()
     editor.title = props.defaultTitle
     editor.type = findTypeById(props.defaultType)
 }
@@ -150,7 +148,6 @@ function submitTopic() {
     props.submit(editor, () => emit('success'))
 }
 
-Quill.register('modules/imageResize', ImageResize)
 Quill.register('modules/ImageExtend', ImageExtend)
 const editorOption = {
     modules: {
@@ -169,9 +166,6 @@ const editorOption = {
                     QuillWatch.emit(this.quill.id)
                 }
             }
-        },
-        imageResize: {
-            modules: [ 'Resize', 'DisplaySize' ]
         },
         ImageExtend: {
             action:  axios.defaults.baseURL + '/api/image/cache',
