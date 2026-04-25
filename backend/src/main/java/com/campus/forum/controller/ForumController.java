@@ -67,6 +67,14 @@ public class ForumController {
         return RestBean.success(topicService.listTopicByPage(page + 1, type));
     }
 
+    // 分页查询当前用户自己的帖子
+    @GetMapping("/my-topics")
+    public RestBean<List<UserTopicVO>> myTopics(@RequestParam @Min(0) int page,
+                                                @RequestParam(required = false) String status,
+                                                @RequestAttribute(Const.ATTR_USER_ID) int id) {
+        return RestBean.success(topicService.listUserTopics(id, page + 1, status));
+    }
+
     // 获取置顶帖子列表
     @GetMapping("/top-topic")
     public RestBean<List<TopicTopVO>> topTopic(){
@@ -78,6 +86,13 @@ public class ForumController {
     public RestBean<TopicDetailVO> topic(@RequestParam @Min(0) int tid,
                                          @RequestAttribute(Const.ATTR_USER_ID) int id){
         return RestBean.success(topicService.getTopic(tid, id));
+    }
+
+    // 获取当前用户自己的帖子详情
+    @GetMapping("/my-topic")
+    public RestBean<TopicDetailVO> myTopic(@RequestParam @Min(0) int tid,
+                                           @RequestAttribute(Const.ATTR_USER_ID) int id) {
+        return RestBean.success(topicService.getOwnTopic(tid, id));
     }
 
     // 点赞/收藏互动操作

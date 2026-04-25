@@ -7,7 +7,13 @@ import com.campus.forum.entity.dto.TopicType;
 import com.campus.forum.entity.vo.request.AddCommentVO;
 import com.campus.forum.entity.vo.request.TopicCreateVO;
 import com.campus.forum.entity.vo.request.TopicUpdateVO;
-import com.campus.forum.entity.vo.response.*;
+import com.campus.forum.entity.vo.response.AdminCommentVO;
+import com.campus.forum.entity.vo.response.AdminTopicVO;
+import com.campus.forum.entity.vo.response.CommentVO;
+import com.campus.forum.entity.vo.response.TopicDetailVO;
+import com.campus.forum.entity.vo.response.TopicPreviewVO;
+import com.campus.forum.entity.vo.response.TopicTopVO;
+import com.campus.forum.entity.vo.response.UserTopicVO;
 
 import java.util.List;
 
@@ -18,8 +24,10 @@ public interface TopicService extends IService<Topic> {
     List<TopicType> listTypes();
     String createTopic(int uid, TopicCreateVO vo);
     List<TopicPreviewVO> listTopicByPage(int page, int type);
+    List<UserTopicVO> listUserTopics(int uid, int page, String status);
     List<TopicTopVO> listTopTopics();
     TopicDetailVO getTopic(int tid, int uid);
+    TopicDetailVO getOwnTopic(int tid, int uid);
     TopicDetailVO adminGetTopic(int tid);
     void interact(Interact interact, boolean state);
     List<TopicPreviewVO> listTopicCollects(int uid);

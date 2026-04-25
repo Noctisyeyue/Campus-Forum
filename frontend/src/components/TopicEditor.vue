@@ -7,7 +7,7 @@
              @close="emit('close')">
     <template #header>
       <div>
-        <div style="font-weight: bold">发表新的帖子</div>
+        <div style="font-weight: bold">{{headerTitle}}</div>
         <div style="font-size: 13px">发表内容之前，请遵守相关法律法规，不要出现骂人等爆粗口的不文明行为。</div>
       </div>
     </template>
@@ -79,6 +79,10 @@ const props = defineProps({
     },
     submitButton: {
         default: '立即发表主题',
+        type: String
+    },
+    headerTitle: {
+        default: '发表新的帖子',
         type: String
     },
     submit: {

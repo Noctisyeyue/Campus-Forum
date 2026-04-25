@@ -137,7 +137,7 @@
 import {useRoute} from "vue-router";
 import {get, post} from "@/net";
 import axios from "axios";
-import {computed, reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import {ArrowLeft, ChatSquare, CircleCheck, Delete, EditPen, Female, Male, Plus, Star} from "@element-plus/icons-vue";
 import { QuillDeltaToHtmlConverter } from 'quill-delta-to-html';
 import Card from "@/components/Card.vue";
@@ -151,7 +151,6 @@ import TopicCommentEditor from "@/components/TopicCommentEditor.vue";
 const route = useRoute()
 const store = useStore()
 
-const tid = route.params.tid
 const notFound = ref(false)
 
 const topic = reactive({
@@ -168,8 +167,20 @@ const comment = reactive({
     quote: null
 })
 
-const init = () => get(`api/forum/topic?tid=${tid}`, data => {
+const resetTopicState = () => {
+    topic.data = null
+    topic.like = false
+    topic.collect = false
+    topic.comments = null
+    topic.page = 1
+}
+
+const init = (tid) => {
+    resetTopicState()
+    notFound.value = false
+    get(`api/forum/topic?tid=${tid}`, data => {
     if (!data) {
+        resetTopicState()
         notFound.value = true
         return
     }
@@ -178,9 +189,12 @@ const init = () => get(`api/forum/topic?tid=${tid}`, data => {
     topic.collect = data.interact.collect
     loadComments(1)
 }, () => {
+    resetTopicState()
     notFound.value = true
 })
-init()
+}
+
+watch(() => route.params.tid, tid => init(tid), { immediate: true })
 
 function convertToHtml(content) {
     const ops = JSON.parse(content).ops
@@ -200,21 +214,21 @@ function interact(type, message) {
 
 function updateTopic(editor) {
     post('/api/forum/update-topic', {
-        id: tid,
+        id: route.params.tid,
         type: editor.type.id,
         title: editor.title,
         content: editor.text
     }, () => {
         ElMessage.success('帖子内容更新成功！')
         edit.value = false
-        init()
+        init(route.params.tid)
     })
 }
 
 function loadComments(page) {
     topic.comments = null
     topic.page = page
-    get(`/api/forum/comments?tid=${tid}&page=${page - 1}`, data => topic.comments = data)
+    get(`/api/forum/comments?tid=${route.params.tid}&page=${page - 1}`, data => topic.comments = data)
 }
 
 function onCommentAdd() {
@@ -230,7 +244,7 @@ function deleteComment(id) {
 }
 
 function deleteTopic() {
-    post(`/api/forum/delete-topic?tid=${tid}`, null, () => {
+    post(`/api/forum/delete-topic?tid=${route.params.tid}`, null, () => {
         ElMessage.success('帖子已删除')
         router.push('/index')
     })

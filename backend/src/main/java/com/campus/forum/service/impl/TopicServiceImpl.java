@@ -15,6 +15,7 @@ import com.campus.forum.entity.vo.response.TopicPreviewVO;
 import com.campus.forum.entity.vo.response.TopicTopVO;
 import com.campus.forum.entity.vo.response.AdminTopicVO;
 import com.campus.forum.entity.vo.response.AdminCommentVO;
+import com.campus.forum.entity.vo.response.UserTopicVO;
 import com.campus.forum.mapper.*;
 import com.campus.forum.service.NotificationService;
 import com.campus.forum.service.TopicService;
@@ -47,6 +48,24 @@ import java.util.stream.Collectors;
  */
 @Service
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
+
+    private static final Set<String> USER_TOPIC_VISIBLE_STATUS = Set.of(
+            Const.TOPIC_STATUS_PENDING,
+            Const.TOPIC_STATUS_PUBLISHED,
+            Const.TOPIC_STATUS_REJECTED,
+            Const.TOPIC_STATUS_HIDDEN,
+            Const.TOPIC_STATUS_DELETED
+    );
+
+    private static final Set<String> USER_TOPIC_EDITABLE_STATUS = Set.of(
+            Const.TOPIC_STATUS_PUBLISHED,
+            Const.TOPIC_STATUS_REJECTED
+    );
+
+    private static final Set<String> USER_TOPIC_DELETABLE_STATUS = Set.of(
+            Const.TOPIC_STATUS_PUBLISHED,
+            Const.TOPIC_STATUS_PENDING
+    );
 
     @Resource
     TopicTypeMapper mapper;
@@ -127,6 +146,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return "文章内容太多，发文失败！";
         if (!types.contains(vo.getType()))
             return "文章类型非法！";
+        Topic topic = baseMapper.selectById(vo.getId());
+        if (topic == null) return "帖子不存在";
+        if (!Objects.equals(topic.getUid(), uid)) return "无权操作";
+        if (!USER_TOPIC_EDITABLE_STATUS.contains(topic.getStatus()))
+            return "当前状态的帖子不允许编辑";
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("uid", uid)
                 .eq("id", vo.getId())
@@ -135,6 +159,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                 .set("type", vo.getType())
                 .set("status", Const.TOPIC_STATUS_PENDING)      // 编辑后重新待审核
                 .set("last_submit_time", new Date())
+                .set("review_time", null)
+                .set("review_by", null)
+                .set("review_reason", null)
         );
         return null;
     }
@@ -147,6 +174,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         Topic topic = baseMapper.selectById(tid);
         if (topic == null) return "帖子不存在";
         if (!Objects.equals(topic.getUid(), uid)) return "无权操作";
+        if (!USER_TOPIC_DELETABLE_STATUS.contains(topic.getStatus()))
+            return "当前状态的帖子不允许删除";
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
                 .eq("uid", uid)
@@ -252,6 +281,27 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
+     * 分页查询当前用户自己的帖子
+     */
+    @Override
+    public List<UserTopicVO> listUserTopics(int uid, int pageNumber, String status) {
+        Page<Topic> page = Page.of(pageNumber, 10);
+        var wrapper = Wrappers.<Topic>query()
+                .eq("uid", uid)
+                .orderByDesc("time");
+        if (status != null && !status.isBlank() && !"all".equals(status)) {
+            if (!USER_TOPIC_VISIBLE_STATUS.contains(status)) {
+                return List.of();
+            }
+            wrapper.eq("status", status);
+        }
+        baseMapper.selectPage(page, wrapper);
+        return page.getRecords().stream()
+                .map(this::resolveToUserTopic)
+                .toList();
+    }
+
+    /**
      * 分页查询帖子列表（仅 published 状态，前台可见）
      */
     @Override
@@ -303,6 +353,18 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (topic == null) return null;
         // 用户端只能查看已发布的帖子
         if (!Const.TOPIC_STATUS_PUBLISHED.equals(topic.getStatus())) {
+            return null;
+        }
+        return this.buildTopicDetail(topic, uid);
+    }
+
+    /**
+     * 获取当前用户自己的帖子详情
+     */
+    @Override
+    public TopicDetailVO getOwnTopic(int tid, int uid) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null || !Objects.equals(topic.getUid(), uid)) {
             return null;
         }
         return this.buildTopicDetail(topic, uid);
@@ -401,6 +463,20 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     private TopicPreviewVO resolveToPreview(Topic topic) {
         TopicPreviewVO vo = new TopicPreviewVO();
         BeanUtils.copyProperties(accountMapper.selectById(topic.getUid()), vo);
+        BeanUtils.copyProperties(topic, vo);
+        vo.setLike(baseMapper.interactCount(topic.getId(), "like"));
+        vo.setCollect(baseMapper.interactCount(topic.getId(), "collect"));
+        List<String> images = new ArrayList<>();
+        StringBuilder previewText = new StringBuilder();
+        JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
+        this.shortContent(ops, previewText, obj -> images.add(obj.toString()));
+        vo.setText(previewText.length() > 300 ? previewText.substring(0, 300) : previewText.toString());
+        vo.setImages(images);
+        return vo;
+    }
+
+    private UserTopicVO resolveToUserTopic(Topic topic) {
+        UserTopicVO vo = new UserTopicVO();
         BeanUtils.copyProperties(topic, vo);
         vo.setLike(baseMapper.interactCount(topic.getId(), "like"));
         vo.setCollect(baseMapper.interactCount(topic.getId(), "collect"));

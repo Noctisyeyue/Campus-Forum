@@ -102,6 +102,14 @@
                                         帖子广场
                                     </template>
                                 </el-menu-item>
+                                <el-menu-item index="/index/my-topics">
+                                    <template #title>
+                                        <el-icon>
+                                            <Document/>
+                                        </el-icon>
+                                        我的帖子
+                                    </template>
+                                </el-menu-item>
                                 <el-menu-item>
                                     <template #title>
                                         <el-icon>
