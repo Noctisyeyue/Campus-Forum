@@ -127,6 +127,8 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'TopicList' })
+
 import LightCard from "@/components/LightCard.vue";
 import {
     Calendar,
@@ -141,7 +143,7 @@ import {
     Microphone, CircleCheck, Star, FolderOpened, ArrowRightBold
 } from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
-import {computed, reactive, ref, watch} from "vue";
+import {computed, onActivated, reactive, ref, watch} from "vue";
 import {get} from "@/net";
 import {ElMessage} from "element-plus";
 import TopicEditor from "@/components/TopicEditor.vue";
@@ -170,6 +172,9 @@ const topics = reactive({
 const collects = ref(false)
 
 watch(() => topics.type, () => resetList(), {immediate: true})
+onActivated(() => {
+    if (!topics.list.length && !topics.end) updateList()
+})
 
 const today = computed(() => {
     const date = new Date()
