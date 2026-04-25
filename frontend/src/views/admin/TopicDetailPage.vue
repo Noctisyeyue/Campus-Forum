@@ -23,7 +23,7 @@
                 <el-button v-if="topic.top" type="info"
                            @click="doAction('untop')">取消置顶</el-button>
                 <el-popconfirm title="此操作不可逆，帖子将永久删除，确定继续？" @confirm="doAction('delete')"
-                               v-if="topic.status !== 'deleted'">
+                               v-if="topic.status !== 'deleted' && topic.status !== 'pending_review'">
                     <template #reference>
                         <el-button type="danger">删除帖子</el-button>
                     </template>

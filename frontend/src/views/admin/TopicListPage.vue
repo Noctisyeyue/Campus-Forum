@@ -64,7 +64,7 @@
                         <el-link v-if="row.top" type="info"
                                  @click="doAction(row.id, 'untop')" style="margin-left: 8px">&nbsp;取消置顶</el-link>
                         <el-popconfirm title="此操作不可逆，帖子将永久删除，确定继续？" @confirm="doAction(row.id, 'delete')"
-                                       style="margin-left: 8px" v-if="row.status !== 'deleted'">
+                                       style="margin-left: 8px" v-if="row.status !== 'deleted' && row.status !== 'pending_review'">
                             <template #reference>
                                 <el-link type="danger">&nbsp;删除</el-link>
                             </template>

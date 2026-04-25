@@ -589,6 +589,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     public String adminDeleteTopic(int tid, int adminId) {
         Topic topic = baseMapper.selectById(tid);
         if (topic == null) return "帖子不存在";
+        if (Const.TOPIC_STATUS_PENDING.equals(topic.getStatus()))
+            return "待审核帖子不能直接删除，请先通过或拒绝";
         commentMapper.delete(Wrappers.<TopicComment>query().eq("tid", tid));
         baseMapper.deleteLikeByTid(tid);
         baseMapper.deleteCollectByTid(tid);
