@@ -53,6 +53,41 @@ const router = createRouter({
                     component: () => import('@/views/settings/PrivacySetting.vue')
                 }
             ]
+        }, {
+            path: '/admin',
+            name: 'admin',
+            component: () => import('@/views/AdminView.vue'),
+            children: [
+                {
+                    path: '',
+                    name: 'admin-dashboard',
+                    component: () => import('@/views/admin/DashboardPage.vue')
+                }, {
+                    path: 'topics',
+                    name: 'admin-topics',
+                    component: () => import('@/views/admin/TopicListPage.vue')
+                }, {
+                    path: 'topic-detail/:id',
+                    name: 'admin-topic-detail',
+                    component: () => import('@/views/admin/TopicDetailPage.vue')
+                }, {
+                    path: 'users',
+                    name: 'admin-users',
+                    component: () => import('@/views/admin/UserListPage.vue')
+                }, {
+                    path: 'user-detail/:id',
+                    name: 'admin-user-detail',
+                    component: () => import('@/views/admin/UserDetailPage.vue')
+                }, {
+                    path: 'comments',
+                    name: 'admin-comments',
+                    component: () => import('@/views/admin/CommentListPage.vue')
+                }, {
+                    path: 'types',
+                    name: 'admin-types',
+                    component: () => import('@/views/admin/TypeManagePage.vue')
+                }
+            ]
         }
     ]
 })
@@ -61,6 +96,8 @@ router.beforeEach((to, from, next) => {
     const isUnauthorized = unauthorized()
     if(to.name.startsWith('welcome') && !isUnauthorized) {
         next('/index')
+    } else if(to.fullPath.startsWith('/admin') && isUnauthorized) {
+        next('/')
     } else if(to.fullPath.startsWith('/index') && isUnauthorized) {
         next('/')
     } else {

@@ -246,6 +246,7 @@ const notification = ref([])
 get('/api/user/info', (data) => {
     store.user = data
     loading.value = false
+    if (data.role === 'admin') router.replace('/admin')
 })
 const loadNotification =
         () => get('/api/notification/list', data => notification.value = data)

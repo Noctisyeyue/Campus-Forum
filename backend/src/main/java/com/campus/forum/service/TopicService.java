@@ -49,4 +49,6 @@ public interface TopicService extends IService<Topic> {
     List<AdminCommentVO> adminListComments(int page, Integer tid, Integer uid);
     // 管理员方法：删除评论（软删除）
     void adminDeleteComment(int id);
+    // 管理员方法：恢复已删除评论
+    void adminRestoreComment(int id);
 }
