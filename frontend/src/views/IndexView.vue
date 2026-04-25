@@ -233,6 +233,7 @@ import {
     Umbrella, User
 } from "@element-plus/icons-vue";
 import LightCard from "@/components/LightCard.vue";
+import {ElMessage} from "element-plus";
 
 const store = useStore()
 const loading = ref(true)
@@ -259,12 +260,25 @@ function userLogout() {
 function confirmNotification(id, url) {
     get(`/api/notification/delete?id=${id}`, () => {
         loadNotification()
-        window.open(url)
+        if (!hasNotificationTarget(url)) {
+            ElMessage.info('该消息仅用于通知，没有可跳转的内容')
+            return
+        }
+        router.push(url)
     })
 }
 
 function deleteAllNotification() {
     get(`/api/notification/delete-all`, loadNotification)
+}
+
+function hasNotificationTarget(url) {
+    return typeof url === 'string'
+        && url.trim().length > 0
+        && url !== 'null'
+        && url !== 'undefined'
+        && !url.endsWith('/null')
+        && !url.endsWith('/undefined')
 }
 </script>
 

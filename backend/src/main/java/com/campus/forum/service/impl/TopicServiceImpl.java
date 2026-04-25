@@ -299,23 +299,37 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public TopicDetailVO getTopic(int tid, int uid) {
-        TopicDetailVO vo = new TopicDetailVO();
         Topic topic = baseMapper.selectById(tid);
         if (topic == null) return null;
         // 用户端只能查看已发布的帖子
         if (!Const.TOPIC_STATUS_PUBLISHED.equals(topic.getStatus())) {
             return null;
         }
+        return this.buildTopicDetail(topic, uid);
+    }
+
+    /**
+     * 管理员查看帖子详情，不受帖子状态限制
+     */
+    @Override
+    public TopicDetailVO adminGetTopic(int tid) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return null;
+        return this.buildTopicDetail(topic, 0);
+    }
+
+    private TopicDetailVO buildTopicDetail(Topic topic, int uid) {
+        TopicDetailVO vo = new TopicDetailVO();
         BeanUtils.copyProperties(topic, vo);
         TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
-                hasInteract(tid, uid, "like"),
-                hasInteract(tid, uid, "collect")
+                uid > 0 && hasInteract(topic.getId(), uid, "like"),
+                uid > 0 && hasInteract(topic.getId(), uid, "collect")
         );
         vo.setInteract(interact);
         TopicDetailVO.User user = new TopicDetailVO.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
         vo.setComments(commentMapper.selectCount(Wrappers.<TopicComment>query()
-                .eq("tid", tid)
+                .eq("tid", topic.getId())
                 .eq("status", Const.COMMENT_STATUS_NORMAL)));   // 只统计正常评论
         return vo;
     }
@@ -511,7 +525,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             notificationService.addNotification(topic.getUid(),
                     "帖子审核未通过",
                     "您的帖子「" + topic.getTitle() + "」未通过审核，原因：" + (reason != null ? reason : "无") + "。可修改后重新提交。",
-                    "warning", "/index/topic-detail/" + tid);
+                    "warning", null);
         }
     }
 
@@ -521,12 +535,23 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @param reason 下架原因
      */
     @Override
-    public void adminHideTopic(int tid, String reason) {
+    public String adminHideTopic(int tid, String reason) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return "帖子不存在";
+        if (!Const.TOPIC_STATUS_PUBLISHED.equals(topic.getStatus()))
+            return "只有已发布的帖子才能下架";
+        if (reason == null || reason.isBlank())
+            return "请填写下架原因";
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
                 .set("status", Const.TOPIC_STATUS_HIDDEN)
                 .set("hide_reason", reason));
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        notificationService.addNotification(topic.getUid(),
+                "帖子已被下架",
+                "您的帖子「" + topic.getTitle() + "」已被管理员下架，原因：" + reason,
+                "warning", null);
+        return null;
     }
 
     /**
@@ -534,12 +559,25 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @param tid 帖子ID
      */
     @Override
-    public void adminRestoreTopic(int tid) {
-        baseMapper.update(null, Wrappers.<Topic>update()
-                .eq("id", tid)
-                .set("status", Const.TOPIC_STATUS_PUBLISHED)
-                .set("hide_reason", null));
+    public String adminRestoreTopic(int tid) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return "帖子不存在";
+        if (Const.TOPIC_STATUS_HIDDEN.equals(topic.getStatus())) {
+            baseMapper.update(null, Wrappers.<Topic>update()
+                    .eq("id", tid)
+                    .set("status", Const.TOPIC_STATUS_PUBLISHED)
+                    .set("hide_reason", null));
+        } else if (Const.TOPIC_STATUS_DELETED.equals(topic.getStatus())) {
+            baseMapper.update(null, Wrappers.<Topic>update()
+                    .eq("id", tid)
+                    .set("status", Const.TOPIC_STATUS_PUBLISHED)
+                    .set("deleted_time", null)
+                    .set("deleted_by", null));
+        } else {
+            return "当前帖子状态不支持恢复";
+        }
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        return null;
     }
 
     /**
@@ -548,9 +586,17 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @param adminId 操作管理员ID
      */
     @Override
-    public void adminDeleteTopic(int tid, int adminId) {
+    public String adminDeleteTopic(int tid, int adminId) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return "帖子不存在";
+        commentMapper.delete(Wrappers.<TopicComment>query().eq("tid", tid));
+        baseMapper.deleteLikeByTid(tid);
+        baseMapper.deleteCollectByTid(tid);
+        notificationService.remove(Wrappers.<Notification>query()
+                .eq("url", "/index/topic-detail/" + tid));
         baseMapper.deleteById(tid);
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        return null;
     }
 
     /**
