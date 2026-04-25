@@ -44,6 +44,12 @@
                     <div style="font-size: 12px;color: grey">{{ topic.user.email }}</div>
                 </div>
             </div>
+            <el-alert v-if="topic.status === 'hidden' && topic.hideReason"
+                      :title="`下架原因：${topic.hideReason}`"
+                      type="warning" :closable="false" style="margin-bottom: 15px"/>
+            <el-alert v-if="topic.status === 'rejected' && topic.reviewReason"
+                      :title="`拒绝原因：${topic.reviewReason}`"
+                      type="error" :closable="false" style="margin-bottom: 15px"/>
             <div class="topic-content" v-html="convertToHtml(topic.content)"></div>
         </card>
         <card style="margin-top: 10px" v-if="topic">

@@ -113,6 +113,7 @@ CREATE TABLE `db_topic` (
   `review_time`      datetime DEFAULT NULL                 COMMENT '最近一次审核时间',
   `review_by`        int DEFAULT NULL                      COMMENT '审核人ID，关联 db_account.id（哪个管理员审核的）',
   `review_reason`    varchar(255) DEFAULT NULL             COMMENT '审核理由（如拒绝原因）',
+  `hide_reason`      varchar(255) DEFAULT NULL             COMMENT '下架理由（管理员下架时填写）',
   `last_submit_time` datetime DEFAULT NULL                 COMMENT '最后提交审核时间（编辑后重新提交会更新）',
   `deleted_time`     datetime DEFAULT NULL                 COMMENT '删除时间（软删除）',
   `deleted_by`       int DEFAULT NULL                      COMMENT '删除人ID，关联 db_account.id',

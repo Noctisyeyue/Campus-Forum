@@ -5,6 +5,7 @@ import com.campus.forum.entity.vo.response.AdminTopicVO;
 import com.campus.forum.entity.vo.response.TopicDetailVO;
 import com.campus.forum.service.TopicService;
 import com.campus.forum.utils.Const;
+import com.campus.forum.utils.ControllerUtils;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,9 @@ public class AdminTopicController {
 
     @Resource
     TopicService topicService;
+
+    @Resource
+    ControllerUtils utils;
 
     /**
      * 分页查询帖子列表（支持多条件筛选）
@@ -46,7 +50,7 @@ public class AdminTopicController {
      */
     @GetMapping("/{id}")
     public RestBean<TopicDetailVO> getTopic(@PathVariable int id) {
-        return RestBean.success(topicService.getTopic(id, 0));
+        return RestBean.success(topicService.adminGetTopic(id));
     }
 
     /**
@@ -86,8 +90,7 @@ public class AdminTopicController {
     @PostMapping("/{id}/hide")
     public RestBean<Void> hideTopic(@PathVariable int id,
                                     @RequestParam String reason) {
-        topicService.adminHideTopic(id, reason);
-        return RestBean.success();
+        return utils.messageHandle(() -> topicService.adminHideTopic(id, reason));
     }
 
     /**
@@ -97,8 +100,7 @@ public class AdminTopicController {
      */
     @PostMapping("/{id}/restore")
     public RestBean<Void> restoreTopic(@PathVariable int id) {
-        topicService.adminRestoreTopic(id);
-        return RestBean.success();
+        return utils.messageHandle(() -> topicService.adminRestoreTopic(id));
     }
 
     /**
@@ -110,8 +112,7 @@ public class AdminTopicController {
     @PostMapping("/{id}/delete")
     public RestBean<Void> deleteTopic(@PathVariable int id,
                                       @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
-        topicService.adminDeleteTopic(id, adminId);
-        return RestBean.success();
+        return utils.messageHandle(() -> topicService.adminDeleteTopic(id, adminId));
     }
 
     /**

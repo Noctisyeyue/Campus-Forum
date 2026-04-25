@@ -20,6 +20,7 @@ public interface TopicService extends IService<Topic> {
     List<TopicPreviewVO> listTopicByPage(int page, int type);
     List<TopicTopVO> listTopTopics();
     TopicDetailVO getTopic(int tid, int uid);
+    TopicDetailVO adminGetTopic(int tid);
     void interact(Interact interact, boolean state);
     List<TopicPreviewVO> listTopicCollects(int uid);
     String updateTopic(int uid, TopicUpdateVO vo);
@@ -35,11 +36,11 @@ public interface TopicService extends IService<Topic> {
     // 管理员方法：审核拒绝帖子
     void adminRejectTopic(int tid, int adminId, String reason);
     // 管理员方法：下架帖子（需填写原因）
-    void adminHideTopic(int tid, String reason);
+    String adminHideTopic(int tid, String reason);
     // 管理员方法：上架帖子（恢复已下架帖子）
-    void adminRestoreTopic(int tid);
+    String adminRestoreTopic(int tid);
     // 管理员方法：删除帖子（物理删除，不可逆）
-    void adminDeleteTopic(int tid, int adminId);
+    String adminDeleteTopic(int tid, int adminId);
     // 管理员方法：置顶帖子
     void adminTopTopic(int tid);
     // 管理员方法：取消置顶

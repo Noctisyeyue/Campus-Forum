@@ -84,6 +84,18 @@ public interface TopicMapper extends BaseMapper<Topic> {
     int deleteCollectInteract(@Param("interacts") List<Interact> interacts);
 
     /**
+     * 删除帖子全部点赞记录
+     */
+    @Delete("delete from db_topic_interact_like where tid = #{tid}")
+    int deleteLikeByTid(@Param("tid") int tid);
+
+    /**
+     * 删除帖子全部收藏记录
+     */
+    @Delete("delete from db_topic_interact_collect where tid = #{tid}")
+    int deleteCollectByTid(@Param("tid") int tid);
+
+    /**
      * 批量删除互动记录
      *
      * @param interacts 互动记录列表

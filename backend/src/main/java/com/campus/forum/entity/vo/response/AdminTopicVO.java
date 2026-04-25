@@ -21,5 +21,6 @@ public class AdminTopicVO {
     Date lastSubmitTime;    // 最后提交审核时间
     Date reviewTime;        // 最近审核时间
     String reviewReason;    // 审核理由
+    String hideReason;      // 下架理由
     Long commentCount;      // 评论数
 }

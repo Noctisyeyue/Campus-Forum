@@ -16,6 +16,8 @@ public class TopicDetailVO {
     Integer type;           // 分类ID
     Date time;              // 创建时间
     String status;          // 帖子状态
+    String reviewReason;    // 审核理由
+    String hideReason;      // 下架理由
     User user;              // 发帖用户信息
     Interact interact;      // 当前用户互动状态（点赞/收藏）
     Long comments;          // 评论数量
