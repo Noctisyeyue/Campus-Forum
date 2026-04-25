@@ -13,14 +13,17 @@
                 <el-button v-if="topic.status === 'pending_review'" type="danger"
                            @click="rejectVisible = true">拒绝</el-button>
                 <el-button v-if="topic.status === 'published'" type="warning"
-                           @click="doAction('hide')">隐藏帖子</el-button>
-                <el-button v-if="topic.status === 'hidden'" type="info"
+                           @click="hideVisible = true">下架帖子</el-button>
+                <el-button v-if="topic.status === 'hidden'" type="success"
+                           @click="doAction('restore')">上架帖子</el-button>
+                <el-button v-if="topic.status === 'deleted'" type="success"
                            @click="doAction('restore')">恢复帖子</el-button>
                 <el-button v-if="topic.status === 'published' && !topic.top" type="warning"
                            @click="doAction('top')">置顶</el-button>
                 <el-button v-if="topic.top" type="info"
                            @click="doAction('untop')">取消置顶</el-button>
-                <el-popconfirm title="确定删除该帖子吗？" @confirm="doAction('delete')">
+                <el-popconfirm title="此操作不可逆，帖子将永久删除，确定继续？" @confirm="doAction('delete')"
+                               v-if="topic.status !== 'deleted'">
                     <template #reference>
                         <el-button type="danger">删除帖子</el-button>
                     </template>
@@ -72,6 +75,14 @@
                 <el-button type="danger" @click="confirmReject">确定拒绝</el-button>
             </template>
         </el-dialog>
+        <el-dialog v-model="hideVisible" title="下架帖子" width="400px">
+            <div style="margin-bottom: 10px;color: grey">下架后前台将不再展示此帖子，确定下架？</div>
+            <el-input v-model="hideReason" type="textarea" :rows="3" placeholder="请输入下架原因"/>
+            <template #footer>
+                <el-button @click="hideVisible = false">取消</el-button>
+                <el-button type="warning" @click="confirmHide">确定下架</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -95,14 +106,15 @@ const loading = ref(true)
 const tid = route.params.id
 const rejectVisible = ref(false)
 const rejectReason = ref('')
-
+const hideVisible = ref(false)
+const hideReason = ref('')
 function statusTag(status) {
     const map = { pending_review: 'warning', published: 'success', rejected: 'danger', hidden: 'info', deleted: 'info' }
     return map[status] || 'info'
 }
 
 function statusText(status) {
-    const map = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已隐藏', deleted: '已删除' }
+    const map = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已下架', deleted: '已删除' }
     return map[status] || status
 }
 
@@ -148,6 +160,18 @@ function confirmReject() {
     post(url, null, () => {
         ElMessage.success('已拒绝')
         rejectVisible.value = false
+        loadTopic()
+    })
+}
+
+function confirmHide() {
+    if (!hideReason.value) {
+        ElMessage.warning('请填写下架原因')
+        return
+    }
+    post(`/api/admin/topics/${tid}/hide?reason=${encodeURIComponent(hideReason.value)}`, null, () => {
+        ElMessage.success('已下架')
+        hideVisible.value = false
         loadTopic()
     })
 }

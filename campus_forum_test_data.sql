@@ -132,9 +132,9 @@ INSERT INTO `db_topic` (`id`, `title`, `content`, `uid`, `type`, `time`, `top`, 
  6, 1, '2025-11-01 09:00:00', 0, 'rejected', '2025-11-01 09:30:00', 1, '帖子内容过少，且疑似广告链接，请补充详细描述后重新提交', '2025-11-01 09:00:00', NULL, NULL);
 
 -- 已隐藏
-INSERT INTO `db_topic` (`id`, `title`, `content`, `uid`, `type`, `time`, `top`, `status`, `review_time`, `review_by`, `review_reason`, `last_submit_time`, `deleted_time`, `deleted_by`) VALUES
+INSERT INTO `db_topic` (`id`, `title`, `content`, `uid`, `type`, `time`, `top`, `status`, `review_time`, `review_by`, `review_reason`, `last_submit_time`, `deleted_time`, `deleted_by`, `hide_reason`) VALUES
 (13, '关于某老师的课程评价', '{"ops":[{"insert":"这门课说实话体验一般，老师讲得太快了，PPT也跟不上。不过考试倒是不难，认真复习就能过。\\n"}]}',
- 3, 3, '2025-10-30 16:00:00', 0, 'hidden', '2025-11-02 10:00:00', 1, '涉及具体教师评价，为避免争议暂时隐藏', '2025-10-30 16:00:00', NULL, NULL);
+ 3, 3, '2025-10-30 16:00:00', 0, 'hidden', '2025-11-02 10:00:00', 1, '涉及具体教师评价，为避免争议暂时隐藏', '2025-10-30 16:00:00', NULL, NULL, '涉及具体教师评价，为避免争议暂时下架');
 
 -- 已删除（软删除）
 INSERT INTO `db_topic` (`id`, `title`, `content`, `uid`, `type`, `time`, `top`, `status`, `review_time`, `review_by`, `review_reason`, `last_submit_time`, `deleted_time`, `deleted_by`) VALUES

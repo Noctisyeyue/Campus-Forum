@@ -34,11 +34,11 @@ public interface TopicService extends IService<Topic> {
     void adminApproveTopic(int tid, int adminId);
     // 管理员方法：审核拒绝帖子
     void adminRejectTopic(int tid, int adminId, String reason);
-    // 管理员方法：隐藏帖子
-    void adminHideTopic(int tid);
-    // 管理员方法：恢复已隐藏帖子
+    // 管理员方法：下架帖子（需填写原因）
+    void adminHideTopic(int tid, String reason);
+    // 管理员方法：上架帖子（恢复已下架帖子）
     void adminRestoreTopic(int tid);
-    // 管理员方法：删除帖子（软删除）
+    // 管理员方法：删除帖子（物理删除，不可逆）
     void adminDeleteTopic(int tid, int adminId);
     // 管理员方法：置顶帖子
     void adminTopTopic(int tid);
@@ -49,6 +49,4 @@ public interface TopicService extends IService<Topic> {
     List<AdminCommentVO> adminListComments(int page, Integer tid, Integer uid);
     // 管理员方法：删除评论（软删除）
     void adminDeleteComment(int id);
-    // 管理员方法：恢复已删除评论
-    void adminRestoreComment(int id);
 }

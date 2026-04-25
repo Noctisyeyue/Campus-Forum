@@ -9,7 +9,7 @@
                     <el-option label="待审核" value="pending_review"/>
                     <el-option label="已发布" value="published"/>
                     <el-option label="已拒绝" value="rejected"/>
-                    <el-option label="已隐藏" value="hidden"/>
+                    <el-option label="已下架" value="hidden"/>
                     <el-option label="已删除" value="deleted"/>
                 </el-select>
                 <el-select v-model="filter.type" placeholder="全部分类" style="width: 130px" clearable>
@@ -54,17 +54,17 @@
                         <el-link v-if="row.status === 'pending_review'" type="danger"
                                  @click="openReject(row.id)" style="margin-left: 8px">&nbsp;拒绝</el-link>
                         <el-link v-if="row.status === 'published'" type="warning"
-                                 @click="doAction(row.id, 'hide')" style="margin-left: 8px">&nbsp;隐藏</el-link>
-                        <el-link v-if="row.status === 'hidden'" type="info"
-                                 @click="doAction(row.id, 'restore')" style="margin-left: 8px">&nbsp;恢复</el-link>
+                                 @click="openHide(row.id)" style="margin-left: 8px">&nbsp;下架</el-link>
+                        <el-link v-if="row.status === 'hidden'" type="success"
+                                 @click="doAction(row.id, 'restore')" style="margin-left: 8px">&nbsp;上架</el-link>
                         <el-link v-if="row.status === 'deleted'" type="success"
                                  @click="doAction(row.id, 'restore')" style="margin-left: 8px">&nbsp;恢复</el-link>
                         <el-link v-if="row.status === 'published' && !row.top" type="warning"
                                  @click="doAction(row.id, 'top')" style="margin-left: 8px">&nbsp;置顶</el-link>
                         <el-link v-if="row.top" type="info"
                                  @click="doAction(row.id, 'untop')" style="margin-left: 8px">&nbsp;取消置顶</el-link>
-                        <el-popconfirm title="确定删除该帖子吗？" @confirm="doAction(row.id, 'delete')"
-                                       style="margin-left: 8px">
+                        <el-popconfirm title="此操作不可逆，帖子将永久删除，确定继续？" @confirm="doAction(row.id, 'delete')"
+                                       style="margin-left: 8px" v-if="row.status !== 'deleted'">
                             <template #reference>
                                 <el-link type="danger">&nbsp;删除</el-link>
                             </template>
@@ -87,6 +87,14 @@
                 <el-button type="danger" @click="confirmReject">确定拒绝</el-button>
             </template>
         </el-dialog>
+        <el-dialog v-model="hideDialog.show" title="下架帖子" width="400px">
+            <div style="margin-bottom: 10px;color: grey">下架后前台将不再展示此帖子，确定下架？</div>
+            <el-input v-model="hideDialog.reason" type="textarea" :rows="3" placeholder="请输入下架原因"/>
+            <template #footer>
+                <el-button @click="hideDialog.show = false">取消</el-button>
+                <el-button type="warning" @click="confirmHide">确定下架</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -105,6 +113,7 @@ const total = ref(0)
 
 const filter = reactive({ status: '', type: '', title: '', author: '' })
 const reject = reactive({ show: false, id: null, reason: '' })
+const hideDialog = reactive({ show: false, id: null, reason: '' })
 
 // 加载分类列表用于筛选
 get('/api/admin/types', data => types.value = data)
@@ -115,7 +124,7 @@ function statusTag(status) {
 }
 
 function statusText(status) {
-    const map = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已隐藏', deleted: '已删除' }
+    const map = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已下架', deleted: '已删除' }
     return map[status] || status
 }
 
@@ -154,6 +163,24 @@ function confirmReject() {
     post(url, null, () => {
         ElMessage.success('已拒绝')
         reject.show = false
+        loadTopics(page.value - 1)
+    })
+}
+
+function openHide(id) {
+    hideDialog.id = id
+    hideDialog.reason = ''
+    hideDialog.show = true
+}
+
+function confirmHide() {
+    if (!hideDialog.reason) {
+        ElMessage.warning('请填写下架原因')
+        return
+    }
+    post(`/api/admin/topics/${hideDialog.id}/hide?reason=${encodeURIComponent(hideDialog.reason)}`, null, () => {
+        ElMessage.success('已下架')
+        hideDialog.show = false
         loadTopics(page.value - 1)
     })
 }

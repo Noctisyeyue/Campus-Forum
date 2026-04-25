@@ -302,6 +302,10 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         TopicDetailVO vo = new TopicDetailVO();
         Topic topic = baseMapper.selectById(tid);
         if (topic == null) return null;
+        // 用户端只能查看已发布的帖子
+        if (!Const.TOPIC_STATUS_PUBLISHED.equals(topic.getStatus())) {
+            return null;
+        }
         BeanUtils.copyProperties(topic, vo);
         TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
                 hasInteract(tid, uid, "like"),
@@ -512,41 +516,40 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 隐藏帖子（下架）
+     * 下架帖子（需填写原因）
      * @param tid 帖子ID
+     * @param reason 下架原因
      */
     @Override
-    public void adminHideTopic(int tid) {
+    public void adminHideTopic(int tid, String reason) {
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
-                .set("status", Const.TOPIC_STATUS_HIDDEN));
+                .set("status", Const.TOPIC_STATUS_HIDDEN)
+                .set("hide_reason", reason));
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
     }
 
     /**
-     * 恢复已隐藏帖子
+     * 上架帖子（恢复已下架帖子）
      * @param tid 帖子ID
      */
     @Override
     public void adminRestoreTopic(int tid) {
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
-                .set("status", Const.TOPIC_STATUS_PUBLISHED));
+                .set("status", Const.TOPIC_STATUS_PUBLISHED)
+                .set("hide_reason", null));
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
     }
 
     /**
-     * 管理员删除帖子（软删除）
+     * 管理员删除帖子（物理删除，不可逆）
      * @param tid 帖子ID
      * @param adminId 操作管理员ID
      */
     @Override
     public void adminDeleteTopic(int tid, int adminId) {
-        baseMapper.update(null, Wrappers.<Topic>update()
-                .eq("id", tid)
-                .set("status", Const.TOPIC_STATUS_DELETED)
-                .set("deleted_time", new Date())
-                .set("deleted_by", adminId));
+        baseMapper.deleteById(tid);
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
     }
 

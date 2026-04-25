@@ -1,4 +1,8 @@
 <template>
+    <div v-if="notFound" style="text-align: center;padding: 80px 20px">
+        <el-empty description="帖子不存在或已被下架"/>
+        <el-button type="primary" @click="router.push('/index')" style="margin-top: 10px">返回首页</el-button>
+    </div>
     <div class="topic-page" v-if="topic.data">
         <div class="topic-main" style="position: sticky;top: 0;z-index: 10">
             <card style="display: flex;width: 100%;">
@@ -148,6 +152,7 @@ const route = useRoute()
 const store = useStore()
 
 const tid = route.params.tid
+const notFound = ref(false)
 
 const topic = reactive({
     data: null,
@@ -164,10 +169,16 @@ const comment = reactive({
 })
 
 const init = () => get(`api/forum/topic?tid=${tid}`, data => {
+    if (!data) {
+        notFound.value = true
+        return
+    }
     topic.data = data
     topic.like = data.interact.like
     topic.collect = data.interact.collect
     loadComments(1)
+}, () => {
+    notFound.value = true
 })
 init()
 

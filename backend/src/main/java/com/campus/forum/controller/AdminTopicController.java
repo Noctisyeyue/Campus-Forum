@@ -78,18 +78,20 @@ public class AdminTopicController {
     }
 
     /**
-     * 隐藏帖子（下架）
+     * 下架帖子（需填写原因）
      * @param id 帖子ID
+     * @param reason 下架原因
      * @return 操作结果
      */
     @PostMapping("/{id}/hide")
-    public RestBean<Void> hideTopic(@PathVariable int id) {
-        topicService.adminHideTopic(id);
+    public RestBean<Void> hideTopic(@PathVariable int id,
+                                    @RequestParam String reason) {
+        topicService.adminHideTopic(id, reason);
         return RestBean.success();
     }
 
     /**
-     * 恢复已隐藏帖子
+     * 上架帖子（恢复已下架帖子）
      * @param id 帖子ID
      * @return 操作结果
      */
@@ -100,7 +102,7 @@ public class AdminTopicController {
     }
 
     /**
-     * 删除帖子（软删除）
+     * 删除帖子（物理删除，不可逆）
      * @param id 帖子ID
      * @param adminId 当前管理员ID
      * @return 操作结果

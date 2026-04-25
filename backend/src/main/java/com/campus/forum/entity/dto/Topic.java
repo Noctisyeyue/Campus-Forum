@@ -25,6 +25,7 @@ public class Topic {
     Date reviewTime;            // 最近一次审核时间
     Integer reviewBy;           // 审核人ID
     String reviewReason;        // 审核理由
+    String hideReason;          // 下架理由（管理员下架时填写）
     Date lastSubmitTime;        // 最后提交审核时间
     Date deletedTime;           // 删除时间（软删除）
     Integer deletedBy;          // 删除人ID
