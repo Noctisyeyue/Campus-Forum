@@ -41,20 +41,26 @@
                     <div>发帖时间: {{new Date(topic.data.time).toLocaleString()}}</div>
                 </div>
                 <div style="text-align: right;margin-top: 30px">
-                    <interact-button name="编辑帖子" color="dodgerblue" :check="false"
-                                     @check="edit = true" style="margin-right: 20px"
-                                     v-if="store.user.id === topic.data.user.id">
-                        <el-icon><EditPen/></el-icon>
-                    </interact-button>
-                    <interact-button name="点个赞吧" check-name="已点赞" color="pink" :check="topic.like"
-                                     @check="interact('like', '点赞')">
-                        <el-icon><CircleCheck/></el-icon>
-                    </interact-button>
-                    <interact-button name="收藏本帖" check-name="已收藏" color="orange" :check="topic.collect"
-                                     @check="interact('collect', '收藏')"
-                                     style="margin-left: 20px">
-                        <el-icon><Star/></el-icon>
-                    </interact-button>
+                    <el-popconfirm title="确定要删除这篇帖子吗？删除后无法恢复。" confirm-button-text="确定"
+                                   cancel-button-text="取消" @confirm="deleteTopic"
+                                   v-if="store.user.id === topic.data.user.id">
+                        <template #reference>
+                            <el-link :icon="Delete" type="danger"
+                                     style="margin-right: 20px">&nbsp;删除帖子</el-link>
+                        </template>
+                    </el-popconfirm>
+                    <el-link :icon="EditPen" type="primary" @click="edit = true"
+                             style="margin-right: 20px"
+                             v-if="store.user.id === topic.data.user.id">&nbsp;编辑帖子</el-link>
+                    <el-link :icon="CircleCheck" :type="topic.like ? 'primary' : 'info'"
+                             @click="interact('like', '点赞')">
+                        &nbsp;{{topic.like ? '已点赞' : '点个赞吧'}}
+                    </el-link>
+                    <el-link :icon="Star" :type="topic.collect ? 'warning' : 'info'"
+                             @click="interact('collect', '收藏')"
+                             style="margin-left: 20px">
+                        &nbsp;{{topic.collect ? '已收藏' : '收藏本帖'}}
+                    </el-link>
                 </div>
             </div>
         </div>
@@ -93,8 +99,14 @@
                         <div style="text-align: right">
                             <el-link :icon="ChatSquare" @click="comment.show = true;comment.quote = item"
                                      type="info">&nbsp;回复评论</el-link>
-                            <el-link :icon="Delete" type="danger" v-if="item.user.id === store.user.id"
-                                     style="margin-left: 20px" @click="deleteComment(item.id)">&nbsp;删除评论</el-link>
+                            <el-popconfirm title="确定要删除这条评论吗？" confirm-button-text="确定"
+                                           cancel-button-text="取消" @confirm="deleteComment(item.id)"
+                                           v-if="item.user.id === store.user.id">
+                                <template #reference>
+                                    <el-link :icon="Delete" type="danger"
+                                             style="margin-left: 20px">&nbsp;删除评论</el-link>
+                                </template>
+                            </el-popconfirm>
                         </div>
                     </div>
                 </div>
@@ -127,7 +139,6 @@ import { QuillDeltaToHtmlConverter } from 'quill-delta-to-html';
 import Card from "@/components/Card.vue";
 import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
-import InteractButton from "@/components/InteractButton.vue";
 import {ElMessage} from "element-plus";
 import {useStore} from "@/stores/index";
 import TopicEditor from "@/components/TopicEditor.vue";
@@ -204,6 +215,13 @@ function deleteComment(id) {
     get(`/api/forum/delete-comment?id=${id}`, () => {
         ElMessage.success('删除评论成功！')
         loadComments(topic.page)
+    })
+}
+
+function deleteTopic() {
+    post(`/api/forum/delete-topic?tid=${tid}`, null, () => {
+        ElMessage.success('帖子已删除')
+        router.push('/index')
     })
 }
 </script>

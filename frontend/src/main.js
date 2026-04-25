@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import axios from 'axios'
 import { createPinia } from 'pinia'
+import 'element-plus/es/components/message/style/css'
 
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/assets/quill.css'
