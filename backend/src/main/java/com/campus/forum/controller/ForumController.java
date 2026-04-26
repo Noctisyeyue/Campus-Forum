@@ -63,20 +63,23 @@ public class ForumController {
     @GetMapping("/list-topic")
     public RestBean<List<TopicPreviewVO>> listTopic(@RequestParam @Min(0) int page,
                                                     @RequestParam @Min(0) int type,
-                                                    @RequestParam(defaultValue = "time") String sort) {
-        return RestBean.success(topicService.listTopicByPage(page + 1, type, sort));
+                                                    @RequestParam(defaultValue = "time") String sort,
+                                                    @RequestParam(required = false) String title) {
+        return RestBean.success(topicService.listTopicByPage(page + 1, type, sort, title));
     }
 
     // 分页查询校园活动列表
     @GetMapping("/list-activity")
-    public RestBean<List<TopicPreviewVO>> listActivity(@RequestParam @Min(0) int page) {
-        return RestBean.success(topicService.listActivityByPage(page + 1));
+    public RestBean<List<TopicPreviewVO>> listActivity(@RequestParam @Min(0) int page,
+                                                       @RequestParam(required = false) String title) {
+        return RestBean.success(topicService.listActivityByPage(page + 1, title));
     }
 
     // 分页查询教务通知列表
     @GetMapping("/list-notice-topic")
-    public RestBean<List<TopicPreviewVO>> listNoticeTopic(@RequestParam @Min(0) int page) {
-        return RestBean.success(topicService.listNoticeTopicByPage(page + 1));
+    public RestBean<List<TopicPreviewVO>> listNoticeTopic(@RequestParam @Min(0) int page,
+                                                          @RequestParam(required = false) String title) {
+        return RestBean.success(topicService.listNoticeTopicByPage(page + 1, title));
     }
 
     // 获取论坛公告

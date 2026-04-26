@@ -1,6 +1,12 @@
 <template>
     <div style="display: flex;margin: 20px auto;gap: 20px;max-width: 900px;padding: 0 20px">
         <div style="flex: 1">
+            <light-card v-if="topics.search" style="display: flex;align-items: center;justify-content: space-between">
+                <span style="font-size: 14px;color: #606266">
+                    搜索: <b>{{ topics.search }}</b>
+                </span>
+                <el-link type="info" :underline="false" @click="clearSearch">清除搜索</el-link>
+            </light-card>
             <light-card>
                 <div class="create-topic" @click="editor = true">
                     <el-icon><EditPen/></el-icon> 点击发表主题...
@@ -82,6 +88,11 @@
                         </light-card>
                     </div>
                 </div>
+                <div v-else-if="topics.end" style="margin-top: 10px">
+                    <light-card>
+                        <el-empty :image-size="90" :description="topics.search ? '没有找到相关帖子' : '暂时没有帖子'"/>
+                    </light-card>
+                </div>
             </transition>
         </div>
         <div style="width: 280px">
@@ -161,6 +172,7 @@ import {
 } from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
 import {computed, onActivated, reactive, ref, watch} from "vue";
+import {useRoute} from "vue-router";
 import {get} from "@/net";
 import {ElMessage} from "element-plus";
 import TopicEditor from "@/components/TopicEditor.vue";
@@ -170,6 +182,7 @@ import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
 import TopicCollectList from "@/components/TopicCollectList.vue";
 const store = useStore()
+const route = useRoute()
 
 const weather = reactive({
     location: {},
@@ -188,12 +201,17 @@ const topics = reactive({
     sort: 'time',
     page: 0,
     end: false,
-    top: []
+    top: [],
+    search: ''
 })
 const collects = ref(false)
 const normalTypes = computed(() => store.forum.types.filter(item => !item.systemKey))
 
-watch(() => topics.type, () => resetList(), {immediate: true})
+watch(() => topics.type, () => resetList())
+watch(() => route.query.search, val => {
+    topics.search = val || ''
+    resetList()
+}, { immediate: true })
 onActivated(() => {
     if (!topics.list.length && !topics.end) updateList()
 })
@@ -206,7 +224,9 @@ get('/api/forum/top-topic', data => topics.top = data)
 get('/api/forum/notice', data => Object.assign(notice, data || {}))
 function updateList(){
     if(topics.end) return
-    get(`/api/forum/list-topic?page=${topics.page}&type=${topics.type}&sort=${topics.sort}`, data => {
+    let url = `/api/forum/list-topic?page=${topics.page}&type=${topics.type}&sort=${topics.sort}`
+    if (topics.search) url += `&title=${encodeURIComponent(topics.search)}`
+    get(url, data => {
         if(data) {
             data.forEach(d => topics.list.push(d))
             topics.page++
@@ -230,6 +250,11 @@ function resetList() {
     topics.end = false
     topics.list = []
     updateList()
+}
+
+function clearSearch() {
+    topics.search = ''
+    router.replace({ path: '/index' })
 }
 
 navigator.geolocation.getCurrentPosition(position => {

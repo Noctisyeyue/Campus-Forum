@@ -5,7 +5,8 @@
                 <div style="font-size: 20px;font-weight: bold;color: #409EFF">Campus Forum</div>
                 <div style="flex: 1;padding: 0 20px;text-align: center">
                     <el-input v-model="searchInput.text" style="width: 100%;max-width: 500px"
-                              placeholder="搜索论坛相关内容...">
+                              placeholder="搜索论坛相关内容..."
+                              @keyup.enter="doSearch">
                         <template #prefix>
                             <el-icon>
                                 <Search/>
@@ -213,6 +214,13 @@ const searchInput = reactive({
     type: '1',
     text: ''
 })
+
+function doSearch() {
+    const text = searchInput.text.trim()
+    if (!text) return
+    const typeRouteMap = { '1': '/index', '2': '/index/activity', '4': '/index/notice-topic' }
+    router.push({ path: typeRouteMap[searchInput.type], query: { search: text } })
+}
 const notification = ref([])
 
 get('/api/user/info', (data) => {

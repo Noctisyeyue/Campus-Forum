@@ -331,28 +331,28 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * 分页查询帖子列表（仅 published 状态，前台可见）
      */
     @Override
-    public List<TopicPreviewVO> listTopicByPage(int pageNumber, int type, String sort) {
+    public List<TopicPreviewVO> listTopicByPage(int pageNumber, int type, String sort, String title) {
         if (type > 0) {
             TopicType topicType = this.findTypeById(type);
             if (topicType == null || this.isSystemType(topicType)) {
                 return null;
             }
         }
-        return this.listPublishedTopicByPage(pageNumber, type == 0 ? null : type, "forum", true, sort);
+        return this.listPublishedTopicByPage(pageNumber, type == 0 ? null : type, "forum", true, sort, title);
     }
 
     @Override
-    public List<TopicPreviewVO> listActivityByPage(int pageNumber) {
+    public List<TopicPreviewVO> listActivityByPage(int pageNumber, String title) {
         Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_ACTIVITY);
         if (typeId == null) return null;
-        return this.listPublishedTopicByPage(pageNumber, typeId, "activity", false, "time");
+        return this.listPublishedTopicByPage(pageNumber, typeId, "activity", false, "time", title);
     }
 
     @Override
-    public List<TopicPreviewVO> listNoticeTopicByPage(int pageNumber) {
+    public List<TopicPreviewVO> listNoticeTopicByPage(int pageNumber, String title) {
         Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_NOTICE);
         if (typeId == null) return null;
-        return this.listPublishedTopicByPage(pageNumber, typeId, "notice", false, "time");
+        return this.listPublishedTopicByPage(pageNumber, typeId, "notice", false, "time", title);
     }
 
     /**
@@ -893,14 +893,20 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return topic.getAllowComment() == null || topic.getAllowComment() == 1;
     }
 
-    private List<TopicPreviewVO> listPublishedTopicByPage(int pageNumber, Integer typeId, String cacheScope, boolean excludeSystemType, String sort) {
-        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + cacheScope + ":" + pageNumber + ":" + (typeId == null ? 0 : typeId) + ":" + sort;
-        List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key, TopicPreviewVO.class);
-        if (list != null)
-            return list;
+    private List<TopicPreviewVO> listPublishedTopicByPage(int pageNumber, Integer typeId, String cacheScope, boolean excludeSystemType, String sort, String title) {
+        boolean hasTitle = title != null && !title.isBlank();
+        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + cacheScope + ":" + pageNumber + ":" + (typeId == null ? 0 : typeId) + ":" + sort + (hasTitle ? ":" + title : "");
+        if (!hasTitle) {
+            List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key, TopicPreviewVO.class);
+            if (list != null)
+                return list;
+        }
         Page<Topic> page = Page.of(pageNumber, 10);
         var wrapper = Wrappers.<Topic>query()
                 .eq("status", Const.TOPIC_STATUS_PUBLISHED);
+        if (hasTitle) {
+            wrapper.like("title", title);
+        }
         switch (sort) {
             case "views"    -> wrapper.orderByDesc("view_count");
             case "likes"    -> { page.setOptimizeCountSql(false); wrapper.last("ORDER BY (SELECT COUNT(*) FROM db_topic_interact_like WHERE tid = db_topic.id) DESC"); }
@@ -919,9 +925,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         baseMapper.selectPage(page, wrapper);
         List<Topic> topics = page.getRecords();
         if (topics.isEmpty()) return null;
-        list = topics.stream().map(this::resolveToPreview).toList();
-        cacheUtils.saveListToCache(key, list, 60);
-        return list;
+        List<TopicPreviewVO> result = topics.stream().map(this::resolveToPreview).toList();
+        if (!hasTitle) {
+            cacheUtils.saveListToCache(key, result, 60);
+        }
+        return result;
     }
 
     private void fillActivityFields(Topic topic, TopicDetailVO vo) {

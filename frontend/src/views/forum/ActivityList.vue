@@ -1,6 +1,12 @@
 <template>
     <div style="display: flex;margin: 20px auto;gap: 20px;max-width: 980px;padding: 0 20px">
         <div style="flex: 1">
+            <light-card v-if="topics.search" style="display: flex;align-items: center;justify-content: space-between">
+                <span style="font-size: 14px;color: #606266">
+                    搜索: <b>{{ topics.search }}</b>
+                </span>
+                <el-link type="info" :underline="false" @click="clearSearch">清除搜索</el-link>
+            </light-card>
             <light-card>
                 <div style="display: flex;justify-content: space-between;align-items: center;gap: 10px;flex-wrap: wrap">
                     <div>
@@ -33,11 +39,11 @@
                     </div>
                     <div class="topic-content">{{ item.text }}</div>
                 </light-card>
-
-                <light-card v-if="!topics.list.length && topics.end">
-                    <el-empty :image-size="90" description="暂时没有校园活动"/>
-                </light-card>
             </div>
+
+            <light-card v-if="!topics.list.length && topics.end" style="margin-top: 10px">
+                <el-empty :image-size="90" :description="topics.search ? '没有找到相关活动' : '暂时没有校园活动'"/>
+            </light-card>
         </div>
 
         <div style="width: 280px">
@@ -57,24 +63,35 @@
 <script setup>
 defineOptions({ name: 'ActivityList' })
 
-import { reactive } from "vue";
+import { reactive, watch } from "vue";
+import { useRoute } from "vue-router";
 import { get } from "@/net";
 import router from "@/router";
 import LightCard from "@/components/LightCard.vue";
 import TopicTag from "@/components/TopicTag.vue";
 
+const route = useRoute()
+
 const topics = reactive({
     list: [],
     page: 0,
     end: false,
-    loading: false
+    loading: false,
+    search: ''
 })
+
+watch(() => route.query.search, val => {
+    topics.search = val || ''
+    resetList()
+}, { immediate: true })
 
 function updateList() {
     if (topics.end || topics.loading) return
     topics.loading = true
     const page = topics.page
-    get(`/api/forum/list-activity?page=${page}`, data => {
+    let url = `/api/forum/list-activity?page=${page}`
+    if (topics.search) url += `&title=${encodeURIComponent(topics.search)}`
+    get(url, data => {
         if (data) {
             const existIds = new Set(topics.list.map(item => item.id))
             data.forEach(item => {
@@ -97,7 +114,17 @@ function openTopicDetail(id) {
     router.push(`/index/topic-detail/${id}`)
 }
 
-updateList()
+function resetList() {
+    topics.page = 0
+    topics.end = false
+    topics.list = []
+    updateList()
+}
+
+function clearSearch() {
+    topics.search = ''
+    router.replace({ path: '/index/activity' })
+}
 </script>
 
 <style scoped lang="less">

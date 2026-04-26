@@ -27,9 +27,9 @@ import java.util.List;
 public interface TopicService extends IService<Topic> {
     List<TopicType> listTypes();
     String createTopic(int uid, TopicCreateVO vo);
-    List<TopicPreviewVO> listTopicByPage(int page, int type, String sort);
-    List<TopicPreviewVO> listActivityByPage(int page);
-    List<TopicPreviewVO> listNoticeTopicByPage(int page);
+    List<TopicPreviewVO> listTopicByPage(int page, int type, String sort, String title);
+    List<TopicPreviewVO> listActivityByPage(int page, String title);
+    List<TopicPreviewVO> listNoticeTopicByPage(int page, String title);
     List<UserTopicVO> listUserTopics(int uid, int page, String status);
     List<TopicTopVO> listTopTopics();
     TopicDetailVO getTopic(int tid, int uid);
