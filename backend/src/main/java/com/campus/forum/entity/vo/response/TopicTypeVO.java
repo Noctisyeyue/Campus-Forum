@@ -11,4 +11,5 @@ public class TopicTypeVO {
     String name;        // 分类名称
     String desc;        // 分类描述
     String color;       // 标签颜色
+    String systemKey;   // 系统分类标识
 }

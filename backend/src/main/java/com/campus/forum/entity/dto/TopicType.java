@@ -19,4 +19,5 @@ public class TopicType implements BaseData {
     @TableField("`desc`")
     String desc;            // 分类描述
     String color;           // 标签颜色（十六进制色值）
+    String systemKey;       // 系统分类标识：activity/notice/null
 }

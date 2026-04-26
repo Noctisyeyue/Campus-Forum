@@ -16,14 +16,21 @@
                 </el-table-column>
                 <el-table-column prop="name" label="名称"/>
                 <el-table-column prop="desc" label="描述"/>
+                <el-table-column label="类型" width="120">
+                    <template #default="{ row }">
+                        <el-tag v-if="row.systemKey" type="warning">系统分类</el-tag>
+                        <el-tag v-else type="info">普通分类</el-tag>
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" width="180">
                     <template #default="{ row }">
                         <el-link type="primary" @click="openDialog(row)">&nbsp;编辑</el-link>
-                        <el-popconfirm title="确定删除该分类吗？" @confirm="deleteType(row.id)">
+                        <el-popconfirm v-if="!row.systemKey" title="确定删除该分类吗？" @confirm="deleteType(row.id)">
                             <template #reference>
                                 <el-link type="danger" style="margin-left: 15px">&nbsp;删除</el-link>
                             </template>
                         </el-popconfirm>
+                        <span v-else style="margin-left: 15px;font-size: 12px;color: grey">仅可改颜色</span>
                     </template>
                 </el-table-column>
             </el-table>
@@ -31,10 +38,10 @@
         <el-dialog v-model="dialog.show" :title="dialog.edit ? '编辑分类' : '新增分类'" width="450px">
             <el-form label-width="80px">
                 <el-form-item label="名称">
-                    <el-input v-model="dialog.form.name" placeholder="请输入分类名称"/>
+                    <el-input v-model="dialog.form.name" placeholder="请输入分类名称" :disabled="dialog.form.systemKey"/>
                 </el-form-item>
                 <el-form-item label="描述">
-                    <el-input v-model="dialog.form.desc" type="textarea" :rows="3" placeholder="请输入分类描述"/>
+                    <el-input v-model="dialog.form.desc" type="textarea" :rows="3" placeholder="请输入分类描述" :disabled="dialog.form.systemKey"/>
                 </el-form-item>
                 <el-form-item label="颜色">
                     <el-color-picker v-model="dialog.form.color"/>
@@ -64,7 +71,7 @@ const dialog = reactive({
     show: false,
     edit: false,
     id: null,
-    form: { name: '', desc: '', color: '#409EFF' }
+    form: { name: '', desc: '', color: '#409EFF', systemKey: null }
 })
 
 function loadTypes() {
@@ -76,11 +83,11 @@ function openDialog(row) {
     if (row) {
         dialog.edit = true
         dialog.id = row.id
-        dialog.form = { name: row.name, desc: row.desc, color: row.color }
+        dialog.form = { name: row.name, desc: row.desc, color: row.color, systemKey: row.systemKey }
     } else {
         dialog.edit = false
         dialog.id = null
-        dialog.form = { name: '', desc: '', color: '#409EFF' }
+        dialog.form = { name: '', desc: '', color: '#409EFF', systemKey: null }
     }
     dialog.show = true
 }

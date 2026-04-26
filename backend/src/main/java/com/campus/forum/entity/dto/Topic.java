@@ -21,6 +21,7 @@ public class Topic {
     Integer type;               // 分类ID
     Date time;                  // 创建时间
     Integer top;                // 是否置顶：0=否, 1=是
+    Integer allowComment;       // 是否允许评论：0=否, 1=是
     String status;              // 帖子状态：pending_review/published/rejected/hidden/deleted
     Date reviewTime;            // 最近一次审核时间
     Integer reviewBy;           // 审核人ID

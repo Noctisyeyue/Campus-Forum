@@ -15,7 +15,6 @@
                             <el-select style="width: 120px" v-model="searchInput.type">
                                 <el-option value="1" label="帖子广场"/>
                                 <el-option value="2" label="校园活动"/>
-                                <el-option value="3" label="表白墙"/>
                                 <el-option value="4" label="教务通知"/>
                             </el-select>
                         </template>
@@ -110,28 +109,12 @@
                                         我的帖子
                                     </template>
                                 </el-menu-item>
-                                <el-menu-item>
-                                    <template #title>
-                                        <el-icon>
-                                            <Bell/>
-                                        </el-icon>
-                                        失物招领
-                                    </template>
-                                </el-menu-item>
-                                <el-menu-item>
+                                <el-menu-item index="/index/activity">
                                     <template #title>
                                         <el-icon>
                                             <Notification/>
                                         </el-icon>
                                         校园活动
-                                    </template>
-                                </el-menu-item>
-                                <el-menu-item>
-                                    <template #title>
-                                        <el-icon>
-                                            <Umbrella/>
-                                        </el-icon>
-                                        表白墙
                                     </template>
                                 </el-menu-item>
                             </el-sub-menu>
@@ -142,44 +125,12 @@
                                     </el-icon>
                                     <span><b>探索与发现</b></span>
                                 </template>
-                                <el-menu-item>
-                                    <template #title>
-                                        <el-icon>
-                                            <Document/>
-                                        </el-icon>
-                                        成绩查询
-                                    </template>
-                                </el-menu-item>
-                                <el-menu-item>
-                                    <template #title>
-                                        <el-icon>
-                                            <Files/>
-                                        </el-icon>
-                                        班级课程表
-                                    </template>
-                                </el-menu-item>
-                                <el-menu-item>
+                                <el-menu-item index="/index/notice-topic">
                                     <template #title>
                                         <el-icon>
                                             <Monitor/>
                                         </el-icon>
                                         教务通知
-                                    </template>
-                                </el-menu-item>
-                                <el-menu-item>
-                                    <template #title>
-                                        <el-icon>
-                                            <Collection/>
-                                        </el-icon>
-                                        在线图书馆
-                                    </template>
-                                </el-menu-item>
-                                <el-menu-item>
-                                    <template #title>
-                                        <el-icon>
-                                            <DataLine/>
-                                        </el-icon>
-                                        预约教室
                                     </template>
                                 </el-menu-item>
                             </el-sub-menu>
@@ -232,13 +183,13 @@ import {reactive, ref} from "vue";
 import {
     Back,
     Bell,
-    ChatDotSquare, Check, Collection, DataLine,
-    Document, Files,
+    ChatDotSquare, Check,
+    Document,
     Location, Lock, Message, Monitor,
     Notification, Operation,
     Position,
     School, Search,
-    Umbrella, User
+    User
 } from "@element-plus/icons-vue";
 import LightCard from "@/components/LightCard.vue";
 import {ElMessage} from "element-plus";

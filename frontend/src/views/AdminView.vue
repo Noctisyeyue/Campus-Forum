@@ -51,6 +51,18 @@
                                 <el-icon><CollectionTag/></el-icon>
                                 <span>分类管理</span>
                             </el-menu-item>
+                            <el-menu-item index="/admin/publish-activity">
+                                <el-icon><Calendar/></el-icon>
+                                <span>发布校园活动</span>
+                            </el-menu-item>
+                            <el-menu-item index="/admin/publish-notice-topic">
+                                <el-icon><Bell/></el-icon>
+                                <span>发布教务通知</span>
+                            </el-menu-item>
+                            <el-menu-item index="/admin/forum-notice">
+                                <el-icon><EditPen/></el-icon>
+                                <span>论坛公告设置</span>
+                            </el-menu-item>
                         </el-menu>
                     </el-scrollbar>
                 </el-aside>
@@ -74,8 +86,8 @@ import router from "@/router"
 import {useStore} from "@/stores/index"
 import {ref} from "vue"
 import {
-    Back, ChatDotSquare, CollectionTag,
-    DataLine, Document, SwitchButton, User
+    Back, Bell, Calendar, ChatDotSquare, CollectionTag,
+    DataLine, Document, EditPen, SwitchButton, User
 } from "@element-plus/icons-vue"
 import {ElMessage} from "element-plus"
 

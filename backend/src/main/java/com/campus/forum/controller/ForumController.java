@@ -39,8 +39,7 @@ public class ForumController {
     @GetMapping("/weather")
     public RestBean<WeatherVO> weather(double longitude, double latitude){
         WeatherVO vo = service.fetchWeather(longitude, latitude);
-        return vo == null ?
-                RestBean.failure(400, "天气服务暂时不可用") : RestBean.success(vo);
+        return RestBean.success(vo == null ? new WeatherVO() : vo);
     }
 
     // 获取帖子分类列表
@@ -65,6 +64,24 @@ public class ForumController {
     public RestBean<List<TopicPreviewVO>> listTopic(@RequestParam @Min(0) int page,
                                                     @RequestParam @Min(0) int type) {
         return RestBean.success(topicService.listTopicByPage(page + 1, type));
+    }
+
+    // 分页查询校园活动列表
+    @GetMapping("/list-activity")
+    public RestBean<List<TopicPreviewVO>> listActivity(@RequestParam @Min(0) int page) {
+        return RestBean.success(topicService.listActivityByPage(page + 1));
+    }
+
+    // 分页查询教务通知列表
+    @GetMapping("/list-notice-topic")
+    public RestBean<List<TopicPreviewVO>> listNoticeTopic(@RequestParam @Min(0) int page) {
+        return RestBean.success(topicService.listNoticeTopicByPage(page + 1));
+    }
+
+    // 获取论坛公告
+    @GetMapping("/notice")
+    public RestBean<ForumNoticeVO> notice() {
+        return RestBean.success(topicService.getForumNotice());
     }
 
     // 分页查询当前用户自己的帖子

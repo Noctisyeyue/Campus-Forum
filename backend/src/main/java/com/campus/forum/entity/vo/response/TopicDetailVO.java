@@ -15,9 +15,14 @@ public class TopicDetailVO {
     String content;         // 帖子内容
     Integer type;           // 分类ID
     Date time;              // 创建时间
+    Boolean allowComment;   // 是否允许评论
     String status;          // 帖子状态
     String reviewReason;    // 审核理由
     String hideReason;      // 下架理由
+    Date activityTime;      // 活动时间
+    String location;        // 活动地点
+    String organizer;       // 主办方
+    Date signupDeadline;    // 报名截止时间
     User user;              // 发帖用户信息
     Interact interact;      // 当前用户互动状态（点赞/收藏）
     Long comments;          // 评论数量

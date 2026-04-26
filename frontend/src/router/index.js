@@ -38,6 +38,14 @@ const router = createRouter({
                             name: 'topic-list',
                             component: () => import('@/views/forum/TopicList.vue')
                         },{
+                            path: 'activity',
+                            name: 'activity-list',
+                            component: () => import('@/views/forum/ActivityList.vue')
+                        },{
+                            path: 'notice-topic',
+                            name: 'notice-topic-list',
+                            component: () => import('@/views/forum/NoticeTopicList.vue')
+                        },{
                             path: 'topic-detail/:tid',
                             name: 'topic-detail',
                             component: () => import('@/views/forum/TopicDetail.vue')
@@ -90,6 +98,18 @@ const router = createRouter({
                     path: 'types',
                     name: 'admin-types',
                     component: () => import('@/views/admin/TypeManagePage.vue')
+                }, {
+                    path: 'publish-activity',
+                    name: 'admin-publish-activity',
+                    component: () => import('@/views/admin/PublishActivityPage.vue')
+                }, {
+                    path: 'publish-notice-topic',
+                    name: 'admin-publish-notice-topic',
+                    component: () => import('@/views/admin/PublishNoticeTopicPage.vue')
+                }, {
+                    path: 'forum-notice',
+                    name: 'admin-forum-notice',
+                    component: () => import('@/views/admin/ForumNoticeSettingPage.vue')
                 }
             ]
         }

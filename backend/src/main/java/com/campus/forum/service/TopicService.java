@@ -5,11 +5,15 @@ import com.campus.forum.entity.dto.Interact;
 import com.campus.forum.entity.dto.Topic;
 import com.campus.forum.entity.dto.TopicType;
 import com.campus.forum.entity.vo.request.AddCommentVO;
+import com.campus.forum.entity.vo.request.ForumNoticeSaveVO;
+import com.campus.forum.entity.vo.request.PublishActivityVO;
+import com.campus.forum.entity.vo.request.PublishNoticeTopicVO;
 import com.campus.forum.entity.vo.request.TopicCreateVO;
 import com.campus.forum.entity.vo.request.TopicUpdateVO;
 import com.campus.forum.entity.vo.response.AdminCommentVO;
 import com.campus.forum.entity.vo.response.AdminTopicVO;
 import com.campus.forum.entity.vo.response.CommentVO;
+import com.campus.forum.entity.vo.response.ForumNoticeVO;
 import com.campus.forum.entity.vo.response.TopicDetailVO;
 import com.campus.forum.entity.vo.response.TopicPreviewVO;
 import com.campus.forum.entity.vo.response.TopicTopVO;
@@ -24,11 +28,14 @@ public interface TopicService extends IService<Topic> {
     List<TopicType> listTypes();
     String createTopic(int uid, TopicCreateVO vo);
     List<TopicPreviewVO> listTopicByPage(int page, int type);
+    List<TopicPreviewVO> listActivityByPage(int page);
+    List<TopicPreviewVO> listNoticeTopicByPage(int page);
     List<UserTopicVO> listUserTopics(int uid, int page, String status);
     List<TopicTopVO> listTopTopics();
     TopicDetailVO getTopic(int tid, int uid);
     TopicDetailVO getOwnTopic(int tid, int uid);
     TopicDetailVO adminGetTopic(int tid);
+    ForumNoticeVO getForumNotice();
     void interact(Interact interact, boolean state);
     List<TopicPreviewVO> listTopicCollects(int uid);
     String updateTopic(int uid, TopicUpdateVO vo);
@@ -53,6 +60,12 @@ public interface TopicService extends IService<Topic> {
     void adminTopTopic(int tid);
     // 管理员方法：取消置顶
     void adminUntopTopic(int tid);
+    // 管理员方法：发布校园活动
+    String publishActivity(int adminId, PublishActivityVO vo);
+    // 管理员方法：发布教务通知
+    String publishNoticeTopic(int adminId, PublishNoticeTopicVO vo);
+    // 管理员方法：保存论坛公告
+    String saveForumNotice(int adminId, ForumNoticeSaveVO vo);
 
     // 管理员方法：分页查询全部评论（支持帖子/用户筛选）
     List<AdminCommentVO> adminListComments(int page, Integer tid, Integer uid);

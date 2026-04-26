@@ -50,6 +50,7 @@ public class AdminTypeController {
         type.setName(name);
         type.setDesc(desc);
         type.setColor(color);
+        type.setSystemKey(null);
         topicTypeMapper.insert(type);
         return RestBean.success(type.asViewObject(TopicTypeVO.class));
     }
@@ -69,8 +70,12 @@ public class AdminTypeController {
                                       @RequestParam(required = false) String color) {
         TopicType type = topicTypeMapper.selectById(id);
         if (type == null) return RestBean.failure(404, "分类不存在");
-        type.setName(name);
-        type.setDesc(desc);
+        if (type.getSystemKey() == null || type.getSystemKey().isBlank()) {
+            type.setName(name);
+            type.setDesc(desc);
+        } else if (!type.getName().equals(name) || !java.util.Objects.equals(type.getDesc(), desc)) {
+            return RestBean.failure(400, "系统分类只允许修改颜色");
+        }
         type.setColor(color);
         topicTypeMapper.updateById(type);
         return RestBean.success();
@@ -85,6 +90,9 @@ public class AdminTypeController {
     public RestBean<Void> deleteType(@PathVariable int id) {
         TopicType type = topicTypeMapper.selectById(id);
         if (type == null) return RestBean.failure(404, "分类不存在");
+        if (type.getSystemKey() != null && !type.getSystemKey().isBlank()) {
+            return RestBean.failure(400, "系统分类不允许删除");
+        }
         topicTypeMapper.deleteById(id);
         return RestBean.success();
     }

@@ -20,9 +20,9 @@
                     <div>{{new Date(item.time).toLocaleDateString()}}</div>
                 </div>
             </light-card>
-            <light-card style="margin-top: 10px;display: flex;gap: 7px">
+            <light-card style="margin-top: 10px;display: flex;gap: 7px;flex-wrap: wrap">
                 <div :class="`type-select-card ${topics.type === item.id ? 'active' : ''}`"
-                     v-for="item in store.forum.types"
+                     v-for="item in normalTypes"
                      @click="topics.type = item.id">
                     <color-dot :color="item.color"/>
                     <span style="margin-left: 5px">{{item.name}}</span>
@@ -83,9 +83,11 @@
                         论坛公告
                     </div>
                     <el-divider style="margin: 10px 0"/>
-                    <div style="font-size: 14px;margin: 10px;color: grey">
-                        为认真学习宣传贯彻党的二十大精神,深入贯彻习近平强军思想,
-                        作为迎接办学70周年系列学术活动之一,国防科技大学将于2022年11月24日至26日在长沙举办"国防科技
+                    <div style="font-size: 14px;margin: 10px;color: grey;white-space: pre-wrap;line-height: 1.7">
+                        {{ notice.content || '暂无论坛公告' }}
+                    </div>
+                    <div v-if="notice.updateTime" style="font-size: 12px;color: #999;text-align: right">
+                        更新于 {{ new Date(notice.updateTime).toLocaleString() }}
                     </div>
                 </light-card>
                 <light-card style="margin-top: 10px">
@@ -162,6 +164,10 @@ const weather = reactive({
     success: false
 })
 const editor = ref(false)
+const notice = reactive({
+    content: '',
+    updateTime: null
+})
 const topics = reactive({
     list: [],
     type: 0,
@@ -170,6 +176,7 @@ const topics = reactive({
     top: []
 })
 const collects = ref(false)
+const normalTypes = computed(() => store.forum.types.filter(item => !item.systemKey))
 
 watch(() => topics.type, () => resetList(), {immediate: true})
 onActivated(() => {
@@ -181,6 +188,7 @@ const today = computed(() => {
     return `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`
 })
 get('/api/forum/top-topic', data => topics.top = data)
+get('/api/forum/notice', data => Object.assign(notice, data || {}))
 function updateList(){
     if(topics.end) return
     get(`/api/forum/list-topic?page=${topics.page}&type=${topics.type}`, data => {

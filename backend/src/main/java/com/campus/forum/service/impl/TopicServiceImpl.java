@@ -7,9 +7,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.campus.forum.entity.dto.*;
 import com.campus.forum.entity.vo.request.AddCommentVO;
+import com.campus.forum.entity.vo.request.ForumNoticeSaveVO;
+import com.campus.forum.entity.vo.request.PublishActivityVO;
+import com.campus.forum.entity.vo.request.PublishNoticeTopicVO;
 import com.campus.forum.entity.vo.request.TopicCreateVO;
 import com.campus.forum.entity.vo.request.TopicUpdateVO;
 import com.campus.forum.entity.vo.response.CommentVO;
+import com.campus.forum.entity.vo.response.ForumNoticeVO;
 import com.campus.forum.entity.vo.response.TopicDetailVO;
 import com.campus.forum.entity.vo.response.TopicPreviewVO;
 import com.campus.forum.entity.vo.response.TopicTopVO;
@@ -48,6 +52,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements TopicService {
+    private static final String SYSTEM_TYPE_ACTIVITY = "activity";
+    private static final String SYSTEM_TYPE_NOTICE = "notice";
 
     private static final Set<String> USER_TOPIC_VISIBLE_STATUS = Set.of(
             Const.TOPIC_STATUS_PENDING,
@@ -69,6 +75,12 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     @Resource
     TopicTypeMapper mapper;
+
+    @Resource
+    TopicActivityMapper topicActivityMapper;
+
+    @Resource
+    ForumNoticeMapper forumNoticeMapper;
 
     @Resource
     FlowUtils flowUtils;
@@ -94,19 +106,18 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     @Resource
     NotificationService notificationService;
 
-    private Set<Integer> types = null;
+    private Set<Integer> types = new HashSet<>();
+    private Map<Integer, TopicType> typeIndex = new HashMap<>();
 
     @PostConstruct
     private void initTypes() {
-        types = this.listTypes()
-                .stream()
-                .map(TopicType::getId)
-                .collect(Collectors.toSet());
+        this.refreshTypeCache();
     }
 
     @Override
     public List<TopicType> listTypes() {
-        return mapper.selectList(null);
+        this.refreshTypeCache();
+        return mapper.selectList(Wrappers.<TopicType>query().orderByAsc("id"));
     }
 
     /**
@@ -116,8 +127,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     public String createTopic(int uid, TopicCreateVO vo) {
         if (!textLimitCheck(vo.getContent(), 20000))
             return "文章内容太多，发文失败！";
-        if (!types.contains(vo.getType()))
+        TopicType type = this.findTypeById(vo.getType());
+        if (type == null)
             return "文章类型非法！";
+        if (this.isSystemType(type))
+            return "当前分类不允许普通用户发帖！";
         String key = Const.FORUM_TOPIC_CREATE_COUNTER + uid;
         if (!flowUtils.limitPeriodCounterCheck(key, 3, 3600))
             return "发文频繁，请稍后再试！";
@@ -126,6 +140,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         topic.setContent(vo.getContent().toJSONString());
         topic.setUid(uid);
         topic.setTime(new Date());
+        topic.setAllowComment(1);
         topic.setStatus(Const.TOPIC_STATUS_PENDING);     // 新发帖为待审核
         topic.setTop(0);                                  // 默认不置顶
         topic.setLastSubmitTime(new Date());
@@ -144,8 +159,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     public String updateTopic(int uid, TopicUpdateVO vo) {
         if (!textLimitCheck(vo.getContent(), 20000))
             return "文章内容太多，发文失败！";
-        if (!types.contains(vo.getType()))
+        TopicType type = this.findTypeById(vo.getType());
+        if (type == null)
             return "文章类型非法！";
+        if (this.isSystemType(type))
+            return "当前分类不允许普通用户选择！";
         Topic topic = baseMapper.selectById(vo.getId());
         if (topic == null) return "帖子不存在";
         if (!Objects.equals(topic.getUid(), uid)) return "无权操作";
@@ -157,6 +175,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                 .set("title", vo.getTitle())
                 .set("content", vo.getContent().toString())
                 .set("type", vo.getType())
+                .set("allow_comment", 1)
                 .set("status", Const.TOPIC_STATUS_PENDING)      // 编辑后重新待审核
                 .set("last_submit_time", new Date())
                 .set("review_time", null)
@@ -194,6 +213,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     public String createComment(int uid, AddCommentVO vo) {
         if (!textLimitCheck(JSONObject.parseObject(vo.getContent()), 2000))
             return "评论内容太多，发表失败！";
+        Topic topic = baseMapper.selectById(vo.getTid());
+        if (topic == null || !Const.TOPIC_STATUS_PUBLISHED.equals(topic.getStatus()))
+            return "帖子不存在或当前不可评论";
+        if (!Boolean.TRUE.equals(this.allowComment(topic)))
+            return "当前帖子已关闭评论";
         String key = Const.FORUM_TOPIC_COMMENT_COUNTER + uid;
         if (!flowUtils.limitPeriodCounterCheck(key, 2, 60))
             return "发表评论频繁，请稍后再试！";
@@ -204,7 +228,6 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         comment.setStatus(Const.COMMENT_STATUS_NORMAL);
         commentMapper.insert(comment);
         // 发送通知
-        Topic topic = baseMapper.selectById(vo.getTid());
         Account account = accountMapper.selectById(uid);
         if (vo.getQuote() > 0) {
             TopicComment com = commentMapper.selectById(vo.getQuote());
@@ -232,6 +255,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public List<CommentVO> comments(int tid, int pageNumber) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null || !Const.TOPIC_STATUS_PUBLISHED.equals(topic.getStatus()) || !Boolean.TRUE.equals(this.allowComment(topic)))
+            return List.of();
         Page<TopicComment> page = Page.of(pageNumber, 10);
         commentMapper.selectPage(page, Wrappers.<TopicComment>query()
                 .eq("tid", tid)
@@ -306,26 +332,27 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public List<TopicPreviewVO> listTopicByPage(int pageNumber, int type) {
-        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + pageNumber + ":" + type;
-        List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key, TopicPreviewVO.class);
-        if (list != null)
-            return list;
-        Page<Topic> page = Page.of(pageNumber, 10);
-        // 只查询已发布的帖子
-        if (type == 0)
-            baseMapper.selectPage(page, Wrappers.<Topic>query()
-                    .eq("status", Const.TOPIC_STATUS_PUBLISHED)
-                    .orderByDesc("time"));
-        else
-            baseMapper.selectPage(page, Wrappers.<Topic>query()
-                    .eq("status", Const.TOPIC_STATUS_PUBLISHED)
-                    .eq("type", type)
-                    .orderByDesc("time"));
-        List<Topic> topics = page.getRecords();
-        if (topics.isEmpty()) return null;
-        list = topics.stream().map(this::resolveToPreview).toList();
-        cacheUtils.saveListToCache(key, list, 60);
-        return list;
+        if (type > 0) {
+            TopicType topicType = this.findTypeById(type);
+            if (topicType == null || this.isSystemType(topicType)) {
+                return null;
+            }
+        }
+        return this.listPublishedTopicByPage(pageNumber, type == 0 ? null : type, "forum", true);
+    }
+
+    @Override
+    public List<TopicPreviewVO> listActivityByPage(int pageNumber) {
+        Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_ACTIVITY);
+        if (typeId == null) return null;
+        return this.listPublishedTopicByPage(pageNumber, typeId, "activity", false);
+    }
+
+    @Override
+    public List<TopicPreviewVO> listNoticeTopicByPage(int pageNumber) {
+        Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_NOTICE);
+        if (typeId == null) return null;
+        return this.listPublishedTopicByPage(pageNumber, typeId, "notice", false);
     }
 
     /**
@@ -333,10 +360,15 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public List<TopicTopVO> listTopTopics() {
-        List<Topic> topics = baseMapper.selectList(Wrappers.<Topic>query()
+        List<Integer> systemTypeIds = this.systemTypeIds();
+        var wrapper = Wrappers.<Topic>query()
                 .select("id", "title", "time")
                 .eq("top", 1)
-                .eq("status", Const.TOPIC_STATUS_PUBLISHED));    // 置顶帖子也只显示已发布
+                .eq("status", Const.TOPIC_STATUS_PUBLISHED);
+        if (!systemTypeIds.isEmpty()) {
+            wrapper.notIn("type", systemTypeIds);
+        }
+        List<Topic> topics = baseMapper.selectList(wrapper);    // 置顶帖子也只显示已发布
         return topics.stream().map(topic -> {
             TopicTopVO vo = new TopicTopVO();
             BeanUtils.copyProperties(topic, vo);
@@ -383,6 +415,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     private TopicDetailVO buildTopicDetail(Topic topic, int uid) {
         TopicDetailVO vo = new TopicDetailVO();
         BeanUtils.copyProperties(topic, vo);
+        vo.setAllowComment(this.allowComment(topic));
         TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
                 uid > 0 && hasInteract(topic.getId(), uid, "like"),
                 uid > 0 && hasInteract(topic.getId(), uid, "collect")
@@ -390,9 +423,12 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         vo.setInteract(interact);
         TopicDetailVO.User user = new TopicDetailVO.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
-        vo.setComments(commentMapper.selectCount(Wrappers.<TopicComment>query()
+        vo.setComments(Boolean.TRUE.equals(vo.getAllowComment())
+                ? commentMapper.selectCount(Wrappers.<TopicComment>query()
                 .eq("tid", topic.getId())
-                .eq("status", Const.COMMENT_STATUS_NORMAL)));   // 只统计正常评论
+                .eq("status", Const.COMMENT_STATUS_NORMAL))
+                : 0L);
+        this.fillActivityFields(topic, vo);
         return vo;
     }
 
@@ -472,6 +508,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         this.shortContent(ops, previewText, obj -> images.add(obj.toString()));
         vo.setText(previewText.length() > 300 ? previewText.substring(0, 300) : previewText.toString());
         vo.setImages(images);
+        this.fillActivityPreview(topic, vo);
         return vo;
     }
 
@@ -668,6 +705,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (Const.TOPIC_STATUS_PENDING.equals(topic.getStatus()))
             return "待审核帖子不能直接删除，请先通过或拒绝";
         commentMapper.delete(Wrappers.<TopicComment>query().eq("tid", tid));
+        topicActivityMapper.deleteById(tid);
         baseMapper.deleteLikeByTid(tid);
         baseMapper.deleteCollectByTid(tid);
         notificationService.remove(Wrappers.<Notification>query()
@@ -697,6 +735,199 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
                 .set("top", 0));
+    }
+
+    @Override
+    public ForumNoticeVO getForumNotice() {
+        ForumNotice notice = this.firstForumNotice();
+        if (notice == null) return null;
+        ForumNoticeVO vo = new ForumNoticeVO();
+        BeanUtils.copyProperties(notice, vo);
+        Account account = notice.getUpdateBy() == null ? null : accountMapper.selectById(notice.getUpdateBy());
+        if (account != null) {
+            vo.setUpdateByName(account.getUsername());
+        }
+        return vo;
+    }
+
+    @Override
+    public String publishActivity(int adminId, PublishActivityVO vo) {
+        if (!textLimitCheck(vo.getContent(), 20000))
+            return "文章内容太多，发布失败！";
+        Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_ACTIVITY);
+        if (typeId == null)
+            return "未找到校园活动系统分类";
+        if (vo.getSignupDeadline() != null && vo.getSignupDeadline().after(vo.getActivityTime()))
+            return "报名截止时间不能晚于活动时间";
+        Topic topic = new Topic();
+        topic.setTitle(vo.getTitle());
+        topic.setContent(vo.getContent().toJSONString());
+        topic.setUid(adminId);
+        topic.setType(typeId);
+        topic.setTime(new Date());
+        topic.setTop(0);
+        topic.setAllowComment(1);
+        topic.setStatus(Const.TOPIC_STATUS_PUBLISHED);
+        topic.setReviewTime(new Date());
+        topic.setReviewBy(adminId);
+        topic.setLastSubmitTime(new Date());
+        if (!this.save(topic))
+            return "内部错误，请联系管理员！";
+        TopicActivity activity = new TopicActivity();
+        activity.setTid(topic.getId());
+        activity.setActivityTime(vo.getActivityTime());
+        activity.setLocation(vo.getLocation());
+        activity.setOrganizer(vo.getOrganizer());
+        activity.setSignupDeadline(vo.getSignupDeadline());
+        topicActivityMapper.insert(activity);
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        return null;
+    }
+
+    @Override
+    public String publishNoticeTopic(int adminId, PublishNoticeTopicVO vo) {
+        if (!textLimitCheck(vo.getContent(), 20000))
+            return "文章内容太多，发布失败！";
+        Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_NOTICE);
+        if (typeId == null)
+            return "未找到教务通知系统分类";
+        Topic topic = new Topic();
+        topic.setTitle(vo.getTitle());
+        topic.setContent(vo.getContent().toJSONString());
+        topic.setUid(adminId);
+        topic.setType(typeId);
+        topic.setTime(new Date());
+        topic.setTop(0);
+        topic.setAllowComment(0);
+        topic.setStatus(Const.TOPIC_STATUS_PUBLISHED);
+        topic.setReviewTime(new Date());
+        topic.setReviewBy(adminId);
+        topic.setLastSubmitTime(new Date());
+        if (this.save(topic)) {
+            cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+            return null;
+        }
+        return "内部错误，请联系管理员！";
+    }
+
+    @Override
+    public String saveForumNotice(int adminId, ForumNoticeSaveVO vo) {
+        ForumNotice notice = this.firstForumNotice();
+        Date now = new Date();
+        if (notice == null) {
+            notice = new ForumNotice();
+            notice.setId(1);
+            notice.setContent(vo.getContent());
+            notice.setUpdateTime(now);
+            notice.setUpdateBy(adminId);
+            forumNoticeMapper.insert(notice);
+        } else {
+            notice.setContent(vo.getContent());
+            notice.setUpdateTime(now);
+            notice.setUpdateBy(adminId);
+            forumNoticeMapper.updateById(notice);
+        }
+        return null;
+    }
+
+    private ForumNotice firstForumNotice() {
+        return forumNoticeMapper.selectList(Wrappers.<ForumNotice>query()
+                        .orderByAsc("id")
+                        .last("limit 1"))
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void refreshTypeCache() {
+        List<TopicType> list = mapper.selectList(Wrappers.<TopicType>query().orderByAsc("id"));
+        this.types = list.stream().map(TopicType::getId).collect(Collectors.toSet());
+        this.typeIndex = list.stream().collect(Collectors.toMap(TopicType::getId, type -> type, (a, b) -> a, LinkedHashMap::new));
+    }
+
+    private TopicType findTypeById(int id) {
+        TopicType type = this.typeIndex.get(id);
+        if (type != null) {
+            return type;
+        }
+        this.refreshTypeCache();
+        return this.typeIndex.get(id);
+    }
+
+    private boolean isSystemType(TopicType type) {
+        return type != null && type.getSystemKey() != null && !type.getSystemKey().isBlank();
+    }
+
+    private Integer resolveSystemTypeId(String systemKey) {
+        this.refreshTypeCache();
+        return this.typeIndex.values().stream()
+                .filter(type -> systemKey.equals(type.getSystemKey()))
+                .map(TopicType::getId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<Integer> systemTypeIds() {
+        this.refreshTypeCache();
+        return this.typeIndex.values().stream()
+                .filter(this::isSystemType)
+                .map(TopicType::getId)
+                .toList();
+    }
+
+    private Boolean allowComment(Topic topic) {
+        return topic.getAllowComment() == null || topic.getAllowComment() == 1;
+    }
+
+    private List<TopicPreviewVO> listPublishedTopicByPage(int pageNumber, Integer typeId, String cacheScope, boolean excludeSystemType) {
+        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + cacheScope + ":" + pageNumber + ":" + (typeId == null ? 0 : typeId);
+        List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key, TopicPreviewVO.class);
+        if (list != null)
+            return list;
+        Page<Topic> page = Page.of(pageNumber, 10);
+        var wrapper = Wrappers.<Topic>query()
+                .eq("status", Const.TOPIC_STATUS_PUBLISHED)
+                .orderByDesc("time");
+        if (typeId != null) {
+            wrapper.eq("type", typeId);
+        } else if (excludeSystemType) {
+            List<Integer> systemTypeIds = this.systemTypeIds();
+            if (!systemTypeIds.isEmpty()) {
+                wrapper.notIn("type", systemTypeIds);
+            }
+        }
+        baseMapper.selectPage(page, wrapper);
+        List<Topic> topics = page.getRecords();
+        if (topics.isEmpty()) return null;
+        list = topics.stream().map(this::resolveToPreview).toList();
+        cacheUtils.saveListToCache(key, list, 60);
+        return list;
+    }
+
+    private void fillActivityFields(Topic topic, TopicDetailVO vo) {
+        TopicType type = this.findTypeById(topic.getType());
+        if (type == null || !SYSTEM_TYPE_ACTIVITY.equals(type.getSystemKey())) {
+            return;
+        }
+        TopicActivity activity = topicActivityMapper.selectById(topic.getId());
+        if (activity != null) {
+            vo.setActivityTime(activity.getActivityTime());
+            vo.setLocation(activity.getLocation());
+            vo.setOrganizer(activity.getOrganizer());
+            vo.setSignupDeadline(activity.getSignupDeadline());
+        }
+    }
+
+    private void fillActivityPreview(Topic topic, TopicPreviewVO vo) {
+        TopicType type = this.findTypeById(topic.getType());
+        if (type == null || !SYSTEM_TYPE_ACTIVITY.equals(type.getSystemKey())) {
+            return;
+        }
+        TopicActivity activity = topicActivityMapper.selectById(topic.getId());
+        if (activity != null) {
+            vo.setActivityTime(activity.getActivityTime());
+            vo.setLocation(activity.getLocation());
+        }
     }
 
     /**

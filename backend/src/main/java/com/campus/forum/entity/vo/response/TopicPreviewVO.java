@@ -24,4 +24,6 @@ public class TopicPreviewVO {
     String status;          // 帖子状态
     String reviewReason;    // 审核拒绝原因
     String hideReason;      // 下架原因
+    Date activityTime;      // 活动时间
+    String location;        // 活动地点
 }
