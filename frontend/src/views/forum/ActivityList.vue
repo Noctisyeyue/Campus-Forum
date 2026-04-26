@@ -15,7 +15,7 @@
 
             <div style="margin-top: 10px;display: flex;flex-direction: column;gap: 10px" v-infinite-scroll="updateList">
                 <light-card v-for="item in topics.list" :key="item.id" class="topic-card"
-                            @click="router.push(`/index/topic-detail/${item.id}`)">
+                            @click="openTopicDetail(item.id)">
                     <div style="display: flex;justify-content: space-between;gap: 12px;flex-wrap: wrap">
                         <div>
                             <div style="display: flex;align-items: center;gap: 8px;flex-wrap: wrap">
@@ -91,6 +91,10 @@ function updateList() {
     }, () => {
         topics.loading = false
     })
+}
+
+function openTopicDetail(id) {
+    router.push(`/index/topic-detail/${id}`)
 }
 
 updateList()

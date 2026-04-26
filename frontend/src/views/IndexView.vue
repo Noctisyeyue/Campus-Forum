@@ -162,7 +162,9 @@
                     </el-scrollbar>
                 </el-aside>
                 <el-main class="main-content-page">
-                    <el-scrollbar style="height: calc(100vh - 55px)">
+                    <el-scrollbar ref="mainScrollbar"
+                                  style="height: calc(100vh - 55px)"
+                                  @scroll="handleMainScroll">
                         <router-view v-slot="{ Component }">
                             <transition name="el-fade-in-linear" mode="out-in">
                                 <component :is="Component" style="height: 100%"/>
@@ -179,7 +181,8 @@
 import {get, logout} from '@/net'
 import router from "@/router";
 import {useStore} from "@/stores/index";
-import {reactive, ref} from "vue";
+import {nextTick, reactive, ref, watch} from "vue";
+import {useRoute} from "vue-router";
 import {
     Back,
     Bell,
@@ -195,7 +198,16 @@ import LightCard from "@/components/LightCard.vue";
 import {ElMessage} from "element-plus";
 
 const store = useStore()
+const route = useRoute()
 const loading = ref(true)
+const mainScrollbar = ref()
+const routeScrollState = new Map()
+const RESTORE_SCROLL_ROUTE_SET = new Set([
+    '/index',
+    '/index/activity',
+    '/index/notice-topic',
+    '/index/my-topics'
+])
 
 const searchInput = reactive({
     type: '1',
@@ -239,6 +251,38 @@ function hasNotificationTarget(url) {
         && !url.endsWith('/null')
         && !url.endsWith('/undefined')
 }
+
+function shouldRememberScroll(path) {
+    return RESTORE_SCROLL_ROUTE_SET.has(path)
+}
+
+function currentScrollWrap() {
+    return mainScrollbar.value?.wrapRef || null
+}
+
+function handleMainScroll({ scrollTop }) {
+    if (!shouldRememberScroll(route.path)) return
+    routeScrollState.set(route.path, scrollTop)
+}
+
+function restoreMainScroll(path) {
+    if (!shouldRememberScroll(path)) return
+    const top = routeScrollState.get(path)
+    if (typeof top !== 'number') return
+    ;[0, 30, 80, 160, 320, 600].forEach(delay => {
+        window.setTimeout(() => {
+            const wrap = currentScrollWrap()
+            if (wrap) {
+                wrap.scrollTop = top
+            }
+        }, delay)
+    })
+}
+
+watch(() => route.path, async path => {
+    await nextTick()
+    restoreMainScroll(path)
+})
 </script>
 
 <style lang="less" scoped>
