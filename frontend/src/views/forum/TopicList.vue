@@ -20,12 +20,21 @@
                     <div>{{new Date(item.time).toLocaleDateString()}}</div>
                 </div>
             </light-card>
-            <light-card style="margin-top: 10px;display: flex;gap: 7px;flex-wrap: wrap">
+            <light-card style="margin-top: 10px;display: flex;align-items: center;gap: 7px;flex-wrap: wrap">
                 <div :class="`type-select-card ${topics.type === item.id ? 'active' : ''}`"
                      v-for="item in normalTypes"
                      @click="topics.type = item.id">
                     <color-dot :color="item.color"/>
                     <span style="margin-left: 5px">{{item.name}}</span>
+                </div>
+                <div style="margin-left:auto">
+                    <el-select v-model="topics.sort" style="width: 120px" size="small" @change="resetList">
+                        <el-option value="time" label="最新发布"/>
+                        <el-option value="views" label="最多浏览"/>
+                        <el-option value="likes" label="最多点赞"/>
+                        <el-option value="collects" label="最多收藏"/>
+                        <el-option value="comments" label="最多评论"/>
+                    </el-select>
                 </div>
             </light-card>
             <transition name="el-fade-in" mode="out-in">
@@ -58,10 +67,16 @@
                             </div>
                             <div style="display: flex;gap: 20px;font-size: 13px;margin-top: 10px;opacity: 0.8">
                                 <div>
+                                    <el-icon style="vertical-align: middle"><View/></el-icon> {{item.viewCount}}浏览
+                                </div>
+                                <div>
                                     <el-icon style="vertical-align: middle"><CircleCheck/></el-icon> {{item.like}}点赞
                                 </div>
                                 <div>
                                     <el-icon style="vertical-align: middle"><Star/></el-icon> {{item.collect}}收藏
+                                </div>
+                                <div>
+                                    <el-icon style="vertical-align: middle"><ChatSquare/></el-icon> {{item.comments}}评论
                                 </div>
                             </div>
                         </light-card>
@@ -142,7 +157,7 @@ import {
     EditPen,
     Link,
     Picture,
-    Microphone, CircleCheck, Star, FolderOpened, ArrowRightBold
+    Microphone, CircleCheck, Star, FolderOpened, ArrowRightBold, View, ChatSquare
 } from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
 import {computed, onActivated, reactive, ref, watch} from "vue";
@@ -170,6 +185,7 @@ const notice = reactive({
 const topics = reactive({
     list: [],
     type: 0,
+    sort: 'time',
     page: 0,
     end: false,
     top: []
@@ -190,7 +206,7 @@ get('/api/forum/top-topic', data => topics.top = data)
 get('/api/forum/notice', data => Object.assign(notice, data || {}))
 function updateList(){
     if(topics.end) return
-    get(`/api/forum/list-topic?page=${topics.page}&type=${topics.type}`, data => {
+    get(`/api/forum/list-topic?page=${topics.page}&type=${topics.type}&sort=${topics.sort}`, data => {
         if(data) {
             data.forEach(d => topics.list.push(d))
             topics.page++

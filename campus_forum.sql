@@ -122,6 +122,7 @@ CREATE TABLE `db_topic` (
   `top`              tinyint DEFAULT 0                     COMMENT '是否置顶：0=否, 1=是',
   `status`           varchar(255) DEFAULT 'pending_review' COMMENT '帖子状态：pending_review=待审核, published=已发布, rejected=已拒绝, hidden=已隐藏, deleted=已删除',
   `allow_comment`    tinyint(1) NOT NULL DEFAULT 1         COMMENT '是否允许评论：1=允许,0=不允许',
+  `view_count`       int NOT NULL DEFAULT 0                COMMENT '浏览量',
   `review_time`      datetime DEFAULT NULL                 COMMENT '最近一次审核时间',
   `review_by`        int DEFAULT NULL                      COMMENT '审核人ID，关联 db_account.id',
   `review_reason`    varchar(255) DEFAULT NULL             COMMENT '审核理由（如拒绝原因）',

@@ -331,28 +331,28 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * 分页查询帖子列表（仅 published 状态，前台可见）
      */
     @Override
-    public List<TopicPreviewVO> listTopicByPage(int pageNumber, int type) {
+    public List<TopicPreviewVO> listTopicByPage(int pageNumber, int type, String sort) {
         if (type > 0) {
             TopicType topicType = this.findTypeById(type);
             if (topicType == null || this.isSystemType(topicType)) {
                 return null;
             }
         }
-        return this.listPublishedTopicByPage(pageNumber, type == 0 ? null : type, "forum", true);
+        return this.listPublishedTopicByPage(pageNumber, type == 0 ? null : type, "forum", true, sort);
     }
 
     @Override
     public List<TopicPreviewVO> listActivityByPage(int pageNumber) {
         Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_ACTIVITY);
         if (typeId == null) return null;
-        return this.listPublishedTopicByPage(pageNumber, typeId, "activity", false);
+        return this.listPublishedTopicByPage(pageNumber, typeId, "activity", false, "time");
     }
 
     @Override
     public List<TopicPreviewVO> listNoticeTopicByPage(int pageNumber) {
         Integer typeId = this.resolveSystemTypeId(SYSTEM_TYPE_NOTICE);
         if (typeId == null) return null;
-        return this.listPublishedTopicByPage(pageNumber, typeId, "notice", false);
+        return this.listPublishedTopicByPage(pageNumber, typeId, "notice", false, "time");
     }
 
     /**
@@ -413,8 +413,13 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     private TopicDetailVO buildTopicDetail(Topic topic, int uid) {
+        // 浏览量 +1
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", topic.getId())
+                .setSql("view_count = view_count + 1"));
         TopicDetailVO vo = new TopicDetailVO();
         BeanUtils.copyProperties(topic, vo);
+        vo.setViewCount(topic.getViewCount() == null ? 1 : topic.getViewCount() + 1);
         vo.setAllowComment(this.allowComment(topic));
         TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
                 uid > 0 && hasInteract(topic.getId(), uid, "like"),
@@ -442,6 +447,13 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             template.opsForHash().put(type, interact.toKey(), Boolean.toString(state));
             this.saveInteractSchedule(type);
         }
+        // 立即同步该条互动到数据库，确保列表数量实时更新
+        if (state) {
+            baseMapper.addInteract(List.of(interact), type);
+        } else {
+            baseMapper.deleteInteract(List.of(interact), type);
+        }
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
     }
 
     // 检查用户是否对帖子有指定互动
@@ -502,6 +514,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         BeanUtils.copyProperties(topic, vo);
         vo.setLike(baseMapper.interactCount(topic.getId(), "like"));
         vo.setCollect(baseMapper.interactCount(topic.getId(), "collect"));
+        vo.setComments(baseMapper.commentCount(topic.getId()));
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
@@ -517,6 +530,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         BeanUtils.copyProperties(topic, vo);
         vo.setLike(baseMapper.interactCount(topic.getId(), "like"));
         vo.setCollect(baseMapper.interactCount(topic.getId(), "collect"));
+        vo.setComments(baseMapper.commentCount(topic.getId()));
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
@@ -879,15 +893,21 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return topic.getAllowComment() == null || topic.getAllowComment() == 1;
     }
 
-    private List<TopicPreviewVO> listPublishedTopicByPage(int pageNumber, Integer typeId, String cacheScope, boolean excludeSystemType) {
-        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + cacheScope + ":" + pageNumber + ":" + (typeId == null ? 0 : typeId);
+    private List<TopicPreviewVO> listPublishedTopicByPage(int pageNumber, Integer typeId, String cacheScope, boolean excludeSystemType, String sort) {
+        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + cacheScope + ":" + pageNumber + ":" + (typeId == null ? 0 : typeId) + ":" + sort;
         List<TopicPreviewVO> list = cacheUtils.takeListFromCache(key, TopicPreviewVO.class);
         if (list != null)
             return list;
         Page<Topic> page = Page.of(pageNumber, 10);
         var wrapper = Wrappers.<Topic>query()
-                .eq("status", Const.TOPIC_STATUS_PUBLISHED)
-                .orderByDesc("time");
+                .eq("status", Const.TOPIC_STATUS_PUBLISHED);
+        switch (sort) {
+            case "views"    -> wrapper.orderByDesc("view_count");
+            case "likes"    -> { page.setOptimizeCountSql(false); wrapper.last("ORDER BY (SELECT COUNT(*) FROM db_topic_interact_like WHERE tid = db_topic.id) DESC"); }
+            case "collects" -> { page.setOptimizeCountSql(false); wrapper.last("ORDER BY (SELECT COUNT(*) FROM db_topic_interact_collect WHERE tid = db_topic.id) DESC"); }
+            case "comments" -> { page.setOptimizeCountSql(false); wrapper.last("ORDER BY (SELECT COUNT(*) FROM db_topic_comment WHERE tid = db_topic.id AND status = 'normal') DESC"); }
+            default         -> wrapper.orderByDesc("time");
+        }
         if (typeId != null) {
             wrapper.eq("type", typeId);
         } else if (excludeSystemType) {

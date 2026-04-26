@@ -18,6 +18,7 @@ public class UserTopicVO {
     Date time;              // 创建时间
     int like;               // 点赞数
     int collect;            // 收藏数
+    int comments;           // 评论数
     String status;          // 帖子状态
     String reviewReason;    // 审核拒绝原因
     String hideReason;      // 下架原因

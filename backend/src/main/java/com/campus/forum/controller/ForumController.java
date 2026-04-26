@@ -62,8 +62,9 @@ public class ForumController {
     // 分页查询帖子列表（仅已发布）
     @GetMapping("/list-topic")
     public RestBean<List<TopicPreviewVO>> listTopic(@RequestParam @Min(0) int page,
-                                                    @RequestParam @Min(0) int type) {
-        return RestBean.success(topicService.listTopicByPage(page + 1, type));
+                                                    @RequestParam @Min(0) int type,
+                                                    @RequestParam(defaultValue = "time") String sort) {
+        return RestBean.success(topicService.listTopicByPage(page + 1, type, sort));
     }
 
     // 分页查询校园活动列表

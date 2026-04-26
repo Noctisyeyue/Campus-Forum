@@ -16,6 +16,7 @@ public class TopicDetailVO {
     Integer type;           // 分类ID
     Date time;              // 创建时间
     Boolean allowComment;   // 是否允许评论
+    int viewCount;          // 浏览量
     String status;          // 帖子状态
     String reviewReason;    // 审核理由
     String hideReason;      // 下架理由

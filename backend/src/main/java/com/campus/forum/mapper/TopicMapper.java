@@ -138,6 +138,12 @@ public interface TopicMapper extends BaseMapper<Topic> {
     }
 
     /**
+     * 统计帖子评论数量（仅正常状态）
+     */
+    @Select("select count(*) from db_topic_comment where tid = #{tid} and status = 'normal'")
+    int commentCount(@Param("tid") int tid);
+
+    /**
      * 查询用户对帖子是否点过赞
      */
     @Select("select count(*) from db_topic_interact_like where tid = #{tid} and uid = #{uid}")

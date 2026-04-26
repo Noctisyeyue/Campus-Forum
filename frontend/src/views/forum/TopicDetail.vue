@@ -64,7 +64,7 @@
                 <div class="topic-content" v-html="convertToHtml(topic.data.content)"></div>
                 <el-divider/>
                 <div style="font-size: 13px;color: grey;text-align: center">
-                    <div>发帖时间: {{ new Date(topic.data.time).toLocaleString() }}</div>
+                    <div>发帖时间: {{ new Date(topic.data.time).toLocaleString() }} &nbsp;&nbsp; 浏览量: {{ topic.data.viewCount }}</div>
                 </div>
                 <div style="text-align: right;margin-top: 30px">
                     <el-popconfirm title="确定要删除这篇帖子吗？删除后将进入“已删除”状态。"

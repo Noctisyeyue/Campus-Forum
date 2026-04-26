@@ -21,6 +21,8 @@ public class TopicPreviewVO {
     String avatar;          // 发帖用户头像
     int like;               // 点赞数
     int collect;            // 收藏数
+    int viewCount;          // 浏览量
+    int comments;           // 评论数
     String status;          // 帖子状态
     String reviewReason;    // 审核拒绝原因
     String hideReason;      // 下架原因
