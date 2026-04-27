@@ -16,6 +16,7 @@ DELETE FROM `db_topic_interact_collect`;
 DELETE FROM `db_topic_comment`;
 DELETE FROM `db_topic_activity`;
 DELETE FROM `db_notification`;
+DELETE FROM `db_report`;
 DELETE FROM `db_image_store`;
 DELETE FROM `db_forum_notice`;
 DELETE FROM `db_topic`;
@@ -210,6 +211,19 @@ INSERT INTO `db_notification` (`id`, `uid`, `title`, `content`, `type`, `url`, `
 (5, 2, '收到评论回复', '张三 回复了你在《食堂二楼新开的麻辣烫太好吃了》中的评论', 'comment_reply', '/index/topic-detail/3', '2025-10-15 14:00:00'),
 (6, 2, '收到评论回复', 'test 回复了你在《期末复习有没有什么好方法》中的评论', 'comment_reply', '/index/topic-detail/15', '2025-11-04 22:00:00'),
 (7, 2, '收到活动评论回复', 'admin 回复了你在《创新创业讲座报名开始啦》中的评论', 'comment_reply', '/index/topic-detail/16', '2025-11-05 10:20:00');
+COMMIT;
+
+-- ----------------------------
+-- 举报记录（覆盖待处理/已处理/已驳回三种状态，帖子+评论两种类型）
+-- ----------------------------
+BEGIN;
+INSERT INTO `db_report` (`id`, `uid`, `target_type`, `target_id`, `reason`, `detail`, `status`, `admin_id`, `admin_note`, `resolve_time`, `time`) VALUES
+(1, 2, 'topic', 6, '违规内容', '帖子内容涉及不当言论', 'resolved', 1, '已下架处理', '2025-11-02 10:00:00', '2025-11-01 20:30:00'),
+(2, 3, 'comment', 5, '人身攻击', '评论中存在辱骂性用语', 'resolved', 1, '已删除评论', '2025-11-03 09:00:00', '2025-11-02 22:15:00'),
+(3, 5, 'topic', 10, '垃圾广告', '疑似兼职诈骗广告', 'dismissed', 1, '经核实为正常兼职信息，不予处理', '2025-11-04 14:00:00', '2025-11-03 18:00:00'),
+(4, 4, 'topic', 8, '虚假信息', '活动时间地点与实际不符', 'pending', NULL, NULL, NULL, '2025-11-05 09:00:00'),
+(5, 2, 'comment', 12, '色情低俗', NULL, 'pending', NULL, NULL, NULL, '2025-11-05 11:00:00'),
+(6, 7, 'topic', 4, '其他', '帖子内容涉嫌侵权', 'pending', NULL, NULL, NULL, '2025-11-05 14:30:00');
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;

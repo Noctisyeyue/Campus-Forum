@@ -110,6 +110,10 @@ const router = createRouter({
                     path: 'forum-notice',
                     name: 'admin-forum-notice',
                     component: () => import('@/views/admin/ForumNoticeSettingPage.vue')
+                }, {
+                    path: 'reports',
+                    name: 'admin-reports',
+                    component: () => import('@/views/admin/ReportListPage.vue')
                 }
             ]
         }

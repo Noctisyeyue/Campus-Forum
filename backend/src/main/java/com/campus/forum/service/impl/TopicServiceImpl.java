@@ -106,6 +106,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     @Resource
     NotificationService notificationService;
 
+    @Resource
+    ReportMapper reportMapper;
+
     private Set<Integer> types = new HashSet<>();
     private Map<Integer, TopicType> typeIndex = new HashMap<>();
 
@@ -202,6 +205,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                 .set("deleted_time", new Date())
                 .set("deleted_by", uid)
         );
+        // 帖子删除后，自动关闭该帖子的 pending 举报并通知举报人
+        var pendingTopicReports = reportMapper.selectList(Wrappers.<Report>query()
+                .eq("target_type", Const.REPORT_TARGET_TOPIC)
+                .eq("target_id", tid)
+                .eq("status", Const.REPORT_STATUS_PENDING));
+        for (Report report : pendingTopicReports) {
+            reportMapper.update(null, Wrappers.<Report>update()
+                    .eq("id", report.getId())
+                    .set("status", Const.REPORT_STATUS_DISMISSED)
+                    .set("admin_note", "目标帖子已被作者删除，举报自动关闭"));
+            notificationService.addNotification(
+                    report.getUid(),
+                    "举报处理结果",
+                    "您举报的帖子已被作者删除，举报自动关闭",
+                    "info", null);
+        }
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
         return null;
     }
@@ -293,6 +312,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                 .eq("id", id)
                 .eq("uid", uid)
                 .set("status", Const.COMMENT_STATUS_DELETED));
+        // 评论删除后，自动关闭该评论的 pending 举报并通知举报人
+        var pendingReports = reportMapper.selectList(Wrappers.<Report>query()
+                .eq("target_type", Const.REPORT_TARGET_COMMENT)
+                .eq("target_id", id)
+                .eq("status", Const.REPORT_STATUS_PENDING));
+        for (Report report : pendingReports) {
+            reportMapper.update(null, Wrappers.<Report>update()
+                    .eq("id", report.getId())
+                    .set("status", Const.REPORT_STATUS_DISMISSED)
+                    .set("admin_note", "目标评论已被作者删除，举报自动关闭"));
+            notificationService.addNotification(
+                    report.getUid(),
+                    "举报处理结果",
+                    "您举报的评论已被作者删除，举报自动关闭",
+                    "info", null);
+        }
     }
 
     /**
@@ -704,6 +739,10 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             return "当前帖子状态不支持恢复";
         }
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        reportMapper.delete(Wrappers.<Report>query()
+                .eq("target_type", Const.REPORT_TARGET_TOPIC)
+                .eq("target_id", tid)
+                .eq("status", Const.REPORT_STATUS_PENDING));
         return null;
     }
 
@@ -718,6 +757,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (topic == null) return "帖子不存在";
         if (Const.TOPIC_STATUS_PENDING.equals(topic.getStatus()))
             return "待审核帖子不能直接删除，请先通过或拒绝";
+        reportMapper.delete(Wrappers.<Report>query()
+                .eq("target_type", Const.REPORT_TARGET_TOPIC).eq("target_id", tid)
+                .or()
+                .eq("target_type", Const.REPORT_TARGET_COMMENT).inSql("target_id",
+                        "select id from db_topic_comment where tid = " + tid));
         commentMapper.delete(Wrappers.<TopicComment>query().eq("tid", tid));
         topicActivityMapper.deleteById(tid);
         baseMapper.deleteLikeByTid(tid);
@@ -968,7 +1012,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     @Override
     public List<AdminCommentVO> adminListComments(int page, Integer tid, Integer uid) {
         Page<TopicComment> p = Page.of(page, 15);
-        var wrapper = Wrappers.<TopicComment>query().ne("status", Const.COMMENT_STATUS_DELETED);
+        var wrapper = Wrappers.<TopicComment>query();
         if (tid != null && tid > 0)
             wrapper.eq("tid", tid);
         if (uid != null && uid > 0)

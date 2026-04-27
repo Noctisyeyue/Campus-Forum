@@ -3,7 +3,7 @@
         <card>
             <div style="display: flex;justify-content: space-between;align-items: center">
                 <span style="font-size: 18px;font-weight: bold">帖子详情</span>
-                <el-button :icon="ArrowLeft" size="small" plain round @click="router.push('/admin/topics')">返回列表</el-button>
+                <el-button :icon="ArrowLeft" size="small" plain round @click="router.back()">返回列表</el-button>
             </div>
         </card>
         <card style="margin-top: 10px" v-if="topic">

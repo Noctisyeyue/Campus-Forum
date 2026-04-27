@@ -88,6 +88,10 @@
                              style="margin-left: 20px">
                         &nbsp;{{ topic.collect ? '已收藏' : '收藏本帖' }}
                     </el-link>
+                    <el-link :icon="Warning" type="danger"
+                             @click="openReport('topic', topic.data.id)"
+                             style="margin-left: 20px"
+                             v-if="store.user.id !== topic.data.user.id">&nbsp;举报</el-link>
                 </div>
             </div>
         </div>
@@ -132,6 +136,10 @@
                             <el-link :icon="ChatSquare"
                                      @click="comment.show = true; comment.quote = item"
                                      type="info">&nbsp;回复评论</el-link>
+                            <el-link :icon="Warning" type="danger"
+                                     @click="openReport('comment', item.id)"
+                                     style="margin-left: 20px"
+                                     v-if="item.user.id !== store.user.id">&nbsp;举报</el-link>
                             <el-popconfirm title="确定要删除这条评论吗？"
                                            confirm-button-text="确定"
                                            cancel-button-text="取消"
@@ -172,6 +180,28 @@
                               :quote="comment.quote"
                               @comment="onCommentAdd"/>
 
+        <el-dialog v-model="report.show" title="举报" width="420px" @close="report.reason = ''; report.detail = ''">
+            <div style="margin-bottom: 15px">
+                <div style="margin-bottom: 8px;font-weight: bold">举报原因</div>
+                <el-radio-group v-model="report.reason">
+                    <el-radio value="垃圾广告">垃圾广告</el-radio>
+                    <el-radio value="虚假信息">虚假信息</el-radio>
+                    <el-radio value="违规内容">违规内容</el-radio>
+                    <el-radio value="人身攻击">人身攻击</el-radio>
+                    <el-radio value="色情低俗">色情低俗</el-radio>
+                    <el-radio value="其他">其他</el-radio>
+                </el-radio-group>
+            </div>
+            <div>
+                <div style="margin-bottom: 8px;font-weight: bold">补充说明（可选）</div>
+                <el-input type="textarea" v-model="report.detail" :rows="3" placeholder="请描述具体情况"/>
+            </div>
+            <template #footer>
+                <el-button @click="report.show = false">取消</el-button>
+                <el-button type="danger" @click="submitReport" :disabled="!report.reason">提交举报</el-button>
+            </template>
+        </el-dialog>
+
         <div v-if="topic.commentEnabled" class="add-comment" @click="comment.show = true; comment.quote = null">
             <el-icon><Plus/></el-icon>
         </div>
@@ -191,7 +221,7 @@ import TopicTag from "@/components/TopicTag.vue";
 import TopicEditor from "@/components/TopicEditor.vue";
 import TopicCommentEditor from "@/components/TopicCommentEditor.vue";
 import { ElMessage } from "element-plus";
-import { ArrowLeft, ChatSquare, CircleCheck, Delete, EditPen, Female, Male, Plus, Star } from "@element-plus/icons-vue";
+import { ArrowLeft, ChatSquare, CircleCheck, Delete, EditPen, Female, Male, Plus, Star, Warning } from "@element-plus/icons-vue";
 
 const route = useRoute()
 const store = useStore()
@@ -213,6 +243,34 @@ const comment = reactive({
     show: false,
     quote: null
 })
+
+const report = reactive({
+    show: false,
+    targetType: '',
+    targetId: null,
+    reason: '',
+    detail: ''
+})
+
+function openReport(type, id) {
+    report.targetType = type
+    report.targetId = id
+    report.reason = ''
+    report.detail = ''
+    report.show = true
+}
+
+function submitReport() {
+    post('/api/forum/report', {
+        targetType: report.targetType,
+        targetId: report.targetId,
+        reason: report.reason,
+        detail: report.detail
+    }, () => {
+        report.show = false
+        ElMessage.success('举报已提交，感谢您的反馈')
+    })
+}
 
 function resetTopicState() {
     topic.data = null

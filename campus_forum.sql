@@ -215,6 +215,26 @@ CREATE TABLE `db_forum_notice` (
 BEGIN;
 INSERT INTO `db_forum_notice` (`id`, `content`, `update_time`, `update_by`) VALUES
 (1, '欢迎来到 Campus Forum。请文明发言，友善交流，共同维护良好的校园社区氛围。', NOW(), 1);
+
+-- =============================================
+-- 举报记录表
+-- =============================================
+DROP TABLE IF EXISTS `db_report`;
+CREATE TABLE `db_report` (
+  `id`            int NOT NULL AUTO_INCREMENT  COMMENT '举报ID',
+  `uid`           int DEFAULT NULL             COMMENT '举报人ID，关联 db_account.id',
+  `target_type`   varchar(255) DEFAULT NULL    COMMENT '举报目标类型：topic=帖子, comment=评论',
+  `target_id`     int DEFAULT NULL             COMMENT '举报目标ID',
+  `reason`        varchar(255) DEFAULT NULL    COMMENT '举报原因分类',
+  `detail`        varchar(500) DEFAULT NULL    COMMENT '补充说明',
+  `status`        varchar(255) DEFAULT 'pending' COMMENT '状态：pending=待处理, resolved=已处理, dismissed=已驳回',
+  `admin_id`      int DEFAULT NULL             COMMENT '处理人ID',
+  `admin_note`    varchar(500) DEFAULT NULL    COMMENT '处理备注',
+  `resolve_time`  datetime DEFAULT NULL        COMMENT '处理时间',
+  `time`          datetime DEFAULT NULL        COMMENT '举报时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='举报记录';
+
 COMMIT;
 
 -- ----------------------------

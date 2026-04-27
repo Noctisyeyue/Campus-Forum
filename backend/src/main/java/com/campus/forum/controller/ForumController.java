@@ -3,9 +3,11 @@ package com.campus.forum.controller;
 import com.campus.forum.entity.RestBean;
 import com.campus.forum.entity.dto.Interact;
 import com.campus.forum.entity.vo.request.AddCommentVO;
+import com.campus.forum.entity.vo.request.ReportCreateVO;
 import com.campus.forum.entity.vo.request.TopicCreateVO;
 import com.campus.forum.entity.vo.request.TopicUpdateVO;
 import com.campus.forum.entity.vo.response.*;
+import com.campus.forum.service.ReportService;
 import com.campus.forum.service.TopicService;
 import com.campus.forum.service.WeatherService;
 import com.campus.forum.utils.Const;
@@ -31,6 +33,9 @@ public class ForumController {
 
     @Resource
     TopicService topicService;
+
+    @Resource
+    ReportService reportService;
 
     @Resource
     ControllerUtils utils;
@@ -171,5 +176,12 @@ public class ForumController {
                                         @RequestAttribute(Const.ATTR_USER_ID) int uid){
         topicService.deleteComment(id, uid);
         return RestBean.success();
+    }
+
+    // 提交举报
+    @PostMapping("/report")
+    public RestBean<Void> report(@Valid @RequestBody ReportCreateVO vo,
+                                 @RequestAttribute(Const.ATTR_USER_ID) int uid) {
+        return utils.messageHandle(() -> reportService.createReport(uid, vo));
     }
 }

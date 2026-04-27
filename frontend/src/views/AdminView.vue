@@ -47,6 +47,10 @@
                                 <el-icon><ChatDotSquare/></el-icon>
                                 <span>评论管理</span>
                             </el-menu-item>
+                            <el-menu-item index="/admin/reports">
+                                <el-icon><Warning/></el-icon>
+                                <span>举报管理</span>
+                            </el-menu-item>
                             <el-menu-item index="/admin/types">
                                 <el-icon><CollectionTag/></el-icon>
                                 <span>分类管理</span>
@@ -87,7 +91,7 @@ import {useStore} from "@/stores/index"
 import {ref} from "vue"
 import {
     Back, Bell, Calendar, ChatDotSquare, CollectionTag,
-    DataLine, Document, EditPen, SwitchButton, User
+    DataLine, Document, EditPen, SwitchButton, User, Warning
 } from "@element-plus/icons-vue"
 import {ElMessage} from "element-plus"
 

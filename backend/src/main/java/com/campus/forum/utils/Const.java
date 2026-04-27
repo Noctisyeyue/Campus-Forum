@@ -51,4 +51,13 @@ public final class Const {
     // 评论状态
     public final static String COMMENT_STATUS_NORMAL = "normal";        // 评论正常
     public final static String COMMENT_STATUS_DELETED = "deleted";      // 评论已删除（软删除）
+
+    // 举报状态
+    public final static String REPORT_STATUS_PENDING = "pending";       // 待处理
+    public final static String REPORT_STATUS_RESOLVED = "resolved";     // 已处理
+    public final static String REPORT_STATUS_DISMISSED = "dismissed";   // 已驳回
+
+    // 举报目标类型
+    public final static String REPORT_TARGET_TOPIC = "topic";
+    public final static String REPORT_TARGET_COMMENT = "comment";
 }
