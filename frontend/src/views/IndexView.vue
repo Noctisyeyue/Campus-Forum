@@ -61,7 +61,7 @@
                                 <el-icon>
                                     <Operation/>
                                 </el-icon>
-                                个人设置
+                                个人中心
                             </el-dropdown-item>
                             <el-dropdown-item>
                                 <el-icon>
@@ -102,14 +102,6 @@
                                         帖子广场
                                     </template>
                                 </el-menu-item>
-                                <el-menu-item index="/index/my-topics">
-                                    <template #title>
-                                        <el-icon>
-                                            <Document/>
-                                        </el-icon>
-                                        我的帖子
-                                    </template>
-                                </el-menu-item>
                                 <el-menu-item index="/index/activity">
                                     <template #title>
                                         <el-icon>
@@ -140,7 +132,7 @@
                                     <el-icon>
                                         <Operation/>
                                     </el-icon>
-                                    <span><b>个人设置</b></span>
+                                    <span><b>个人中心</b></span>
                                 </template>
                                 <el-menu-item index="/index/user-setting">
                                     <template #title>
@@ -156,6 +148,14 @@
                                             <Lock/>
                                         </el-icon>
                                         账号安全设置
+                                    </template>
+                                </el-menu-item>
+                                <el-menu-item index="/index/my-topics">
+                                    <template #title>
+                                        <el-icon>
+                                            <Document/>
+                                        </el-icon>
+                                        我的帖子
                                     </template>
                                 </el-menu-item>
                             </el-sub-menu>
