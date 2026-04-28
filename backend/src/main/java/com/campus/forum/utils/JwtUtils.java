@@ -23,16 +23,21 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class JwtUtils {
 
+    /** JWT 签名密钥 */
     @Value("${spring.security.jwt.key}")
-    private String key;              // JWT 签名密钥
+    private String key;
+    /** 令牌过期时间（小时） */
     @Value("${spring.security.jwt.expire}")
-    private int expire;              // 令牌过期时间（小时）
+    private int expire;
+    /** 令牌生成基础冷却时间（秒） */
     @Value("${spring.security.jwt.limit.base}")
-    private int limit_base;          // 令牌生成基础冷却时间（秒）
+    private int limit_base;
+    /** 令牌生成升级封禁时间（秒） */
     @Value("${spring.security.jwt.limit.upgrade}")
-    private int limit_upgrade;       // 令牌生成升级封禁时间（秒）
+    private int limit_upgrade;
+    /** 恶意刷令牌的请求次数阈值 */
     @Value("${spring.security.jwt.limit.frequency}")
-    private int limit_frequency;     // 恶意刷令牌的请求次数阈值
+    private int limit_frequency;
 
     @Resource
     StringRedisTemplate template;
@@ -42,6 +47,9 @@ public class JwtUtils {
 
     /**
      * 使指定令牌失效（加入 Redis 黑名单）
+     *
+     * @param headerToken 请求头中的 Bearer Token
+     * @return true=成功失效，false=令牌无效或已失效
      */
     public boolean invalidateJwt(String headerToken) {
         String token = this.convertToken(headerToken);
@@ -57,6 +65,8 @@ public class JwtUtils {
 
     /**
      * 计算令牌过期时间
+     *
+     * @return 基于当前时间 + expire 小时后的 Date
      */
     public Date expireTime() {
         Calendar calendar = Calendar.getInstance();
@@ -66,6 +76,11 @@ public class JwtUtils {
 
     /**
      * 为已认证用户创建 JWT 令牌，频率限制触发时返回 null
+     *
+     * @param user     Spring Security UserDetails
+     * @param username 用户名
+     * @param userId   用户 ID
+     * @return 签名后的 JWT 字符串，频率限制触发时返回 null
      */
     public String createJwt(UserDetails user, String username, int userId) {
         if (this.frequencyCheck(userId)) {
@@ -87,7 +102,10 @@ public class JwtUtils {
     }
 
     /**
-     * 解析并校验 JWT 令牌，无效返回 null
+     * 解析并校验 JWT 令牌
+     *
+     * @param headerToken 请求头中的 Bearer Token
+     * @return 解析成功返回 DecodedJWT，无效或已失效返回 null
      */
     public DecodedJWT resolveJwt(String headerToken) {
         String token = this.convertToken(headerToken);
@@ -104,7 +122,12 @@ public class JwtUtils {
         }
     }
 
-    /** 将 JWT 信息转换为 Spring Security UserDetails */
+    /**
+     * 将 JWT 信息转换为 Spring Security UserDetails
+     *
+     * @param jwt 已校验的 DecodedJWT
+     * @return 包含用户名、权限的 UserDetails
+     */
     public UserDetails toUser(DecodedJWT jwt) {
         Map<String, Claim> claims = jwt.getClaims();
         return User
@@ -114,26 +137,47 @@ public class JwtUtils {
                 .build();
     }
 
-    /** 从 JWT 中提取用户 ID */
+    /**
+     * 从 JWT 中提取用户 ID
+     *
+     * @param jwt 已校验的 DecodedJWT
+     * @return 用户 ID
+     */
     public Integer toId(DecodedJWT jwt) {
         Map<String, Claim> claims = jwt.getClaims();
         return claims.get("id").asInt();
     }
 
-    // JWT 生成频率检测，防止高频刷令牌
+    /**
+     * JWT 生成频率检测，防止高频刷令牌
+     *
+     * @param userId 用户 ID
+     * @return true=允许生成，false=触发频率限制
+     */
     private boolean frequencyCheck(int userId) {
         String key = Const.JWT_FREQUENCY + userId;
         return utils.limitOnceUpgradeCheck(key, limit_frequency, limit_base, limit_upgrade);
     }
 
-    // 从请求头提取 Token 字符串
+    /**
+     * 从请求头提取 Token 字符串
+     *
+     * @param headerToken 请求头中的 Bearer Token
+     * @return 提取出的 Token 字符串，格式不正确返回 null
+     */
     private String convertToken(String headerToken) {
         if (headerToken == null || !headerToken.startsWith("Bearer "))
             return null;
         return headerToken.substring(7);
     }
 
-    // 将令牌加入 Redis 黑名单
+    /**
+     * 将令牌加入 Redis 黑名单，过期时间与令牌本身一致
+     *
+     * @param uuid 令牌的唯一 ID
+     * @param time 令牌的过期时间
+     * @return true=成功加入黑名单，false=已在黑名单中
+     */
     private boolean deleteToken(String uuid, Date time) {
         if (this.isInvalidToken(uuid))
             return false;
@@ -143,7 +187,12 @@ public class JwtUtils {
         return true;
     }
 
-    // 检查令牌是否已在黑名单中
+    /**
+     * 检查令牌是否已在黑名单中
+     *
+     * @param uuid 令牌的唯一 ID
+     * @return true=已失效（在黑名单中），false=有效
+     */
     private boolean isInvalidToken(String uuid) {
         return Boolean.TRUE.equals(template.hasKey(Const.JWT_BLACK_LIST + uuid));
     }
