@@ -100,10 +100,14 @@ public class FlowUtils {
      * @return true=允许请求，false=拒绝
      */
     private boolean internalCheck(String key, int frequency, int period, LimitAction action) {
+        // 检查 Redis 里有没有这个 key
         if (Boolean.TRUE.equals(template.hasKey(key))) {
+            // 有 key → 计数器 +1，检查是否超频   Optional.ofNullable 防止 null 导致程序崩溃
             Long value = Optional.ofNullable(template.opsForValue().increment(key)).orElse(0L);
+            // 次数是否超过了阈值
             return action.run(value > frequency);
         } else {
+            // 没有 key → 创建计数器，允许通过
             template.opsForValue().set(key, "1", period, TimeUnit.SECONDS);
             return true;
         }

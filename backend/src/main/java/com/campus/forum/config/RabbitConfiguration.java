@@ -15,7 +15,7 @@ public class RabbitConfiguration {
     @Bean("mailQueue")
     public Queue queue() {
         return QueueBuilder
-                .durable("mail")
+                .durable("mail") //持久化
                 .build();
     }
 }
