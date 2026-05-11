@@ -10,8 +10,8 @@ springdoc:
 spring:
   mail:
     host: smtp.163.com
-    username: javastudy111@163.com
-    password: QGLYGBVECIASGPWQ
+    username: 18778393679@163.com
+    password: GBpng345SkinBmMZ
   rabbitmq:
     addresses: localhost
     username: admin
