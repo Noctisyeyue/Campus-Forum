@@ -1,11 +1,14 @@
 package com.campus.forum.listener;
 
 import jakarta.annotation.Resource;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -13,6 +16,7 @@ import java.util.Map;
 /**
  * 邮件发送消息队列监听器，消费 "mail" 队列中的邮件任务
  */
+@Slf4j
 @Component
 @RabbitListener(queues = "mail")
 public class MailQueueListener {
@@ -33,7 +37,7 @@ public class MailQueueListener {
     public void sendMailMessage(Map<String, Object> data) {
         String email = data.get("email").toString();
         Integer code = (Integer) data.get("code");
-        SimpleMailMessage message = switch (data.get("type").toString()) {
+        switch (data.get("type").toString()) {
             case "register" ->
                     createMessage("欢迎注册我们的网站",
                             "您的邮件注册验证码为: " + code + "，有效时间3分钟，为了保障您的账户安全，请勿向他人泄露验证码信息。",
@@ -46,25 +50,29 @@ public class MailQueueListener {
                     createMessage("您的邮件修改验证邮件",
                             "您好，您正在绑定新的电子邮件地址，验证码: " + code + "，有效时间3分钟，如非本人操作，请无视。",
                             email);
-            default -> null;
-        };
-        if(message == null) return;
-        sender.send(message);
+            default -> {}
+        }
     }
 
     /**
-     * 封装简单邮件消息实体
+     * 封装 MIME 邮件并发送，发件人显示为"校园论坛"
      * @param title 标题
      * @param content 内容
      * @param email 收件人
-     * @return 邮件实体
      */
-    private SimpleMailMessage createMessage(String title, String content, String email){
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setSubject(title);
-        message.setText(content);
-        message.setTo(email);
-        message.setFrom(username);
-        return message;
+    private void createMessage(String title, String content, String email) {
+        try {
+            MimeMessage message = sender.createMimeMessage();
+            // 启用 multipart	允许邮件包含 HTML、附件等复杂内容
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            // new InternetAddress(邮箱地址, 显示名, 编码)
+            helper.setFrom(new InternetAddress(username, "校园论坛", "UTF-8"));
+            helper.setTo(email);
+            helper.setSubject(title);
+            helper.setText(content);
+            sender.send(message);
+        } catch (Exception e) {
+            log.error("邮件发送失败: {}", email, e);
+        }
     }
 }
