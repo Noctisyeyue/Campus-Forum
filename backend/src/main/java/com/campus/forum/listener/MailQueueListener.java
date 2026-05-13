@@ -17,9 +17,11 @@ import java.util.Map;
 @RabbitListener(queues = "mail")
 public class MailQueueListener {
 
+    /** JavaMail 邮件发送器 */
     @Resource
     JavaMailSender sender;
 
+    /** 发件人邮箱地址，从配置文件读取 */
     @Value("${spring.mail.username}")
     String username;
 
