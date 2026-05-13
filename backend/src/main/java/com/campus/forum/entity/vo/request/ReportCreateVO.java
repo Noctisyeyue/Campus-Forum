@@ -5,17 +5,20 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
+/**
+ * 创建举报请求
+ */
 @Data
 public class ReportCreateVO {
     @NotBlank(message = "举报目标类型不能为空")
     @Pattern(regexp = "(topic|comment)", message = "举报目标类型无效")
-    String targetType;
+    String targetType;      // 举报目标类型：topic/comment
 
     @NotNull(message = "举报目标ID不能为空")
-    Integer targetId;
+    Integer targetId;       // 举报目标ID
 
     @NotBlank(message = "举报原因不能为空")
-    String reason;
+    String reason;          // 举报原因
 
-    String detail;
+    String detail;          // 举报详情（可选）
 }
