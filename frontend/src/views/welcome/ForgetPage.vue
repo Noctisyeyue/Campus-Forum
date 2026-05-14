@@ -43,6 +43,10 @@
                 <div style="margin-top: 70px">
                     <el-button @click="confirmReset()" style="width: 270px;" type="danger" plain>开始重置密码</el-button>
                 </div>
+                <div style="margin-top: 20px">
+                    <span style="font-size: 14px;line-height: 15px;color: grey">想起密码了? </span>
+                    <el-link type="primary" style="translate: 0 -2px" @click="router.push('/')">返回登录</el-link>
+                </div>
             </div>
         </transition>
         <transition name="el-fade-in-linear" mode="out-in">
@@ -72,6 +76,10 @@
                 <div style="margin-top: 70px">
                     <el-button @click="doReset()" style="width: 270px;" type="danger" plain>立即重置密码</el-button>
                 </div>
+                <div style="margin-top: 20px">
+                    <span style="font-size: 14px;line-height: 15px;color: grey">想起密码了? </span>
+                    <el-link type="primary" style="translate: 0 -2px" @click="router.push('/')">返回登录</el-link>
+                </div>
             </div>
         </transition>
     </div>
@@ -84,8 +92,10 @@ import {get, post} from "@/net";
 import {ElMessage} from "element-plus";
 import router from "@/router";
 
+/** 当前步骤索引：0=验证邮箱，1=设置新密码 */
 const active = ref(0)
 
+/** 重置密码表单响应式数据 */
 const form = reactive({
     email: '',
     code: '',
@@ -93,6 +103,7 @@ const form = reactive({
     password_repeat: '',
 })
 
+/** 重复密码校验：不能为空，且必须与新密码一致 */
 const validatePassword = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('请再次输入密码'))
@@ -103,6 +114,7 @@ const validatePassword = (rule, value, callback) => {
     }
 }
 
+/** 各字段的校验规则 */
 const rules = {
     email: [
         { required: true, message: '请输入邮件地址', trigger: 'blur' },
@@ -120,15 +132,20 @@ const rules = {
     ],
 }
 
+/** 表单组件引用 */
 const formRef = ref()
+/** 邮箱格式是否合法，控制"获取验证码"按钮的可用状态 */
 const isEmailValid = ref(false)
+/** 验证码冷却倒计时（秒） */
 const coldTime = ref(0)
 
+/** 表单校验结果回调，追踪邮箱字段的校验状态 */
 const onValidate = (prop, isValid) => {
     if(prop === 'email')
         isEmailValid.value = isValid
 }
 
+/** 请求重置密码的邮箱验证码，成功后启动 60 秒冷却倒计时 */
 const validateEmail = () => {
     coldTime.value = 60
     get(`/api/auth/ask-code?email=${form.email}&type=reset`, () => {
@@ -145,6 +162,7 @@ const validateEmail = () => {
     })
 }
 
+/** 第一步：验证邮箱和验证码，通过后进入第二步 */
 const confirmReset = () => {
     formRef.value.validate((isValid) => {
         if(isValid) {
@@ -156,6 +174,7 @@ const confirmReset = () => {
     })
 }
 
+/** 第二步：提交新密码完成重置，成功后跳转登录页 */
 const doReset = () => {
     formRef.value.validate((isValid) => {
         if(isValid) {
