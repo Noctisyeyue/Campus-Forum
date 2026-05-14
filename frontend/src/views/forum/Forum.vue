@@ -1,9 +1,11 @@
 <template>
     <div>
         <router-view v-slot="{ Component }">
-            <keep-alive include="TopicList,ActivityList,NoticeTopicList">
-                <component :is="Component"/>
-            </keep-alive>
+            <transition name="forum-slide" mode="out-in">
+                <keep-alive include="TopicList,ActivityList,NoticeTopicList">
+                    <component :is="Component"/>
+                </keep-alive>
+            </transition>
         </router-view>
         <el-backtop target=".main-content-page .el-scrollbar__wrap" :right="20" :bottom="70"/>
     </div>
@@ -22,3 +24,18 @@ get('/api/forum/types', data => {
     store.forum.types = array
 })
 </script>
+
+<style scoped>
+.forum-slide-enter-active,
+.forum-slide-leave-active {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.forum-slide-enter-from {
+    opacity: 0;
+    transform: translateX(30px);
+}
+.forum-slide-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+</style>
