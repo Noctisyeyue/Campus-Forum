@@ -116,6 +116,10 @@ const router = createRouter({
                     component: () => import('@/views/admin/ReportListPage.vue')
                 }
             ]
+        }, {
+            path: '/:pathMatch(.*)*',
+            name: 'not-found',
+            component: () => import('@/views/NotFound.vue')
         }
     ]
 })
