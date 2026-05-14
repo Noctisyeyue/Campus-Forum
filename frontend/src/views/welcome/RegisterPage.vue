@@ -70,6 +70,7 @@ import {reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import {get, post} from "@/net";
 
+/** 注册表单响应式数据 */
 const form = reactive({
     username: '',
     password: '',
@@ -78,6 +79,7 @@ const form = reactive({
     code: ''
 })
 
+/** 用户名校验：不能为空，且只能包含中文、英文、数字 */
 const validateUsername = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('请输入用户名'))
@@ -88,6 +90,7 @@ const validateUsername = (rule, value, callback) => {
     }
 }
 
+/** 重复密码校验：不能为空，且必须与密码一致 */
 const validatePassword = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('请再次输入密码'))
@@ -98,6 +101,7 @@ const validatePassword = (rule, value, callback) => {
     }
 }
 
+/** 各字段的校验规则，trigger 指定触发校验的时机 */
 const rules = {
     username: [
         { validator: validateUsername, trigger: ['blur', 'change'] },
@@ -119,15 +123,20 @@ const rules = {
     ]
 }
 
+/** 表单组件引用，用于调用 validate 方法 */
 const formRef = ref()
+/** 邮箱格式是否合法，控制"获取验证码"按钮的可用状态 */
 const isEmailValid = ref(false)
+/** 验证码冷却倒计时（秒），大于 0 时按钮禁用 */
 const coldTime = ref(0)
 
+/** 表单字段校验结果回调，追踪邮箱字段是否通过校验 */
 const onValidate = (prop, isValid) => {
     if(prop === 'email')
         isEmailValid.value = isValid
 }
 
+/** 提交注册：先做前端表单校验，通过后调用后端注册接口 */
 const register = () => {
     formRef.value.validate((isValid) => {
         if(isValid) {
@@ -146,6 +155,7 @@ const register = () => {
     })
 }
 
+/** 请求邮箱验证码，成功后启动 60 秒冷却倒计时 */
 const validateEmail = () => {
     coldTime.value = 60
     get(`/api/auth/ask-code?email=${form.email}&type=register`, () => {
@@ -153,7 +163,7 @@ const validateEmail = () => {
         const handle = setInterval(() => {
           coldTime.value--
           if(coldTime.value === 0) {
-            clearInterval(handle)
+            clearInterval(handle)// 停止定时器
           }
         }, 1000)
     }, undefined, (message) => {
