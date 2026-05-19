@@ -4,7 +4,7 @@
             <div style="display: flex;justify-content: space-between;align-items: center;gap: 10px;flex-wrap: wrap">
                 <div>
                     <div style="font-size: 20px;font-weight: bold">我的帖子</div>
-                    <div style="font-size: 13px;color: grey;margin-top: 4px">
+                    <div class="text-secondary" style="font-size: 13px;margin-top: 4px">
                         展示你自己的帖子，按状态查看；已发布可进入详情，待审核仅允许删除。
                     </div>
                 </div>
@@ -254,6 +254,10 @@ function deleteTopic(id) {
     margin-top: 8px;
 }
 
+:global(.dark) .topic-meta {
+    color: #a0a3a8;
+}
+
 .topic-content {
     font-size: 13px;
     color: grey;
@@ -263,6 +267,10 @@ function deleteTopic(id) {
     -webkit-line-clamp: 3;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+:global(.dark) .topic-content {
+    color: #a0a3a8;
 }
 
 .topic-images {

@@ -14,7 +14,9 @@ export const useStore = defineStore('general', {
             },
             forum: {
                 types: []
-            }
+            },
+            dark: false,
+            toggleDark: null
         }
     }, getters: {
         avatarUrl() {

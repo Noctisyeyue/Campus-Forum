@@ -11,7 +11,7 @@
                 <div class="create-topic" @click="editor = true">
                     <el-icon><EditPen/></el-icon> 点击发表主题...
                 </div>
-                <div style="margin-top: 10px;display: flex;gap: 13px;font-size: 18px;color: grey">
+                <div class="text-secondary" style="margin-top: 10px;display: flex;gap: 13px;font-size: 18px">
                     <el-icon><Edit /></el-icon>
                     <el-icon><Document /></el-icon>
                     <el-icon><Compass /></el-icon>
@@ -55,7 +55,7 @@
                                 </div>
                                 <div style="margin-left: 7px;transform: translateY(-2px)">
                                     <div style="font-size: 13px;font-weight: bold">{{item.username}}</div>
-                                    <div style="font-size: 12px;color: grey">
+                                    <div class="text-secondary" style="font-size: 12px">
                                         <el-icon><Clock/></el-icon>
                                         <div style="margin-left: 2px;display: inline-block;transform: translateY(-2px)">
                                             {{new Date(item.time).toLocaleString()}}
@@ -109,10 +109,10 @@
                         论坛公告
                     </div>
                     <el-divider style="margin: 10px 0"/>
-                    <div style="font-size: 14px;margin: 10px;color: grey;white-space: pre-wrap;line-height: 1.7">
+                    <div class="text-secondary" style="font-size: 14px;margin: 10px;white-space: pre-wrap;line-height: 1.7">
                         {{ notice.content || '暂无论坛公告' }}
                     </div>
-                    <div v-if="notice.updateTime" style="font-size: 12px;color: #999;text-align: right">
+                    <div v-if="notice.updateTime" class="text-secondary" style="font-size: 12px;text-align: right">
                         更新于 {{ new Date(notice.updateTime).toLocaleString() }}
                     </div>
                 </light-card>
@@ -134,7 +134,7 @@
                         <div>127.0.0.1</div>
                     </div>
                 </light-card>
-                <div style="font-size: 14px;margin-top: 10px;color: grey">
+                <div class="text-secondary" style="font-size: 14px;margin-top: 10px">
                     <el-icon><Link/></el-icon>
                     友情链接
                     <el-divider style="margin: 10px 0"/>
@@ -391,6 +391,7 @@ navigator.geolocation.getCurrentPosition(position => {
 .dark {
     .create-topic {
         background-color: #232323;
+        color: #a0a3a8;
     }
 
     .type-select-card {
@@ -402,6 +403,24 @@ navigator.geolocation.getCurrentPosition(position => {
 
         &:hover {
             background-color: #5e5e5e;
+        }
+    }
+
+    .info-text {
+        color: #a0a3a8;
+    }
+
+    .topic-card .topic-content {
+        color: #a0a3a8;
+    }
+
+    .top-topic {
+        div:first-of-type:hover {
+            color: #a0a3a8;
+        }
+
+        div:nth-of-type(2) {
+            color: #a0a3a8;
         }
     }
 }

@@ -11,7 +11,7 @@
                 <div style="display: flex;justify-content: space-between;align-items: center;gap: 10px;flex-wrap: wrap">
                     <div>
                         <div style="font-size: 20px;font-weight: bold">校园活动</div>
-                        <div style="font-size: 13px;color: grey;margin-top: 4px">
+                        <div class="text-secondary" style="font-size: 13px;margin-top: 4px">
                             这里展示管理员发布的校园活动，可查看活动时间、地点和详情。
                         </div>
                     </div>
@@ -28,7 +28,7 @@
                                 <topic-tag :type="item.type"/>
                                 <span style="font-weight: bold">{{ item.title }}</span>
                             </div>
-                            <div style="font-size: 12px;color: grey;margin-top: 6px">
+                            <div class="text-secondary" style="font-size: 12px;margin-top: 6px">
                                 发布时间 {{ new Date(item.time).toLocaleString() }}
                             </div>
                         </div>
@@ -51,7 +51,7 @@
                 <light-card>
                     <div style="font-weight: bold">浏览说明</div>
                     <el-divider style="margin: 10px 0"/>
-                    <div style="font-size: 14px;color: grey;line-height: 1.8">
+                    <div class="text-secondary" style="font-size: 14px;line-height: 1.8">
                         校园活动支持点赞、收藏和评论，进入详情页可查看主办方与报名截止时间。
                     </div>
                 </light-card>
@@ -147,6 +147,10 @@ function clearSearch() {
     -webkit-line-clamp: 3;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    :global(.dark) & {
+        color: #a0a3a8;
+    }
 }
 
 .activity-meta {
@@ -154,5 +158,9 @@ function clearSearch() {
     color: grey;
     text-align: right;
     line-height: 1.8;
+
+    :global(.dark) & {
+        color: #a0a3a8;
+    }
 }
 </style>

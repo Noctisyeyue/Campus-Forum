@@ -1,0 +1,17 @@
+/* 全局深色模式补充样式 */
+
+/* 行内 style="color: grey" 无法被 .dark 覆盖，
+   所以定义一个 utility class 代替行内 color: grey */
+.text-secondary {
+    color: #909399;
+}
+
+/* 深色模式下的覆盖 */
+html.dark {
+    /* LightCard 等使用 var(--el-bg-color) 的组件已自动适配 */
+    /* 这里只补充 Element Plus 没有覆盖到的自定义样式 */
+
+    .text-secondary {
+        color: #a0a3a8;
+    }
+}

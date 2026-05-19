@@ -22,6 +22,11 @@
                     </el-input>
                 </div>
                 <div class="user-info">
+                    <div class="theme-toggle" @click="store.toggleDark()">
+                        <el-icon :size="18">
+                            <component :is="store.dark ? Sunny : Moon"/>
+                        </el-icon>
+                    </div>
                     <el-popover placement="bottom" :width="350" trigger="click">
                         <template #reference>
                             <el-badge style="margin-right: 15px" is-dot :hidden="!notification.length">
@@ -40,7 +45,7 @@
                                     <span style="font-weight: bold">{{item.title}}</span>
                                 </div>
                                 <el-divider style="margin: 7px 0 3px 0"/>
-                                <div style="font-size: 13px;color: grey">
+                                <div class="text-secondary" style="font-size: 13px">
                                     {{item.content}}
                                 </div>
                             </light-card>
@@ -190,9 +195,10 @@ import {
     ChatDotSquare, Check,
     Document,
     Location, Lock, Message, Monitor,
+    Moon,
     Notification, Operation,
     Position,
-    School, Search,
+    School, Search, Sunny,
     User
 } from "@element-plus/icons-vue";
 import LightCard from "@/components/LightCard.vue";
@@ -314,6 +320,18 @@ watch(() => route.path, async path => {
     }
 }
 
+.theme-toggle {
+    font-size: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    color: var(--el-text-color-regular);
+    transition: color .3s;
+
+    &:hover {
+        color: var(--el-color-primary);
+    }
+}
+
 .main-content-page {
     padding: 0;
     background-color: #f7f8fa;
@@ -334,6 +352,7 @@ watch(() => route.path, async path => {
     display: flex;
     align-items: center;
     box-sizing: border-box;
+    background-color: var(--el-bg-color);
 
     .user-info {
         display: flex;
@@ -360,5 +379,9 @@ watch(() => route.path, async path => {
             }
         }
     }
+}
+
+:global(.dark) .profile :last-child {
+    color: #a0a3a8;
 }
 </style>

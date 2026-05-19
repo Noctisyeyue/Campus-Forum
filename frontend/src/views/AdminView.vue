@@ -7,6 +7,11 @@
                 </div>
                 <div style="flex: 1"></div>
                 <div class="user-info">
+                    <div class="theme-toggle" @click="store.toggleDark()">
+                        <el-icon :size="18">
+                            <component :is="store.dark ? Sunny : Moon"/>
+                        </el-icon>
+                    </div>
                     <div class="profile">
                         <div>{{ store.user.username }}</div>
                         <div>管理员</div>
@@ -91,7 +96,7 @@ import {useStore} from "@/stores/index"
 import {ref} from "vue"
 import {
     Back, Bell, Calendar, ChatDotSquare, CollectionTag,
-    DataLine, Document, EditPen, SwitchButton, User, Warning
+    DataLine, Document, EditPen, Moon, Sunny, SwitchButton, User, Warning
 } from "@element-plus/icons-vue"
 import {ElMessage} from "element-plus"
 
@@ -127,12 +132,25 @@ function userLogout() {
     width: 100vw;
 }
 
+.theme-toggle {
+    font-size: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    color: var(--el-text-color-regular);
+    transition: color .3s;
+
+    &:hover {
+        color: var(--el-color-primary);
+    }
+}
+
 .main-content-header {
     border-bottom: solid 1px var(--el-border-color);
     height: 55px;
     display: flex;
     align-items: center;
     box-sizing: border-box;
+    background-color: var(--el-bg-color);
 
     .user-info {
         display: flex;
@@ -159,5 +177,9 @@ function userLogout() {
             }
         }
     }
+}
+
+:global(.dark) .profile :last-child {
+    color: #a0a3a8;
 }
 </style>

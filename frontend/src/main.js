@@ -7,6 +7,7 @@ import 'element-plus/es/components/message/style/css'
 
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/assets/quill.css'
+import '@/assets/dark.css'
 
 // 后端接口地址
 axios.defaults.baseURL = 'http://localhost:8081'

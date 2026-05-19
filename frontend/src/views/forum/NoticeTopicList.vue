@@ -11,7 +11,7 @@
                 <div style="display: flex;justify-content: space-between;align-items: center;gap: 10px;flex-wrap: wrap">
                     <div>
                         <div style="font-size: 20px;font-weight: bold">教务通知</div>
-                        <div style="font-size: 13px;color: grey;margin-top: 4px">
+                        <div class="text-secondary" style="font-size: 13px;margin-top: 4px">
                             教务通知由管理员直接发布，支持点赞和收藏，但不开放评论。
                         </div>
                     </div>
@@ -30,7 +30,7 @@
                             </div>
                             <div class="topic-content">{{ item.text }}</div>
                         </div>
-                        <div style="font-size: 12px;color: grey">
+                        <div class="text-secondary" style="font-size: 12px">
                             {{ new Date(item.time).toLocaleString() }}
                         </div>
                     </div>
@@ -55,7 +55,7 @@
                 <light-card>
                     <div style="font-weight: bold">通知规则</div>
                     <el-divider style="margin: 10px 0"/>
-                    <div style="font-size: 14px;color: grey;line-height: 1.8">
+                    <div class="text-secondary" style="font-size: 14px;line-height: 1.8">
                         教务通知详情页不显示评论区，避免把正式通知混入讨论流。
                     </div>
                 </light-card>
@@ -152,5 +152,9 @@ function clearSearch() {
     -webkit-line-clamp: 3;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+:global(.dark) .topic-content {
+    color: #a0a3a8;
 }
 </style>

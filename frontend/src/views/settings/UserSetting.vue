@@ -77,13 +77,13 @@
                         <div style="font-weight: bold">你好, {{ store.user.username }}</div>
                     </div>
                     <el-divider style="margin: 10px 0"/>
-                    <div style="font-size: 14px;color: grey;padding: 10px">
+                    <div style="font-size: 14px;padding: 10px" class="text-secondary">
                         {{ desc || '这个用户很懒，没有填写个人简介~' }}
                     </div>
                 </card>
                 <card style="margin-top: 10px;font-size: 14px">
                     <div>账号注册时间: {{ registerTime }}</div>
-                    <div style="color: grey">欢迎加入 Campus Forum 校园论坛！</div>
+                    <div class="text-secondary">欢迎加入 Campus Forum 校园论坛！</div>
                 </card>
             </div>
         </div>
@@ -236,5 +236,9 @@ function uploadSuccess(response){
 .settings-right {
     width: 300px;
     margin: 20px 30px 20px 0;
+}
+
+:global(.dark) .text-secondary {
+    color: #a0a3a8 !important;
 }
 </style>

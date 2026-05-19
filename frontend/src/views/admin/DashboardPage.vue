@@ -12,7 +12,7 @@
                     </div>
                     <div>
                         <div style="font-size: 24px;font-weight: bold">{{ item.value }}</div>
-                        <div style="font-size: 13px;color: grey">{{ item.label }}</div>
+                        <div style="font-size: 13px;" class="text-secondary">{{ item.label }}</div>
                     </div>
                 </div>
             </card>
@@ -48,12 +48,15 @@ const stats = ref({
     statusMap: {}, typeMap: {}
 })
 
-const statCards = computed(() => [
-    { label: '总帖子数', value: stats.value.totalTopics, icon: Document, color: '#409EFF', bg: '#ecf5ff' },
-    { label: '总用户数', value: stats.value.totalUsers, icon: User, color: '#67C23A', bg: '#f0f9eb' },
-    { label: '总评论数', value: stats.value.totalComments, icon: ChatDotSquare, color: '#E6A23C', bg: '#fdf6ec' },
-    { label: '待审核帖子', value: stats.value.pendingTopics, icon: Warning, color: '#F56C6C', bg: '#fef0f0' }
-])
+const statCards = computed(() => {
+    const d = store.dark
+    return [
+        { label: '总帖子数', value: stats.value.totalTopics, icon: Document, color: '#409EFF', bg: d ? '#1a2a3a' : '#ecf5ff' },
+        { label: '总用户数', value: stats.value.totalUsers, icon: User, color: '#67C23A', bg: d ? '#1a2a1a' : '#f0f9eb' },
+        { label: '总评论数', value: stats.value.totalComments, icon: ChatDotSquare, color: '#E6A23C', bg: d ? '#2a2518' : '#fdf6ec' },
+        { label: '待审核帖子', value: stats.value.pendingTopics, icon: Warning, color: '#F56C6C', bg: d ? '#2a1a1a' : '#fef0f0' }
+    ]
+})
 
 const statusName = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已隐藏', deleted: '已删除' }
 
@@ -66,7 +69,7 @@ const statusChartOption = computed(() => {
         legend: { bottom: 0 },
         series: [{
             type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: false,
-            itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+            itemStyle: { borderRadius: 10, borderColor: store.dark ? '#1d1e1f' : '#fff', borderWidth: 2 },
             label: { show: false }, emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
             data
         }]
@@ -131,3 +134,9 @@ get('/api/admin/types', types => {
     })
 })
 </script>
+
+<style scoped>
+:global(.dark) .text-secondary {
+    color: #a0a3a8 !important;
+}
+</style>

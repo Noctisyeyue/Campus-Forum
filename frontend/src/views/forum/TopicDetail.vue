@@ -63,7 +63,7 @@
 
                 <div class="topic-content" v-html="convertToHtml(topic.data.content)"></div>
                 <el-divider/>
-                <div style="font-size: 13px;color: grey;text-align: center">
+                <div class="text-secondary" style="font-size: 13px;text-align: center">
                     <div>发帖时间: {{ new Date(topic.data.time).toLocaleString() }} &nbsp;&nbsp; 浏览量: {{ topic.data.viewCount }}</div>
                 </div>
                 <div style="text-align: right;margin-top: 30px">
@@ -125,7 +125,7 @@
                         </div>
                     </div>
                     <div class="topic-main-right">
-                        <div style="font-size: 13px;color: grey">
+                        <div class="text-secondary" style="font-size: 13px">
                             <div>评论时间: {{ new Date(item.time).toLocaleString() }}</div>
                         </div>
                         <div v-if="item.quote" class="comment-quote">
@@ -468,5 +468,28 @@ function deleteTopic() {
             flex: 1;
         }
     }
+}
+
+:global(.dark) .comment-quote {
+    color: #909399;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .comment-disabled {
+    color: #909399;
+}
+
+:global(.dark) .activity-box {
+    background: #2a2a2e;
+    border-color: #3a3a3e;
+    color: #c0c4cc;
+}
+
+:global(.dark) .activity-item {
+    color: #a0a4a8;
+}
+
+:global(.dark) .topic-main .topic-main-left .desc {
+    color: #909399;
 }
 </style>
