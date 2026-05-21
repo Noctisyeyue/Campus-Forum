@@ -18,18 +18,43 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
 
     @Override
     public List<NotificationVO> findUserNotification(int uid) {
-        return this.list(Wrappers.<Notification>query().eq("uid", uid))
+        return this.list(Wrappers.<Notification>query().eq("uid", uid).orderByDesc("time"))
                 .stream()
                 .map(notification -> notification.asViewObject(NotificationVO.class))
                 .toList();
     }
 
+    @Override
+    public List<NotificationVO> findUserUnreadNotification(int uid) {
+        return this.list(Wrappers.<Notification>query().eq("uid", uid).eq("status", "unread").orderByDesc("time"))
+                .stream()
+                .map(notification -> notification.asViewObject(NotificationVO.class))
+                .toList();
+    }
+
+    @Override
     public void deleteUserNotification(int id, int uid) {
         this.remove(Wrappers.<Notification>query().eq("id", id).eq("uid", uid));
     }
 
+    @Override
     public void deleteUserAllNotification(int uid) {
         this.remove(Wrappers.<Notification>query().eq("uid", uid));
+    }
+
+    @Override
+    public void deleteBatchNotification(List<Integer> ids, int uid) {
+        this.remove(Wrappers.<Notification>query().eq("uid", uid).in("id", ids));
+    }
+
+    @Override
+    public void readNotification(int id, int uid) {
+        this.update(Wrappers.<Notification>update().eq("id", id).eq("uid", uid).set("status", "read"));
+    }
+
+    @Override
+    public void readAllNotification(int uid) {
+        this.update(Wrappers.<Notification>update().eq("uid", uid).eq("status", "unread").set("status", "read"));
     }
 
     @Override

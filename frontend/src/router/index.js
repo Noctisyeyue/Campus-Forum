@@ -63,6 +63,10 @@ const router = createRouter({
                     path: 'my-topics',
                     name: 'my-topics',
                     component: () => import('@/views/forum/MyTopicList.vue')
+                }, {
+                    path: 'messages',
+                    name: 'messages',
+                    component: () => import('@/views/forum/MessageList.vue')
                 }
             ]
         }, {

@@ -52,7 +52,7 @@
                         </el-scrollbar>
                         <div style="margin-top: 10px">
                             <el-button size="small" type="info" :icon="Check" @click="deleteAllNotification"
-                                       style="width: 100%" plain>清除全部未读消息</el-button>
+                                       style="width: 100%" plain>全部标记为已读</el-button>
                         </div>
                     </el-popover>
                     <div class="profile">
@@ -62,13 +62,13 @@
                     <el-dropdown>
                         <el-avatar :src="store.avatarUrl"/>
                         <template #dropdown>
-                            <el-dropdown-item>
+                            <el-dropdown-item @click="router.push('/index/user-setting')">
                                 <el-icon>
                                     <Operation/>
                                 </el-icon>
                                 个人中心
                             </el-dropdown-item>
-                            <el-dropdown-item>
+                            <el-dropdown-item @click="router.push('/index/messages')">
                                 <el-icon>
                                     <Message/>
                                 </el-icon>
@@ -163,6 +163,14 @@
                                         我的帖子
                                     </template>
                                 </el-menu-item>
+                                <el-menu-item index="/index/messages">
+                                    <template #title>
+                                        <el-icon>
+                                            <Message/>
+                                        </el-icon>
+                                        消息列表
+                                    </template>
+                                </el-menu-item>
                             </el-sub-menu>
                         </el-menu>
                     </el-scrollbar>
@@ -219,7 +227,8 @@ const RESTORE_SCROLL_ROUTE_SET = new Set([
     '/index',
     '/index/activity',
     '/index/notice-topic',
-    '/index/my-topics'
+    '/index/my-topics',
+    '/index/messages'
 ])
 
 /** 搜索栏数据：type 控制搜索范围，text 为搜索关键词 */
@@ -248,7 +257,7 @@ get('/api/user/info', (data) => {
 
 /** 加载未读消息列表 */
 const loadNotification =
-        () => get('/api/notification/list', data => notification.value = data)
+        () => get('/api/notification/unread', data => notification.value = data)
 loadNotification()
 
 /** 退出登录 */
@@ -257,13 +266,13 @@ function userLogout() {
 }
 
 /**
- * 点击单条通知：先删除该通知，再刷新列表，最后跳转到通知指向的页面
+ * 点击单条通知：标记为已读，刷新未读列表，再跳转到通知指向的页面
  *
  * @param id  通知 ID
  * @param url 通知指向的路由路径
  */
 function confirmNotification(id, url) {
-    get(`/api/notification/delete?id=${id}`, () => {
+    get(`/api/notification/read?id=${id}`, () => {
         loadNotification()
         if (!hasNotificationTarget(url)) {
             ElMessage.info('该消息仅用于通知，没有可跳转的内容')
@@ -273,9 +282,9 @@ function confirmNotification(id, url) {
     })
 }
 
-/** 清除全部未读消息 */
+/** 将全部未读消息标记为已读 */
 function deleteAllNotification() {
-    get(`/api/notification/delete-all`, loadNotification)
+    get(`/api/notification/read-all`, loadNotification)
 }
 
 /**

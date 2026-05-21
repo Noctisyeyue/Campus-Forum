@@ -196,6 +196,7 @@ CREATE TABLE `db_notification` (
   `type`    varchar(255) DEFAULT NULL    COMMENT '通知类型',
   `url`     varchar(255) DEFAULT NULL    COMMENT '跳转链接（点击通知后跳转到哪个页面）',
   `time`    datetime DEFAULT NULL        COMMENT '通知时间',
+  `status`  varchar(20) DEFAULT 'unread' COMMENT '阅读状态：unread=未读，read=已读',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='通知表，存储系统通知（如帖子审核结果、评论回复提醒等）';
 

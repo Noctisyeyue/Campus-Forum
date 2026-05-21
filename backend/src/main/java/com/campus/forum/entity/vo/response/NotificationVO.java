@@ -13,4 +13,5 @@ public class NotificationVO {
     String type;        // 通知类型
     String url;         // 跳转链接
     String time;        // 通知时间
+    String status;      // 阅读状态：unread=未读，read=已读
 }
