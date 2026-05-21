@@ -1,30 +1,210 @@
 <template>
-    <div style="padding: 20px">
+    <div class="dashboard-page" v-loading="loading">
         <card>
-            <span style="font-size: 18px;font-weight: bold">数据看板</span>
-        </card>
-        <div style="display: grid;grid-template-columns: repeat(4, 1fr);gap: 15px;margin-top: 15px">
-            <card v-for="item in statCards" :key="item.label">
-                <div style="display: flex;align-items: center;gap: 15px">
-                    <div :style="{ background: item.bg, borderRadius: '8px', width: '50px', height: '50px',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center' }">
-                        <el-icon :size="28" :color="item.color"><component :is="item.icon"/></el-icon>
+            <div class="dashboard-header">
+                <div>
+                    <div class="dashboard-title">数据看板</div>
+                    <div class="dashboard-subtitle text-secondary">
+                        聚合查看论坛总览、审核待办和社区运营数据
                     </div>
-                    <div>
-                        <div style="font-size: 24px;font-weight: bold">{{ item.value }}</div>
-                        <div style="font-size: 13px;" class="text-secondary">{{ item.label }}</div>
+                </div>
+                <el-button size="small" @click="loadDashboard" :disabled="loading">刷新数据</el-button>
+            </div>
+        </card>
+
+        <div class="stat-grid">
+            <card v-for="item in statCards" :key="item.label" class="stat-card-wrapper" @click="handleStatCardClick(item.key)">
+                <div class="stat-card">
+                    <div class="stat-icon" :style="{ background: item.bg }">
+                        <el-icon :size="24" :color="item.color">
+                            <component :is="item.icon"/>
+                        </el-icon>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-value">{{ item.value ?? 0 }}</div>
+                        <div class="stat-label text-secondary">{{ item.label }}</div>
                     </div>
                 </div>
             </card>
         </div>
-        <div style="display: grid;grid-template-columns: 1fr 1fr;gap: 15px;margin-top: 15px">
+
+        <div class="trend-summary-grid">
+            <card v-for="item in trendCards" :key="item.label">
+                <div class="trend-card">
+                    <div class="trend-card-head">
+                        <div class="panel-title">{{ item.label }}</div>
+                    </div>
+                    <div class="trend-main-value">{{ item.current }}</div>
+                    <div class="trend-subtitle text-secondary">
+                        {{ item.desc }}
+                    </div>
+                </div>
+            </card>
+        </div>
+
+        <div class="activity-chart-wrap">
             <card>
-                <div style="font-weight: bold;margin-bottom: 10px">帖子状态分布</div>
-                <v-chart :option="statusChartOption" style="height: 300px" autoresize/>
+                <div class="panel-head trend-panel-head">
+                    <div>
+                        <div class="panel-title">{{ trendTitle }}</div>
+                        <div class="panel-tip text-secondary">支持快捷范围和自定义日期筛选</div>
+                    </div>
+                    <div class="trend-toolbar">
+                        <el-radio-group v-model="rangeMode" size="small" @change="handleRangeModeChange">
+                            <el-radio-button label="7d">近7天</el-radio-button>
+                            <el-radio-button label="30d">近30天</el-radio-button>
+                        </el-radio-group>
+                        <el-date-picker
+                                v-model="customRange"
+                                type="daterange"
+                                range-separator="至"
+                                start-placeholder="开始日期"
+                                end-placeholder="结束日期"
+                                value-format="YYYY-MM-DD"
+                                :disabled-date="disableFutureDate"
+                                unlink-panels
+                                clearable
+                                @change="handleCustomRangeChange"/>
+                    </div>
+                </div>
+                <v-chart :option="activityTrendOption" class="activity-chart-panel" autoresize/>
+            </card>
+        </div>
+
+        <div class="chart-grid">
+            <card>
+                <div class="panel-title">帖子状态分布</div>
+                <v-chart :option="statusChartOption" class="chart-panel" autoresize/>
             </card>
             <card>
-                <div style="font-weight: bold;margin-bottom: 10px">各分类帖子数量</div>
-                <v-chart :option="typeChartOption" style="height: 300px" autoresize/>
+                <div class="panel-title">分类发帖 Top 5</div>
+                <v-chart :option="typeChartOption" class="chart-panel" autoresize/>
+            </card>
+            <card>
+                <div class="panel-head">
+                    <div class="panel-title">举报原因分布</div>
+                    <div class="report-type-tags">
+                        <el-tag size="small" type="danger">帖子举报 {{ dashboard.reportTargetTypeMap.topic || 0 }}</el-tag>
+                        <el-tag size="small" type="warning">评论举报 {{ dashboard.reportTargetTypeMap.comment || 0 }}</el-tag>
+                    </div>
+                </div>
+                <v-chart :option="reportReasonChartOption" class="chart-panel" autoresize/>
+            </card>
+        </div>
+
+        <div class="todo-grid">
+            <card>
+                <div class="panel-head">
+                    <div class="panel-title">最近待审核帖子</div>
+                    <el-button text @click="router.push('/admin/topics')">进入帖子管理</el-button>
+                </div>
+                <div v-if="dashboard.latestPendingTopics.length" class="todo-list">
+                    <div v-for="item in dashboard.latestPendingTopics"
+                         :key="item.id"
+                         class="todo-item"
+                         @click="router.push(`/admin/topic-detail/${item.id}`)">
+                        <div class="todo-main">
+                            <div class="todo-title">{{ item.title }}</div>
+                            <div class="todo-meta text-secondary">
+                                {{ item.username }} · {{ item.typeName }} · {{ formatTime(item.lastSubmitTime) }}
+                            </div>
+                        </div>
+                        <el-tag size="small" type="warning">待审核</el-tag>
+                    </div>
+                </div>
+                <el-empty v-else :image-size="80" description="当前没有待审核帖子"/>
+            </card>
+
+            <card>
+                <div class="panel-head">
+                    <div class="panel-title">最近待处理举报</div>
+                    <el-button text @click="router.push('/admin/reports')">进入举报管理</el-button>
+                </div>
+                <div v-if="dashboard.latestPendingReports.length" class="todo-list">
+                    <div v-for="item in dashboard.latestPendingReports"
+                         :key="item.id"
+                         class="todo-item"
+                         @click="router.push('/admin/reports')">
+                        <div class="todo-main">
+                            <div class="todo-title">
+                                {{ targetTypeName[item.targetType] || item.targetType }} · {{ item.targetSummary }}
+                            </div>
+                            <div class="todo-meta text-secondary">
+                                举报人 {{ item.reporterName }} · 原因 {{ item.reason }} · {{ formatTime(item.time) }}
+                            </div>
+                        </div>
+                        <el-tag size="small" type="danger">待处理</el-tag>
+                    </div>
+                </div>
+                <el-empty v-else :image-size="80" description="当前没有待处理举报"/>
+            </card>
+        </div>
+
+        <div class="ranking-grid">
+            <card>
+                <div class="panel-head">
+                    <div class="panel-title">热门内容榜单</div>
+                    <div class="text-secondary panel-tip">按浏览量优先，结合评论/点赞/收藏排序</div>
+                </div>
+                <div v-if="dashboard.hotTopics.length" class="ranking-list">
+                    <div v-for="(item, index) in dashboard.hotTopics"
+                         :key="item.id"
+                         class="ranking-item"
+                         @click="router.push(`/admin/topic-detail/${item.id}`)">
+                        <div class="ranking-index">{{ index + 1 }}</div>
+                        <div class="ranking-main">
+                            <div class="ranking-title-row">
+                                <div class="ranking-title">{{ item.title }}</div>
+                                <el-tag size="small" :type="topicStatusTagType(item.status)">
+                                    {{ statusName[item.status] || item.status }}
+                                </el-tag>
+                            </div>
+                            <div class="ranking-meta text-secondary">
+                                {{ item.username }} · {{ item.typeName }}
+                            </div>
+                            <div class="ranking-metrics">
+                                <span>浏览 {{ item.viewCount }}</span>
+                                <span>评论 {{ item.commentCount }}</span>
+                                <span>点赞 {{ item.likeCount }}</span>
+                                <span>收藏 {{ item.collectCount }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <el-empty v-else :image-size="80" description="暂无热门内容数据"/>
+            </card>
+
+            <card>
+                <div class="panel-head">
+                    <div class="panel-title">最近注册用户</div>
+                    <el-button text @click="router.push('/admin/users')">进入用户管理</el-button>
+                </div>
+                <div v-if="dashboard.latestUsers.length" class="ranking-list">
+                    <div v-for="item in dashboard.latestUsers"
+                         :key="item.id"
+                         class="ranking-item"
+                         @click="router.push(`/admin/user-detail/${item.id}`)">
+                        <el-avatar :src="store.avatarUserUrl(item.avatar)" :size="38" class="ranking-avatar">
+                            {{ item.username?.charAt(0) }}
+                        </el-avatar>
+                        <div class="ranking-main">
+                            <div class="ranking-title-row">
+                                <div class="ranking-title">{{ item.username }}</div>
+                                <el-tag size="small" :type="userStatusTagType(item.status)">
+                                    {{ item.status === 'active' ? '正常' : '已禁用' }}
+                                </el-tag>
+                            </div>
+                            <div class="ranking-meta text-secondary">
+                                {{ item.email }}
+                            </div>
+                            <div class="ranking-metrics">
+                                <span>{{ item.role === 'admin' ? '管理员' : '普通用户' }}</span>
+                                <span>注册于 {{ formatTime(item.registerTime) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <el-empty v-else :image-size="80" description="暂无用户注册数据"/>
             </card>
         </div>
     </div>
@@ -32,112 +212,621 @@
 
 <script setup>
 import {get} from "@/net"
-import {ref, computed, shallowRef} from "vue"
-import {ChatDotSquare, Document, User, Warning} from "@element-plus/icons-vue"
+import {computed, ref} from "vue"
+import {Bell, ChatDotSquare, Document, Lock, User, Warning} from "@element-plus/icons-vue"
 import Card from "@/components/Card.vue"
 import {useStore} from "@/stores/index"
+import router from "@/router"
 import VChart from "vue-echarts"
 import {use} from "echarts/core"
 import {CanvasRenderer} from "echarts/renderers"
-import {PieChart, BarChart} from "echarts/charts"
-import {TitleComponent, TooltipComponent, LegendComponent, GridComponent} from "echarts/components"
+import {BarChart, LineChart, PieChart} from "echarts/charts"
+import {GridComponent, LegendComponent, TooltipComponent} from "echarts/components"
 
-use([CanvasRenderer, PieChart, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
+use([CanvasRenderer, PieChart, BarChart, LineChart, TooltipComponent, LegendComponent, GridComponent])
 
 const store = useStore()
-const stats = ref({
-    totalTopics: 0, totalUsers: 0, totalComments: 0, pendingTopics: 0,
-    statusMap: {}, typeMap: {}
+const loading = ref(true)
+const rangeMode = ref('7d')
+const customRange = ref([])
+
+const dashboard = ref({
+    overview: {
+        totalUsers: 0,
+        totalTopics: 0,
+        totalComments: 0,
+        pendingTopics: 0,
+        pendingReports: 0,
+        disabledUsers: 0
+    },
+    activityTrend: {
+        topicSummary: { current: 0 },
+        commentSummary: { current: 0 },
+        userSummary: { current: 0 },
+        points: []
+    },
+    topicStatusMap: {},
+    topicTypeTop: [],
+    reportReasonMap: {},
+    reportTargetTypeMap: {},
+    latestPendingTopics: [],
+    latestPendingReports: [],
+    hotTopics: [],
+    latestUsers: []
 })
+
+const targetTypeName = {
+    topic: '帖子',
+    comment: '评论'
+}
+
+const statusName = {
+    pending_review: '待审核',
+    published: '已发布',
+    rejected: '已拒绝',
+    hidden: '已隐藏',
+    deleted: '已删除'
+}
 
 const statCards = computed(() => {
     const d = store.dark
+    const overview = dashboard.value.overview
     return [
-        { label: '总帖子数', value: stats.value.totalTopics, icon: Document, color: '#409EFF', bg: d ? '#1a2a3a' : '#ecf5ff' },
-        { label: '总用户数', value: stats.value.totalUsers, icon: User, color: '#67C23A', bg: d ? '#1a2a1a' : '#f0f9eb' },
-        { label: '总评论数', value: stats.value.totalComments, icon: ChatDotSquare, color: '#E6A23C', bg: d ? '#2a2518' : '#fdf6ec' },
-        { label: '待审核帖子', value: stats.value.pendingTopics, icon: Warning, color: '#F56C6C', bg: d ? '#2a1a1a' : '#fef0f0' }
+        { key: 'topics', label: '总帖子数', value: overview.totalTopics, icon: Document, color: '#409EFF', bg: d ? '#1b3044' : '#ecf5ff' },
+        { key: 'users', label: '总用户数', value: overview.totalUsers, icon: User, color: '#67C23A', bg: d ? '#203322' : '#f0f9eb' },
+        { key: 'comments', label: '总评论数', value: overview.totalComments, icon: ChatDotSquare, color: '#E6A23C', bg: d ? '#382d1d' : '#fdf6ec' },
+        { key: 'pendingTopics', label: '待审核帖子', value: overview.pendingTopics, icon: Warning, color: '#F56C6C', bg: d ? '#3b2225' : '#fef0f0' },
+        { key: 'pendingReports', label: '待处理举报', value: overview.pendingReports, icon: Bell, color: '#F56C6C', bg: d ? '#3a2024' : '#fef0f0' },
+        { key: 'disabledUsers', label: '已禁用用户', value: overview.disabledUsers, icon: Lock, color: '#909399', bg: d ? '#2a2d33' : '#f4f4f5' }
     ]
 })
 
-const statusName = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已隐藏', deleted: '已删除' }
+const trendCards = computed(() => {
+    const trend = dashboard.value.activityTrend
+    const label = trendSummaryLabel.value
+    return [
+        buildTrendCard(`${label}发帖`, trend.topicSummary, '统计区间内累计发帖数'),
+        buildTrendCard(`${label}评论`, trend.commentSummary, '统计区间内累计评论数'),
+        buildTrendCard(`${label}注册`, trend.userSummary, '统计区间内累计注册数')
+    ]
+})
+
+const rangeLabel = computed(() => {
+    if (rangeMode.value === '30d') return '近 30 天'
+    if (rangeMode.value === 'custom') {
+        const [startDate, endDate] = customRange.value || []
+        if (startDate && endDate) return `${startDate} 至 ${endDate}`
+        return '自定义区间'
+    }
+    return '近 7 天'
+})
+
+const trendSummaryLabel = computed(() => rangeMode.value === 'custom' ? '区间' : rangeLabel.value)
+
+const trendTitle = computed(() => `${rangeLabel.value}活跃趋势`)
+
+const activityTrendOption = computed(() => {
+    const points = dashboard.value.activityTrend.points
+    return {
+        tooltip: { trigger: 'axis' },
+        legend: {
+            top: 0,
+            textStyle: { color: store.dark ? '#cfd3dc' : '#606266' }
+        },
+        grid: { left: '3%', right: '3%', top: '16%', bottom: '4%', containLabel: true },
+        xAxis: {
+            type: 'category',
+            data: points.map(item => item.date),
+            boundaryGap: false,
+            axisLabel: { color: store.dark ? '#cfd3dc' : '#606266' }
+        },
+        yAxis: {
+            type: 'value',
+            splitLine: { lineStyle: { color: store.dark ? '#31343b' : '#ebeef5' } }
+        },
+        series: [
+            {
+                name: '发帖',
+                type: 'line',
+                smooth: true,
+                data: points.map(item => item.topics),
+                symbolSize: 7,
+                lineStyle: { width: 3, color: '#409EFF' },
+                itemStyle: { color: '#409EFF' }
+            },
+            {
+                name: '评论',
+                type: 'line',
+                smooth: true,
+                data: points.map(item => item.comments),
+                symbolSize: 7,
+                lineStyle: { width: 3, color: '#E6A23C' },
+                itemStyle: { color: '#E6A23C' }
+            },
+            {
+                name: '注册',
+                type: 'line',
+                smooth: true,
+                data: points.map(item => item.users),
+                symbolSize: 7,
+                lineStyle: { width: 3, color: '#67C23A' },
+                itemStyle: { color: '#67C23A' }
+            }
+        ]
+    }
+})
 
 const statusChartOption = computed(() => {
-    const data = Object.entries(stats.value.statusMap).map(([k, v]) => ({
-        name: statusName[k] || k, value: v
+    const data = Object.entries(dashboard.value.topicStatusMap).map(([key, value]) => ({
+        name: statusName[key] || key,
+        value
     }))
     return {
         tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-        legend: { bottom: 0 },
+        legend: { bottom: 0, textStyle: { color: store.dark ? '#cfd3dc' : '#606266' } },
         series: [{
-            type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: false,
-            itemStyle: { borderRadius: 10, borderColor: store.dark ? '#1d1e1f' : '#fff', borderWidth: 2 },
-            label: { show: false }, emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
-            data
+            type: 'pie',
+            radius: ['42%', '70%'],
+            data,
+            label: { show: false },
+            itemStyle: {
+                borderRadius: 10,
+                borderColor: store.dark ? '#1d1e1f' : '#fff',
+                borderWidth: 2
+            },
+            emphasis: {
+                label: { show: true, fontSize: 15, fontWeight: 'bold' }
+            }
         }]
     }
 })
 
 const typeChartOption = computed(() => {
-    const names = Object.keys(stats.value.typeMap)
-    const values = Object.values(stats.value.typeMap)
+    const rows = [...dashboard.value.topicTypeTop].reverse()
     return {
-        tooltip: { trigger: 'axis' },
-        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-        xAxis: { type: 'category', data: names },
-        yAxis: { type: 'value' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '4%', right: '4%', top: '4%', bottom: '3%', containLabel: true },
+        xAxis: {
+            type: 'value',
+            splitLine: { lineStyle: { color: store.dark ? '#31343b' : '#ebeef5' } }
+        },
+        yAxis: {
+            type: 'category',
+            data: rows.map(item => item.name),
+            axisLabel: { color: store.dark ? '#cfd3dc' : '#606266' }
+        },
         series: [{
-            type: 'bar', data: values, barWidth: '50%',
-            itemStyle: { borderRadius: [4, 4, 0, 0], color: '#409EFF' }
+            type: 'bar',
+            data: rows.map(item => item.value),
+            barWidth: 18,
+            itemStyle: {
+                borderRadius: [0, 6, 6, 0],
+                color: '#409EFF'
+            }
         }]
     }
 })
 
-// 加载统计数据
-const statusList = ['pending_review', 'published', 'rejected', 'hidden', 'deleted']
-let loaded = 0
+const reportReasonChartOption = computed(() => {
+    const data = Object.entries(dashboard.value.reportReasonMap)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+    return {
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '4%', right: '4%', top: '4%', bottom: '3%', containLabel: true },
+        xAxis: {
+            type: 'value',
+            splitLine: { lineStyle: { color: store.dark ? '#31343b' : '#ebeef5' } }
+        },
+        yAxis: {
+            type: 'category',
+            data: [...data].reverse().map(item => item.name),
+            axisLabel: { color: store.dark ? '#cfd3dc' : '#606266' }
+        },
+        series: [{
+            type: 'bar',
+            data: [...data].reverse().map(item => item.value),
+            barWidth: 18,
+            itemStyle: {
+                borderRadius: [0, 6, 6, 0],
+                color: '#E6A23C'
+            }
+        }]
+    }
+})
 
-function checkDone() {
-    loaded++
-    if (loaded >= 3) {
-        // 统计完成
+function loadDashboard() {
+    loading.value = true
+    const params = buildRangeQuery()
+    get(`/api/admin/dashboard${params}`, data => {
+        dashboard.value = data
+        loading.value = false
+    }, () => loading.value = false)
+}
+
+function formatTime(time) {
+    if (!time) return '暂无时间'
+    return new Date(time).toLocaleString()
+}
+
+function disableFutureDate(date) {
+    return date.getTime() > Date.now()
+}
+
+function topicStatusTagType(status) {
+    return ({
+        pending_review: 'warning',
+        published: 'success',
+        rejected: 'danger',
+        hidden: 'info',
+        deleted: 'info'
+    })[status] || 'info'
+}
+
+function userStatusTagType(status) {
+    return status === 'active' ? 'success' : 'danger'
+}
+
+function handleStatCardClick(key) {
+    switch (key) {
+        case 'topics':
+            router.push('/admin/topics')
+            break
+        case 'users':
+            router.push('/admin/users')
+            break
+        case 'comments':
+            router.push('/admin/comments')
+            break
+        case 'pendingTopics':
+            router.push({ path: '/admin/topics', query: { status: 'pending_review' } })
+            break
+        case 'pendingReports':
+            router.push({ path: '/admin/reports', query: { status: 'pending' } })
+            break
+        case 'disabledUsers':
+            router.push({ path: '/admin/users', query: { status: 'disabled' } })
+            break
     }
 }
 
-// 加载帖子各状态数量
-statusList.forEach(status => {
-    get(`/api/admin/topics?page=0&status=${status}`, data => {
-        stats.value.statusMap[status] = data.length
-        if (status === 'pending_review') stats.value.pendingTopics = data.length
-        if (status === 'published') stats.value.totalTopics = data.length
-    })
-})
-// 简化统计：用各状态之和作为总帖子数
-get('/api/admin/topics?page=0', data => {
-    stats.value.totalTopics = data.length
-})
+function buildTrendCard(label, summary = {}, desc) {
+    const current = summary.current ?? 0
+    return {
+        label,
+        current,
+        desc
+    }
+}
 
-get('/api/admin/users?page=0', data => {
-    stats.value.totalUsers = data.length
-})
+function buildRangeQuery() {
+    const { startDate, endDate } = resolveRange()
+    return `?startDate=${startDate}&endDate=${endDate}`
+}
 
-get('/api/admin/comments?page=0', data => {
-    stats.value.totalComments = data.length
-})
+function resolveRange() {
+    const today = new Date()
+    const format = date => {
+        const year = date.getFullYear()
+        const month = `${date.getMonth() + 1}`.padStart(2, '0')
+        const day = `${date.getDate()}`.padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+    const shiftDate = offset => {
+        const date = new Date(today)
+        date.setDate(date.getDate() + offset)
+        return date
+    }
+    if (rangeMode.value === '30d') {
+        return { startDate: format(shiftDate(-29)), endDate: format(today) }
+    }
+    if (rangeMode.value === 'custom' && customRange.value?.length === 2) {
+        return { startDate: customRange.value[0], endDate: customRange.value[1] }
+    }
+    return { startDate: format(shiftDate(-6)), endDate: format(today) }
+}
 
-// 各分类帖子数
-get('/api/admin/types', types => {
-    types.forEach(t => {
-        get(`/api/admin/topics?page=0&type=${t.id}`, data => {
-            if (data.length > 0) {
-                stats.value.typeMap[t.name] = data.length
-            }
-        })
-    })
-})
+function handleRangeModeChange() {
+    if (rangeMode.value === '7d' || rangeMode.value === '30d') {
+        customRange.value = []
+        loadDashboard()
+    }
+}
+
+function handleCustomRangeChange() {
+    if (customRange.value?.length === 2) {
+        rangeMode.value = 'custom'
+        loadDashboard()
+        return
+    }
+    if (!customRange.value?.length && rangeMode.value === 'custom') {
+        rangeMode.value = '7d'
+        loadDashboard()
+    }
+}
+
+loadDashboard()
 </script>
 
 <style scoped>
+.dashboard-page {
+    padding: 20px;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.dashboard-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.dashboard-subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.stat-card-wrapper {
+    cursor: pointer;
+    transition: transform .2s ease;
+}
+
+.stat-card-wrapper:hover {
+    transform: translateY(-1px);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-body {
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.stat-label {
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.trend-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.trend-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.trend-main-value {
+    margin-top: 16px;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.trend-subtitle {
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.activity-chart-wrap {
+    margin-top: 15px;
+}
+
+.trend-panel-head {
+    margin-bottom: 14px;
+}
+
+.trend-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.activity-chart-panel {
+    height: 360px;
+}
+
+.chart-panel {
+    height: 320px;
+}
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.panel-title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.panel-tip {
+    font-size: 12px;
+}
+
+.report-type-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.todo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.ranking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ranking-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--el-fill-color-light);
+    cursor: pointer;
+    transition: background-color .2s ease, transform .2s ease;
+}
+
+.ranking-item:hover {
+    background: var(--el-fill-color);
+    transform: translateY(-1px);
+}
+
+.ranking-index {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #409EFF;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ranking-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.ranking-avatar {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ranking-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ranking-title {
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ranking-meta {
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+.ranking-metrics {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+}
+
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--el-fill-color-light);
+    cursor: pointer;
+    transition: background-color .2s ease, transform .2s ease;
+}
+
+.todo-item:hover {
+    background: var(--el-fill-color);
+    transform: translateY(-1px);
+}
+
+.todo-main {
+    min-width: 0;
+}
+
+.todo-title {
+    font-size: 14px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.todo-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 :global(.dark) .text-secondary {
     color: #a0a3a8 !important;
 }

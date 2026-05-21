@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 帖子 Mapper，包含互动（点赞/收藏）的自定义 SQL
@@ -112,12 +113,18 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 统计帖子点赞数量
+     *
+     * @param tid 帖子ID
+     * @return 点赞数量
      */
     @Select("select count(*) from db_topic_interact_like where tid = #{tid}")
     int likeCount(@Param("tid") int tid);
 
     /**
      * 统计帖子收藏数量
+     *
+     * @param tid 帖子ID
+     * @return 收藏数量
      */
     @Select("select count(*) from db_topic_interact_collect where tid = #{tid}")
     int collectCount(@Param("tid") int tid);
@@ -139,9 +146,82 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 统计帖子评论数量（仅正常状态）
+     *
+     * @param tid 帖子ID
+     * @return 评论数量
      */
     @Select("select count(*) from db_topic_comment where tid = #{tid} and status = 'normal'")
     int commentCount(@Param("tid") int tid);
+
+    /**
+     * 批量统计帖子点赞数量
+     *
+     * @param topicIds 帖子ID列表
+     * @return 统计结果，key 为 id，value 为 value
+     */
+    @Select("""
+            <script>
+                select tid as id, count(*) as value
+                from db_topic_interact_like
+                where tid in
+                <foreach collection="topicIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+                group by tid
+            </script>
+            """)
+    List<Map<String, Object>> batchLikeCounts(@Param("topicIds") List<Integer> topicIds);
+
+    /**
+     * 批量统计帖子收藏数量
+     *
+     * @param topicIds 帖子ID列表
+     * @return 统计结果，key 为 id，value 为 value
+     */
+    @Select("""
+            <script>
+                select tid as id, count(*) as value
+                from db_topic_interact_collect
+                where tid in
+                <foreach collection="topicIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+                group by tid
+            </script>
+            """)
+    List<Map<String, Object>> batchCollectCounts(@Param("topicIds") List<Integer> topicIds);
+
+    /**
+     * 批量统计帖子评论数量
+     *
+     * @param topicIds 帖子ID列表
+     * @return 统计结果，key 为 id，value 为 value
+     */
+    @Select("""
+            <script>
+                select tid as id, count(*) as value
+                from db_topic_comment
+                where status = 'normal' and tid in
+                <foreach collection="topicIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+                group by tid
+            </script>
+            """)
+    List<Map<String, Object>> batchCommentCounts(@Param("topicIds") List<Integer> topicIds);
+
+    /**
+     * 批量统计分类下的帖子数量
+     *
+     * @return 分类统计结果，key 为 id，value 为 value
+     */
+    @Select("""
+            select type as id, count(*) as value
+            from db_topic
+            where type is not null
+            group by type
+            """)
+    List<Map<String, Object>> batchTypeCounts();
 
     /**
      * 查询用户对帖子是否点过赞

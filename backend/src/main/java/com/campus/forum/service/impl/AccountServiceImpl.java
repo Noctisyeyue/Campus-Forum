@@ -304,19 +304,21 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      *
      * @param page   页码
      * @param search 搜索关键词，为空时返回全部
+     * @param status 用户状态筛选，为空时返回全部
      * @return 用户列表
      */
     @Override
-    public List<AdminUserVO> adminListUsers(int page, String search) {
+    public List<AdminUserVO> adminListUsers(int page, String search, String status) {
         Page<Account> p = Page.of(page, 10);
+        var wrapper = Wrappers.<Account>query();
         if (search != null && !search.isBlank()) {
-            this.page(p, Wrappers.<Account>query()
-                    .like("username", search).or()
-                    .like("email", search)
-                    .orderByDesc("register_time"));
-        } else {
-            this.page(p, Wrappers.<Account>query().orderByDesc("register_time"));
+            wrapper.and(query -> query.like("username", search).or().like("email", search));
         }
+        if (status != null && !status.isBlank()) {
+            wrapper.eq("status", status);
+        }
+        wrapper.orderByDesc("register_time");
+        this.page(p, wrapper);
         return p.getRecords().stream().map(account -> {
             AdminUserVO vo = new AdminUserVO();
             BeanUtils.copyProperties(account, vo);

@@ -90,16 +90,18 @@
 
 <script setup>
 import {get, post} from "@/net"
-import {reactive, ref} from "vue"
+import {reactive, ref, watch} from "vue"
 import {ElMessage} from "element-plus"
 import Card from "@/components/Card.vue"
 import router from "@/router"
+import {useRoute} from "vue-router"
 
 const reports = ref([])
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
 const filter = reactive({ status: '', targetType: '' })
+const route = useRoute()
 
 function loadReports(p) {
     loading.value = true
@@ -113,7 +115,6 @@ function loadReports(p) {
         loading.value = false
     })
 }
-loadReports(0)
 
 function resolveReport(id, action, note) {
     let url = `/api/admin/reports/${id}/resolve?action=${action}`
@@ -148,4 +149,12 @@ function statusLabel(status) {
     if (status === 'resolved') return '已处理'
     return '已驳回'
 }
+
+function applyRouteQuery() {
+    filter.status = typeof route.query.status === 'string' ? route.query.status : ''
+    filter.targetType = typeof route.query.targetType === 'string' ? route.query.targetType : ''
+    loadReports(0)
+}
+
+watch(() => route.query, applyRouteQuery, { immediate: true })
 </script>

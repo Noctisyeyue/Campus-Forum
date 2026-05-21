@@ -100,16 +100,18 @@
 
 <script setup>
 import {get, post} from "@/net"
-import {reactive, ref} from "vue"
+import {reactive, ref, watch} from "vue"
 import {ElMessage} from "element-plus"
 import Card from "@/components/Card.vue"
 import router from "@/router"
+import {useRoute} from "vue-router"
 
 const topics = ref([])
 const types = ref([])
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
+const route = useRoute()
 
 const filter = reactive({ status: '', type: '', title: '', author: '' })
 const reject = reactive({ show: false, id: null, reason: '' })
@@ -142,7 +144,6 @@ function loadTopics(p) {
         loading.value = false
     })
 }
-loadTopics(0)
 
 function doAction(id, action) {
     post(`/api/admin/topics/${id}/${action}`, null, () => {
@@ -184,4 +185,14 @@ function confirmHide() {
         loadTopics(page.value - 1)
     })
 }
+
+function applyRouteQuery() {
+    filter.status = typeof route.query.status === 'string' ? route.query.status : ''
+    filter.type = route.query.type ? Number(route.query.type) : ''
+    filter.title = typeof route.query.title === 'string' ? route.query.title : ''
+    filter.author = typeof route.query.author === 'string' ? route.query.author : ''
+    loadTopics(0)
+}
+
+watch(() => route.query, applyRouteQuery, { immediate: true })
 </script>

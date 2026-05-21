@@ -86,9 +86,10 @@ public interface AccountService extends IService<Account>, UserDetailsService {
      *
      * @param page   页码
      * @param search 搜索关键词，为空时返回全部
+     * @param status 用户状态筛选，为空时返回全部
      * @return 用户列表
      */
-    List<AdminUserVO> adminListUsers(int page, String search);
+    List<AdminUserVO> adminListUsers(int page, String search, String status);
 
     /**
      * 管理员禁用用户

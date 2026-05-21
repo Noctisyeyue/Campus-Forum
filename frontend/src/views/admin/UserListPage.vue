@@ -5,6 +5,10 @@
         </card>
         <card style="margin-top: 10px">
             <div style="display: flex;gap: 10px;margin-bottom: 15px">
+                <el-select v-model="status" placeholder="全部状态" style="width: 130px" clearable>
+                    <el-option value="active" label="正常"/>
+                    <el-option value="disabled" label="已禁用"/>
+                </el-select>
                 <el-input v-model="search" placeholder="搜索用户名或邮箱" style="width: 250px" clearable
                           @keyup.enter="loadUsers(0)"/>
                 <el-button type="primary" @click="loadUsers(0)">搜索</el-button>
@@ -75,11 +79,12 @@
 
 <script setup>
 import {get, post} from "@/net"
-import {ref} from "vue"
+import {ref, watch} from "vue"
 import {ElMessage} from "element-plus"
 import Card from "@/components/Card.vue"
 import router from "@/router"
 import {useStore} from "@/stores/index"
+import {useRoute} from "vue-router"
 
 const store = useStore()
 const users = ref([])
@@ -87,19 +92,21 @@ const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
 const search = ref('')
+const status = ref('')
+const route = useRoute()
 
 function loadUsers(p) {
     loading.value = true
     page.value = p + 1
     let url = `/api/admin/users?page=${p}`
     if (search.value) url += `&search=${encodeURIComponent(search.value)}`
+    if (status.value) url += `&status=${status.value}`
     get(url, data => {
         users.value = data
         total.value = (p + 1) * 10
         loading.value = false
     })
 }
-loadUsers(0)
 
 function toggleStatus(user) {
     const action = user.status === 'active' ? 'disable' : 'enable'
@@ -114,4 +121,12 @@ function resetPassword(id) {
         ElMessage.success('密码已重置为 123456')
     })
 }
+
+function applyRouteQuery() {
+    search.value = typeof route.query.search === 'string' ? route.query.search : ''
+    status.value = typeof route.query.status === 'string' ? route.query.status : ''
+    loadUsers(0)
+}
+
+watch(() => route.query, applyRouteQuery, { immediate: true })
 </script>

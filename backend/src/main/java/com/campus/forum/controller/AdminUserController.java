@@ -25,12 +25,14 @@ public class AdminUserController {
      * 分页查询用户列表，支持按用户名或邮箱搜索
      * @param page 页码（从0开始）
      * @param search 搜索关键词（可选）
+     * @param status 用户状态（可选）
      * @return 用户列表
      */
     @GetMapping
     public RestBean<List<AdminUserVO>> listUsers(@RequestParam(defaultValue = "0") @Min(0) int page,
-                                                  @RequestParam(required = false) String search) {
-        return RestBean.success(accountService.adminListUsers(page + 1, search));
+                                                  @RequestParam(required = false) String search,
+                                                  @RequestParam(required = false) String status) {
+        return RestBean.success(accountService.adminListUsers(page + 1, search, status));
     }
 
     /**
