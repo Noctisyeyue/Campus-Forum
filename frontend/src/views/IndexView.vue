@@ -204,11 +204,17 @@ import {
 import LightCard from "@/components/LightCard.vue";
 import {ElMessage} from "element-plus";
 
+/** Pinia 全局状态 */
 const store = useStore()
+/** 当前路由信息 */
 const route = useRoute()
+/** 页面加载状态，true 时显示全屏 loading */
 const loading = ref(true)
+/** 主内容区滚动条组件引用 */
 const mainScrollbar = ref()
+/** 各列表页的滚动位置缓存（path → scrollTop） */
 const routeScrollState = new Map()
+/** 需要记忆滚动位置的列表页路由集合 */
 const RESTORE_SCROLL_ROUTE_SET = new Set([
     '/index',
     '/index/activity',
@@ -216,32 +222,46 @@ const RESTORE_SCROLL_ROUTE_SET = new Set([
     '/index/my-topics'
 ])
 
+/** 搜索栏数据：type 控制搜索范围，text 为搜索关键词 */
 const searchInput = reactive({
     type: '1',
     text: ''
 })
 
+/** 执行搜索：根据选中的范围跳转到对应列表页，携带搜索关键词 */
 function doSearch() {
     const text = searchInput.text.trim()
     if (!text) return
     const typeRouteMap = { '1': '/index', '2': '/index/activity', '4': '/index/notice-topic' }
     router.push({ path: typeRouteMap[searchInput.type], query: { search: text } })
 }
+
+/** 未读消息通知列表 */
 const notification = ref([])
 
+/** 页面初始化：获取当前登录用户信息，管理员自动跳转管理后台 */
 get('/api/user/info', (data) => {
     store.user = data
     loading.value = false
     if (data.role === 'admin') router.replace('/admin')
 })
+
+/** 加载未读消息列表 */
 const loadNotification =
         () => get('/api/notification/list', data => notification.value = data)
 loadNotification()
 
+/** 退出登录 */
 function userLogout() {
     logout(() => router.push("/"))
 }
 
+/**
+ * 点击单条通知：先删除该通知，再刷新列表，最后跳转到通知指向的页面
+ *
+ * @param id  通知 ID
+ * @param url 通知指向的路由路径
+ */
 function confirmNotification(id, url) {
     get(`/api/notification/delete?id=${id}`, () => {
         loadNotification()
@@ -253,10 +273,17 @@ function confirmNotification(id, url) {
     })
 }
 
+/** 清除全部未读消息 */
 function deleteAllNotification() {
     get(`/api/notification/delete-all`, loadNotification)
 }
 
+/**
+ * 判断通知的跳转目标是否有效（排除 null、undefined 等无效路径）
+ *
+ * @param url 通知指向的路由路径
+ * @return true=有效可跳转，false=无效
+ */
 function hasNotificationTarget(url) {
     return typeof url === 'string'
         && url.trim().length > 0
@@ -266,19 +293,36 @@ function hasNotificationTarget(url) {
         && !url.endsWith('/undefined')
 }
 
+/**
+ * 判断指定路由是否需要记忆滚动位置
+ *
+ * @param path 路由路径
+ * @return true=需要记忆
+ */
 function shouldRememberScroll(path) {
     return RESTORE_SCROLL_ROUTE_SET.has(path)
 }
 
+/** 获取主滚动容器的原生 DOM 元素 */
 function currentScrollWrap() {
     return mainScrollbar.value?.wrapRef || null
 }
 
+/**
+ * 主滚动区域滚动事件处理：记录当前路由的滚动位置
+ *
+ * @param scrollTop 当前滚动距离
+ */
 function handleMainScroll({ scrollTop }) {
     if (!shouldRememberScroll(route.path)) return
     routeScrollState.set(route.path, scrollTop)
 }
 
+/**
+ * 恢复指定路由的滚动位置（多次重试，确保 DOM 渲染完成后再恢复）
+ *
+ * @param path 路由路径
+ */
 function restoreMainScroll(path) {
     if (!shouldRememberScroll(path)) return
     const top = routeScrollState.get(path)
@@ -293,6 +337,7 @@ function restoreMainScroll(path) {
     })
 }
 
+/** 监听路由变化，切换页面时恢复滚动位置 */
 watch(() => route.path, async path => {
     await nextTick()
     restoreMainScroll(path)
