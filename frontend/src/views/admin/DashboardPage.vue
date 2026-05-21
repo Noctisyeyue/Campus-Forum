@@ -35,6 +35,7 @@ import {get} from "@/net"
 import {ref, computed, shallowRef} from "vue"
 import {ChatDotSquare, Document, User, Warning} from "@element-plus/icons-vue"
 import Card from "@/components/Card.vue"
+import {useStore} from "@/stores/index"
 import VChart from "vue-echarts"
 import {use} from "echarts/core"
 import {CanvasRenderer} from "echarts/renderers"
@@ -43,6 +44,7 @@ import {TitleComponent, TooltipComponent, LegendComponent, GridComponent} from "
 
 use([CanvasRenderer, PieChart, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
+const store = useStore()
 const stats = ref({
     totalTopics: 0, totalUsers: 0, totalComments: 0, pendingTopics: 0,
     statusMap: {}, typeMap: {}
