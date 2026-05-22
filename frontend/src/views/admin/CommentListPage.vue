@@ -1,16 +1,30 @@
 <template>
-    <div style="padding: 20px">
-        <card>
-            <span style="font-size: 18px;font-weight: bold">评论管理</span>
-        </card>
-        <card style="margin-top: 10px">
-            <div style="display: flex;gap: 10px;margin-bottom: 15px">
-                <el-input v-model="filter.tid" placeholder="帖子 ID" style="width: 150px" clearable/>
-                <el-input v-model="filter.uid" placeholder="用户 ID" style="width: 150px" clearable/>
-                <el-button type="primary" @click="loadComments(0)">搜索</el-button>
+    <div class="admin-page">
+        <div class="admin-page-header">
+            <div>
+                <div class="admin-page-title">评论管理</div>
+                <div class="admin-page-desc text-secondary">查看和管理论坛中所有帖子的评论内容</div>
             </div>
-            <el-table :data="comments" stripe v-loading="loading">
-                <el-table-column prop="id" label="ID" width="100"/>
+            <div class="admin-page-stats" v-if="total > 0">
+                <span class="stat-badge">共 {{ total }} 条</span>
+            </div>
+        </div>
+        <div class="admin-page-filter">
+            <div class="filter-group">
+                <el-select v-model="filter.status" placeholder="全部状态" style="width: 120px" clearable>
+                    <el-option value="normal" label="正常"/>
+                    <el-option value="deleted" label="已删除"/>
+                </el-select>
+                <el-input v-model="filter.content" placeholder="评论内容" style="width: 150px" clearable
+                          :prefix-icon="Search"/>
+                <el-input v-model="filter.author" placeholder="用户名" style="width: 120px" clearable/>
+                <el-input v-model="filter.topicTitle" placeholder="帖子标题" style="width: 150px" clearable/>
+            </div>
+            <el-button type="primary" @click="loadComments(0)" :icon="Search">搜索</el-button>
+        </div>
+        <div class="admin-page-body">
+            <el-table :data="comments" stripe v-loading="loading" class="admin-table">
+                <el-table-column prop="id" label="ID" width="80"/>
                 <el-table-column prop="username" label="用户" width="120"/>
                 <el-table-column label="帖子" width="200">
                     <template #default="{ row }">
@@ -33,36 +47,32 @@
                 </el-table-column>
                 <el-table-column label="状态" width="90">
                     <template #default="{ row }">
-                        <el-tag :type="row.status === 'normal' ? 'success' : 'danger'" size="small">
+                        <el-tag :type="row.status === 'normal' ? 'success' : 'danger'" size="small" effect="light">
                             {{ row.status === 'normal' ? '正常' : '已删除' }}
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="100">
+                <el-table-column label="操作" width="90">
                     <template #default="{ row }">
-                        <el-popconfirm title="确定删除该评论吗？" @confirm="deleteComment(row.id)"
-                                       v-if="row.status === 'normal'">
-                            <template #reference>
-                                <el-link type="danger">&nbsp;删除</el-link>
-                            </template>
-                        </el-popconfirm>
+                        <el-button v-if="row.status === 'normal'" type="danger" size="small" plain round
+                                   @click="confirmDelete(row.id)">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
-            <div style="display: flex;justify-content: center;margin-top: 15px">
+            <div class="admin-pagination">
                 <el-pagination background layout="prev, pager, next"
                                v-model:current-page="page" @current-change="p => loadComments(p - 1)"
                                :total="total" :page-size="15" hide-on-single-page/>
             </div>
-        </card>
+        </div>
     </div>
 </template>
 
 <script setup>
 import {get, post} from "@/net"
 import {reactive, ref} from "vue"
-import {ElMessage} from "element-plus"
-import Card from "@/components/Card.vue"
+import {ElMessage, ElMessageBox} from "element-plus"
+import {Search} from "@element-plus/icons-vue"
 import router from "@/router"
 
 const comments = ref([])
@@ -70,22 +80,31 @@ const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
 
-const filter = reactive({ tid: '', uid: '' })
+const filter = reactive({ status: '', content: '', author: '', topicTitle: '' })
 
 function loadComments(p) {
     loading.value = true
     page.value = p + 1
     let url = `/api/admin/comments?page=${p}`
-    if (filter.tid) url += `&tid=${filter.tid}`
-    if (filter.uid) url += `&uid=${filter.uid}`
+    if (filter.status) url += `&status=${filter.status}`
+    if (filter.content) url += `&content=${encodeURIComponent(filter.content)}`
+    if (filter.author) url += `&author=${encodeURIComponent(filter.author)}`
+    if (filter.topicTitle) url += `&topicTitle=${encodeURIComponent(filter.topicTitle)}`
     get(url, data => {
         comments.value = data
-        // 无法从列表接口获取总数，用返回条数判断是否有下一页
         total.value = (p + 1) * 15
         loading.value = false
     })
 }
 loadComments(0)
+
+function confirmDelete(id) {
+    ElMessageBox.confirm('确定删除该评论吗？此操作不可逆。', '删除评论', {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => deleteComment(id)).catch(() => {})
+}
 
 function deleteComment(id) {
     post(`/api/admin/comments/${id}/delete`, null, () => {
@@ -94,3 +113,69 @@ function deleteComment(id) {
     })
 }
 </script>
+
+<style lang="less" scoped>
+.admin-page {
+    padding: 20px 24px;
+}
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+}
+
+.admin-page-desc {
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+}
+
+.admin-page-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-page-body {
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.admin-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+</style>

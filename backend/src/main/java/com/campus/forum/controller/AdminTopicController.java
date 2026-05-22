@@ -69,13 +69,13 @@ public class AdminTopicController {
     /**
      * 审核拒绝帖子
      * @param id 帖子ID
-     * @param reason 拒绝理由（可选）
+     * @param reason 拒绝理由（必填）
      * @param adminId 当前管理员ID
      * @return 操作结果
      */
     @PostMapping("/{id}/reject")
     public RestBean<Void> rejectTopic(@PathVariable int id,
-                                      @RequestParam(required = false) String reason,
+                                      @RequestParam String reason,
                                       @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
         topicService.adminRejectTopic(id, adminId, reason);
         return RestBean.success();

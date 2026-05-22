@@ -1010,13 +1010,17 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @return 评论列表
      */
     @Override
-    public List<AdminCommentVO> adminListComments(int page, Integer tid, Integer uid) {
+    public List<AdminCommentVO> adminListComments(int page, String status, String content, String author, String topicTitle) {
         Page<TopicComment> p = Page.of(page, 15);
         var wrapper = Wrappers.<TopicComment>query();
-        if (tid != null && tid > 0)
-            wrapper.eq("tid", tid);
-        if (uid != null && uid > 0)
-            wrapper.eq("uid", uid);
+        if (status != null && !status.isBlank())
+            wrapper.eq("status", status);
+        if (content != null && !content.isBlank())
+            wrapper.like("content", content);
+        if (author != null && !author.isBlank())
+            wrapper.inSql("uid", "select id from db_account where username like '%" + author + "%'");
+        if (topicTitle != null && !topicTitle.isBlank())
+            wrapper.inSql("tid", "select id from db_topic where title like '%" + topicTitle + "%'");
         wrapper.orderByDesc("time");
         commentMapper.selectPage(p, wrapper);
         return p.getRecords().stream().map(comment -> {

@@ -1,12 +1,10 @@
 <template>
-    <div style="padding: 20px" v-loading="loading">
-        <card>
-            <div style="display: flex;justify-content: space-between;align-items: center">
-                <span style="font-size: 18px;font-weight: bold">帖子详情</span>
-                <el-button :icon="ArrowLeft" size="small" plain round @click="router.back()">返回列表</el-button>
-            </div>
-        </card>
-        <card style="margin-top: 10px" v-if="topic">
+    <div class="admin-page" v-loading="loading">
+        <div class="admin-page-header">
+            <div class="admin-page-title">帖子详情</div>
+            <el-button :icon="ArrowLeft" size="small" plain round @click="router.back()">返回列表</el-button>
+        </div>
+        <div class="admin-form-card" v-if="topic">
             <div style="display: flex;gap: 10px;margin-bottom: 15px;flex-wrap: wrap">
                 <el-button v-if="topic.status === 'pending_review'" type="success"
                            @click="doAction('approve')">审核通过</el-button>
@@ -51,8 +49,8 @@
                       :title="`拒绝原因：${topic.reviewReason}`"
                       type="error" :closable="false" style="margin-bottom: 15px"/>
             <div class="topic-content" v-html="convertToHtml(topic.content)"></div>
-        </card>
-        <card style="margin-top: 10px" v-if="topic">
+        </div>
+        <div class="admin-form-card" style="margin-top: 16px" v-if="topic">
             <span style="font-weight: bold">评论 ({{ topic.comments }})</span>
             <el-divider/>
             <div v-for="item in comments" style="margin-bottom: 15px">
@@ -73,16 +71,23 @@
                 <div style="font-size: 14px;margin-top: 5px;opacity: 0.8">{{ item.content }}</div>
                 <el-divider style="margin: 10px 0"/>
             </div>
-        </card>
-        <el-dialog v-model="rejectVisible" title="拒绝帖子" width="400px">
+        </div>
+        <el-dialog v-model="rejectVisible" title="拒绝帖子" width="420px">
+            <div class="dialog-hint">
+                <el-icon :size="18" color="#E6A23C"><Warning/></el-icon>
+                <span>拒绝后帖子将不会展示，作者可以看到拒绝原因</span>
+            </div>
             <el-input v-model="rejectReason" type="textarea" :rows="3" placeholder="请输入拒绝理由（可选）"/>
             <template #footer>
                 <el-button @click="rejectVisible = false">取消</el-button>
                 <el-button type="danger" @click="confirmReject">确定拒绝</el-button>
             </template>
         </el-dialog>
-        <el-dialog v-model="hideVisible" title="下架帖子" width="400px">
-            <div style="margin-bottom: 10px;color: grey">下架后前台将不再展示此帖子，确定下架？</div>
+        <el-dialog v-model="hideVisible" title="下架帖子" width="420px">
+            <div class="dialog-hint">
+                <el-icon :size="18" color="#E6A23C"><Warning/></el-icon>
+                <span>下架后前台将不再展示此帖子</span>
+            </div>
             <el-input v-model="hideReason" type="textarea" :rows="3" placeholder="请输入下架原因"/>
             <template #footer>
                 <el-button @click="hideVisible = false">取消</el-button>
@@ -99,7 +104,7 @@ import router from "@/router"
 import {useStore} from "@/stores/index"
 import {ref} from "vue"
 import {ElMessage} from "element-plus"
-import {ArrowLeft} from "@element-plus/icons-vue"
+import {ArrowLeft, Warning} from "@element-plus/icons-vue"
 import {QuillDeltaToHtmlConverter} from "quill-delta-to-html"
 import Card from "@/components/Card.vue"
 import TopicTag from "@/components/TopicTag.vue"
@@ -190,10 +195,46 @@ function deleteComment(id) {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+.admin-page {
+    padding: 20px 24px;
+}
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+}
+
+.admin-form-card {
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    padding: 20px;
+}
+
 .topic-content {
     font-size: 14px;
     line-height: 22px;
     opacity: 0.85;
+}
+
+.dialog-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--el-color-warning-light-9);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--el-text-color-regular);
 }
 </style>

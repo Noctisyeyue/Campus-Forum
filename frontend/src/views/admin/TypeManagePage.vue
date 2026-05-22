@@ -1,47 +1,47 @@
 <template>
-    <div style="padding: 20px">
-        <card>
-            <div style="display: flex;justify-content: space-between;align-items: center">
-                <span style="font-size: 18px;font-weight: bold">分类管理</span>
-                <el-button type="primary" @click="openDialog()" :icon="Plus">新增分类</el-button>
+    <div class="admin-page">
+        <div class="admin-page-header">
+            <div>
+                <div class="admin-page-title">分类管理</div>
+                <div class="admin-page-desc text-secondary">管理帖子分类的类型、颜色和描述信息</div>
             </div>
-        </card>
-        <card style="margin-top: 10px">
-            <el-table :data="types" stripe style="width: 100%">
-                <el-table-column prop="id" label="ID" width="80"/>
-                <el-table-column label="颜色" width="80">
+            <el-button type="primary" @click="openDialog()" :icon="Plus">新增分类</el-button>
+        </div>
+        <div class="admin-page-body">
+            <el-table :data="types" stripe class="admin-table">
+                <el-table-column prop="id" label="ID" width="70"/>
+                <el-table-column label="颜色" width="70">
                     <template #default="{ row }">
                         <color-dot :color="row.color"/>
                     </template>
                 </el-table-column>
                 <el-table-column prop="name" label="名称"/>
                 <el-table-column prop="desc" label="描述"/>
-                <el-table-column label="类型" width="120">
+                <el-table-column label="类型" width="100">
                     <template #default="{ row }">
-                        <el-tag v-if="row.systemKey" type="warning">系统分类</el-tag>
-                        <el-tag v-else type="info">普通分类</el-tag>
+                        <el-tag v-if="row.systemKey" type="warning" size="small" effect="light">系统分类</el-tag>
+                        <el-tag v-else type="info" size="small" effect="light">普通分类</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="180">
+                <el-table-column label="操作" width="170">
                     <template #default="{ row }">
-                        <el-link type="primary" @click="openDialog(row)">&nbsp;编辑</el-link>
-                        <el-popconfirm v-if="!row.systemKey" title="确定删除该分类吗？" @confirm="deleteType(row.id)">
-                            <template #reference>
-                                <el-link type="danger" style="margin-left: 15px">&nbsp;删除</el-link>
-                            </template>
-                        </el-popconfirm>
-                        <span v-else style="margin-left: 15px;font-size: 12px;color: grey">仅可改颜色</span>
+                        <div class="action-cell">
+                            <el-button type="primary" size="small" plain round @click="openDialog(row)">编辑</el-button>
+                            <el-button v-if="!row.systemKey" type="danger" size="small" plain round
+                                       @click="confirmDeleteType(row.id)">删除</el-button>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
-        </card>
+        </div>
         <el-dialog v-model="dialog.show" :title="dialog.edit ? '编辑分类' : '新增分类'" width="450px">
             <el-form label-width="80px">
                 <el-form-item label="名称">
                     <el-input v-model="dialog.form.name" placeholder="请输入分类名称" :disabled="dialog.form.systemKey"/>
                 </el-form-item>
                 <el-form-item label="描述">
-                    <el-input v-model="dialog.form.desc" type="textarea" :rows="3" placeholder="请输入分类描述" :disabled="dialog.form.systemKey"/>
+                    <el-input v-model="dialog.form.desc" type="textarea" :rows="3" placeholder="请输入分类描述"
+                              :disabled="dialog.form.systemKey"/>
                 </el-form-item>
                 <el-form-item label="颜色">
                     <el-color-picker v-model="dialog.form.color"/>
@@ -60,9 +60,8 @@ import {get, post} from "@/net"
 import axios from "axios"
 import {accessHeader} from "@/net"
 import {reactive, ref} from "vue"
-import {ElMessage} from "element-plus"
+import {ElMessage, ElMessageBox} from "element-plus"
 import {Plus} from "@element-plus/icons-vue"
-import Card from "@/components/Card.vue"
 import ColorDot from "@/components/ColorDot.vue"
 
 const types = ref([])
@@ -118,6 +117,14 @@ function submitType() {
     }
 }
 
+function confirmDeleteType(id) {
+    ElMessageBox.confirm('确定删除该分类吗？', '删除分类', {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => deleteType(id)).catch(() => {})
+}
+
 function deleteType(id) {
     axios.delete(`/api/admin/types/${id}`, { headers: accessHeader() })
         .then(({data}) => {
@@ -130,3 +137,46 @@ function deleteType(id) {
         })
 }
 </script>
+
+<style lang="less" scoped>
+.admin-page {
+    padding: 20px 24px;
+}
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+}
+
+.admin-page-desc {
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+.admin-page-body {
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.action-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.admin-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+</style>

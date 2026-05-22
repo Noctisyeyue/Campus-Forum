@@ -20,17 +20,21 @@ public class AdminCommentController {
     TopicService topicService;
 
     /**
-     * 分页查询评论列表（支持按帖子/用户筛选）
+     * 分页查询评论列表（支持按状态/内容/用户名/帖子标题筛选）
      * @param page 页码（从0开始）
-     * @param tid 帖子ID（可选）
-     * @param uid 用户ID（可选）
+     * @param status 评论状态（可选）
+     * @param content 评论内容关键词（可选）
+     * @param author 用户名（可选）
+     * @param topicTitle 帖子标题（可选）
      * @return 评论列表
      */
     @GetMapping
     public RestBean<List<AdminCommentVO>> listComments(@RequestParam(defaultValue = "0") @Min(0) int page,
-                                                        @RequestParam(required = false) Integer tid,
-                                                        @RequestParam(required = false) Integer uid) {
-        return RestBean.success(topicService.adminListComments(page + 1, tid, uid));
+                                                        @RequestParam(required = false) String status,
+                                                        @RequestParam(required = false) String content,
+                                                        @RequestParam(required = false) String author,
+                                                        @RequestParam(required = false) String topicTitle) {
+        return RestBean.success(topicService.adminListComments(page + 1, status, content, author, topicTitle));
     }
 
     /**

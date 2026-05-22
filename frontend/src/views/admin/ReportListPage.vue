@@ -1,10 +1,16 @@
 <template>
-    <div style="padding: 20px">
-        <card>
-            <span style="font-size: 18px;font-weight: bold">举报管理</span>
-        </card>
-        <card style="margin-top: 10px">
-            <div style="display: flex;gap: 10px;margin-bottom: 15px">
+    <div class="admin-page">
+        <div class="admin-page-header">
+            <div>
+                <div class="admin-page-title">举报管理</div>
+                <div class="admin-page-desc text-secondary">处理用户提交的帖子和评论举报，维护社区秩序</div>
+            </div>
+            <div class="admin-page-stats" v-if="total > 0">
+                <span class="stat-badge">共 {{ total }} 条</span>
+            </div>
+        </div>
+        <div class="admin-page-filter">
+            <div class="filter-group">
                 <el-select v-model="filter.status" placeholder="全部状态" style="width: 130px" clearable>
                     <el-option value="pending" label="待处理"/>
                     <el-option value="resolved" label="已处理"/>
@@ -14,14 +20,16 @@
                     <el-option value="topic" label="帖子"/>
                     <el-option value="comment" label="评论"/>
                 </el-select>
-                <el-button type="primary" @click="loadReports(0)">搜索</el-button>
             </div>
-            <el-table :data="reports" stripe v-loading="loading">
-                <el-table-column prop="id" label="ID" width="70"/>
+            <el-button type="primary" @click="loadReports(0)" :icon="Search">搜索</el-button>
+        </div>
+        <div class="admin-page-body">
+            <el-table :data="reports" stripe v-loading="loading" class="admin-table">
+                <el-table-column prop="id" label="ID" width="65"/>
                 <el-table-column prop="reporterName" label="举报人" width="100"/>
                 <el-table-column label="类型" width="80">
                     <template #default="{ row }">
-                        <el-tag size="small" :type="row.targetType === 'topic' ? 'primary' : 'warning'">
+                        <el-tag size="small" :type="row.targetType === 'topic' ? '' : 'warning'" effect="light">
                             {{ row.targetType === 'topic' ? '帖子' : '评论' }}
                         </el-tag>
                     </template>
@@ -50,35 +58,39 @@
                 </el-table-column>
                 <el-table-column label="状态" width="90">
                     <template #default="{ row }">
-                        <el-tag :type="statusType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
+                        <el-tag :type="statusType(row.status)" size="small" effect="light">
+                            {{ statusLabel(row.status) }}
+                        </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="160">
+                <el-table-column label="操作" width="150">
                     <template #default="{ row }">
-                        <template v-if="row.status === 'pending'">
-                            <el-popconfirm title="确定处理该举报（下架/删除内容）？"
-                                           @confirm="resolveReport(row.id, 'delete', null)">
-                                <template #reference>
-                                    <el-link type="danger">&nbsp;处理</el-link>
-                                </template>
-                            </el-popconfirm>
-                            <el-link type="info" style="margin-left: 10px"
-                                     @click="openDismiss(row)">&nbsp;驳回</el-link>
-                        </template>
-                        <span v-else style="font-size: 13px" :style="{ color: row.status === 'resolved' ? '#f56c6c' : '#909399' }">
-                            {{ row.status === 'resolved' ? '已处理（内容已下架/删除）' : (row.adminNote || '已驳回') }}
-                        </span>
+                        <div class="action-cell">
+                            <template v-if="row.status === 'pending'">
+                                <el-button type="success" size="small" plain round
+                                           @click="confirmResolve(row.id)">采纳</el-button>
+                                <el-button type="warning" size="small" plain round
+                                           @click="openDismiss(row)">驳回</el-button>
+                            </template>
+                            <span v-else class="status-done" :class="row.status">
+                                {{ row.status === 'resolved' ? '已处理' : (row.adminNote || '已驳回') }}
+                            </span>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
-            <div style="display: flex;justify-content: center;margin-top: 15px">
+            <div class="admin-pagination">
                 <el-pagination background layout="prev, pager, next"
                                v-model:current-page="page" @current-change="p => loadReports(p - 1)"
                                :total="total" :page-size="15" hide-on-single-page/>
             </div>
-        </card>
+        </div>
 
-        <el-dialog v-model="dismiss.show" title="驳回举报" width="400px">
+        <el-dialog v-model="dismiss.show" title="驳回举报" width="420px" class="admin-dialog">
+            <div class="dialog-hint">
+                <el-icon :size="18" color="#909399"><Warning/></el-icon>
+                <span>驳回后该举报将被关闭，请说明驳回原因</span>
+            </div>
             <el-input type="textarea" v-model="dismiss.note" :rows="3" placeholder="请填写驳回原因（必填）"/>
             <template #footer>
                 <el-button @click="dismiss.show = false">取消</el-button>
@@ -91,8 +103,8 @@
 <script setup>
 import {get, post} from "@/net"
 import {reactive, ref, watch} from "vue"
-import {ElMessage} from "element-plus"
-import Card from "@/components/Card.vue"
+import {ElMessage, ElMessageBox} from "element-plus"
+import {Search, Warning} from "@element-plus/icons-vue"
 import router from "@/router"
 import {useRoute} from "vue-router"
 
@@ -114,6 +126,14 @@ function loadReports(p) {
         total.value = (p + 1) * 15
         loading.value = false
     })
+}
+
+function confirmResolve(id) {
+    ElMessageBox.confirm('采纳举报后将下架/删除被举报的内容，确定继续？', '采纳举报', {
+        confirmButtonText: '确定采纳',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => resolveReport(id, 'delete', null)).catch(() => {})
 }
 
 function resolveReport(id, action, note) {
@@ -158,3 +178,94 @@ function applyRouteQuery() {
 
 watch(() => route.query, applyRouteQuery, { immediate: true })
 </script>
+
+<style lang="less" scoped>
+.admin-page {
+    padding: 20px 24px;
+}
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+}
+
+.admin-page-desc {
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+}
+
+.admin-page-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-page-body {
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.action-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.status-done {
+    font-size: 12px;
+
+    &.resolved { color: #67c23a; }
+    &.dismissed { color: #909399; }
+}
+
+.admin-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.dialog-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--el-color-info-light-9);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+}
+</style>

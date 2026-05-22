@@ -1,12 +1,10 @@
 <template>
-    <div style="padding: 20px" v-loading="loading">
-        <card>
-            <div style="display: flex;justify-content: space-between;align-items: center">
-                <span style="font-size: 18px;font-weight: bold">用户详情</span>
-                <el-button :icon="ArrowLeft" size="small" plain round @click="router.push('/admin/users')">返回列表</el-button>
-            </div>
-        </card>
-        <card style="margin-top: 10px" v-if="user">
+    <div class="admin-page" v-loading="loading">
+        <div class="admin-page-header">
+            <div class="admin-page-title">用户详情</div>
+            <el-button :icon="ArrowLeft" size="small" plain round @click="router.push('/admin/users')">返回列表</el-button>
+        </div>
+        <div class="admin-form-card" v-if="user">
             <el-descriptions :column="2" border>
                 <el-descriptions-item label="头像">
                     <el-avatar :src="store.avatarUserUrl(user.avatar)" :size="60"/>
@@ -38,7 +36,7 @@
                     </template>
                 </el-popconfirm>
             </div>
-        </card>
+        </div>
     </div>
 </template>
 
@@ -50,7 +48,6 @@ import {useStore} from "@/stores/index"
 import {ref} from "vue"
 import {ElMessage} from "element-plus"
 import {ArrowLeft} from "@element-plus/icons-vue"
-import Card from "@/components/Card.vue"
 
 const route = useRoute()
 const store = useStore()
@@ -77,3 +74,29 @@ function resetPassword() {
     })
 }
 </script>
+
+<style lang="less" scoped>
+.admin-page {
+    padding: 20px 24px;
+}
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+}
+
+.admin-form-card {
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    padding: 20px;
+}
+</style>
