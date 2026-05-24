@@ -65,6 +65,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
         notification.setContent(content);
         notification.setType(type);
         notification.setUrl(url);
+        notification.setTime(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
         this.save(notification);
     }
 }
