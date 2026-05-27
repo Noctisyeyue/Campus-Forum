@@ -18,13 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ObjectController {
 
+    /** 图片存储服务 */
     @Resource
     ImageService service;
 
     /**
-     * 图片访问代理入口
-     * @param request HTTP请求
-     * @param response HTTP响应
+     * 图片访问代理入口，匹配所有 /images/** 路径
+     *
+     * @param request  HTTP 请求
+     * @param response HTTP 响应，直接写入图片二进制数据
      */
     @GetMapping("/images/**")
     public void imageFetch(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -33,19 +35,24 @@ public class ObjectController {
     }
 
     /**
-     * 从 MinIO 获取图片并写入响应流
-     * @param request HTTP请求
-     * @param response HTTP响应
+     * 从 MinIO 获取图片并写入响应流，路径过短或图片不存在时返回 404
+     *
+     * @param request  HTTP 请求，用于提取图片路径
+     * @param response HTTP 响应
      */
     private void fetchImage(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        // 获取在 MinIO 中的存储路径
         String imagePath = request.getServletPath().substring(7);
+        // 用来把图片二进制数据写给浏览器
         ServletOutputStream stream = response.getOutputStream();
         if(imagePath.length() <= 13) {
             response.setStatus(404);
             stream.println(RestBean.failure(404, "Not found").toString());
         } else {
             try {
+                // 从 MinIO 读取图片数据写入 stream
                 service.fetchImageFromMinio(stream, imagePath);
+                // 告诉浏览器缓存 30 天（2592000 秒），下次访问同一张图不用再请求后端
                 response.setHeader("Cache-Control", "max-age=2592000");
             } catch (ErrorResponseException e) {
                 if(e.response().code() == 404) {

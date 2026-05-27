@@ -18,10 +18,10 @@ public class ControllerUtils {
      * @return 成功返回 success，失败返回 failure(400, message)
      */
     public <T> RestBean<T> messageHandle(Supplier<String> action) {
-        String message = action.get();
+        String message = action.get();  // 执行业务逻辑，拿到返回值
         if (message == null)
-            return RestBean.success();
+            return RestBean.success();  // 返回 null = 成功，返回 200
         else
-            return RestBean.failure(400, message);
+            return RestBean.failure(400, message);  // 返回字符串 = 失败，返回 400 + 错误信息
     }
 }

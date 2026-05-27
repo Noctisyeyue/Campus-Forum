@@ -92,21 +92,29 @@
 
 <script setup>
 
-import Card from "@/components/Card.vue";
-import {Message, Refresh, Select, User} from "@element-plus/icons-vue";
-import {useStore} from "@/stores/index";
-import {computed, reactive, ref} from "vue";
-import {accessHeader, get, post} from "@/net";
-import {ElMessage} from "element-plus";
-import axios from "axios";
+import Card from "@/components/Card.vue"
+import {Message, Refresh, Select, User} from "@element-plus/icons-vue"
+import {useStore} from "@/stores/index"
+import {computed, reactive, ref} from "vue"
+import {accessHeader, get, post} from "@/net"
+import {ElMessage} from "element-plus"
+import axios from "axios"
 
+/** Pinia 全局状态 */
 const store = useStore()
 
+/** 注册时间，格式化为本地时间字符串 */
 const registerTime = computed(() => new Date(store.user.registerTime).toLocaleString())
 
+/** 个人简介（右侧卡片也需显示，独立于 baseForm） */
 const desc = ref('')
+
+/** 账号信息表单组件引用，用于调用 validate() */
 const baseFormRef = ref()
+/** 邮箱修改表单组件引用 */
 const emailFormRef = ref()
+
+/** 账号基本信息表单数据 */
 const baseForm = reactive({
     username: '',
     gender: 1,
@@ -115,10 +123,20 @@ const baseForm = reactive({
     wx: '',
     desc: ''
 })
+
+/** 邮箱修改表单数据 */
 const emailForm = reactive({
     email: '',
     code: ''
 })
+
+/**
+ * 自定义用户名校验器，只允许中文、英文、数字
+ *
+ * @param rule    校验规则对象
+ * @param value   当前输入值
+ * @param callback 校验结果回调
+ */
 const validateUsername = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('请输入用户名'))
@@ -128,6 +146,8 @@ const validateUsername = (rule, value, callback) => {
         callback()
     }
 }
+
+/** 表单校验规则，key 对应 el-form-item 的 prop */
 const rules = {
     username: [
         {validator: validateUsername, trigger: ['blur', 'change']},
@@ -138,11 +158,15 @@ const rules = {
     ]
 }
 
+/** 加载状态：form 控制页面骨架屏，base 控制保存按钮 loading */
 const loading = reactive({
     form: true,
     base: false
 })
 
+/**
+ * 保存用户信息，校验通过后提交到后端，同步更新全局状态
+ */
 function saveDetails() {
     baseFormRef.value.validate(isValid => {
         if (isValid) {
@@ -160,6 +184,7 @@ function saveDetails() {
     })
 }
 
+/** 页面初始化：拉取用户详情并填入表单 */
 get('/api/user/details', data => {
     baseForm.username = store.user.username
     baseForm.gender = data.gender
@@ -171,13 +196,23 @@ get('/api/user/details', data => {
     loading.form = false
 })
 
+/** 验证码发送冷却倒计时（秒），0 表示可以发送 */
 const coldTime = ref(0)
+/** 邮箱字段校验是否通过，控制"获取验证码"按钮的禁用状态 */
 const isEmailValid = ref(true)
+
+/**
+ * 表单校验回调，追踪邮箱字段的实时校验状态
+ *
+ * @param prop     校验的字段名
+ * @param isValid  校验是否通过
+ */
 const onValidate = (prop, isValid) => {
     if (prop === 'email')
         isEmailValid.value = isValid
 }
 
+/** 发送邮箱验证码，校验通过后请求后端，同时启动 60 秒倒计时 */
 function sendEmailCode() {
     emailFormRef.value.validate(isValid => {
         if (isValid) {
@@ -198,6 +233,7 @@ function sendEmailCode() {
     })
 }
 
+/** 修改邮箱，校验通过后提交新邮箱和验证码到后端 */
 function modifyEmail() {
     emailFormRef.value.validate(isValid => {
         if (isValid) {
@@ -210,6 +246,12 @@ function modifyEmail() {
     })
 }
 
+/**
+ * 头像上传前校验，仅允许 JPG/PNG 且不超过 100KB
+ *
+ * @param rawFile 待上传的原始文件
+ * @return true 允许上传，false 拒绝
+ */
 function beforeAvatarUpload(rawFile) {
     if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
         ElMessage.error('头像只能是 JPG/PNG 格式的')
@@ -221,6 +263,11 @@ function beforeAvatarUpload(rawFile) {
     return true
 }
 
+/**
+ * 头像上传成功回调，更新全局状态中的头像标识
+ *
+ * @param response 后端返回的响应，response.data 为新头像标识
+ */
 function uploadSuccess(response){
     ElMessage.success('头像上传成功')
     store.user.avatar = response.data
