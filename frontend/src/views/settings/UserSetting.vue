@@ -247,7 +247,7 @@ function modifyEmail() {
 }
 
 /**
- * 头像上传前校验，仅允许 JPG/PNG 且不超过 100KB
+ * 头像上传前校验，仅允许 JPG/PNG 且不超过 2MB
  *
  * @param rawFile 待上传的原始文件
  * @return true 允许上传，false 拒绝
@@ -256,8 +256,8 @@ function beforeAvatarUpload(rawFile) {
     if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
         ElMessage.error('头像只能是 JPG/PNG 格式的')
         return false
-    } else if(rawFile.size / 1024 > 100) {
-        ElMessage.error('头像大小不能大于 100KB')
+    } else if(rawFile.size / 1024 / 1024 > 2) {
+        ElMessage.error('头像大小不能大于 2MB')
         return false
     }
     return true

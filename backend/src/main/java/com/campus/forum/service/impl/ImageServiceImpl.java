@@ -82,6 +82,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
                 .bucket("campus-forum")
                 .stream(file.getInputStream(), file.getSize(), -1)
                 .object(imageName)
+                .contentType(file.getContentType())
                 .build();
         try {
             client.putObject(args);
@@ -112,6 +113,7 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
                 .bucket("campus-forum")                            // MinIO 中的桶名
                 .stream(file.getInputStream(), file.getSize(), -1) // 文件内容、大小、未知长度用-1
                 .object(imageName)                                 // 存储路径
+                .contentType(file.getContentType())                // 文件 MIME 类型（如 image/jpeg）
                 .build();
         try {
             client.putObject(args);                                // 1. 把文件上传到 MinIO
