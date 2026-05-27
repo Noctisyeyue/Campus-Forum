@@ -9,11 +9,7 @@
                 </div>
                 <div style="flex: 1"></div>
                 <div class="admin-header-actions">
-                    <div class="header-action-btn" @click="store.toggleDark()" title="切换主题">
-                        <el-icon :size="18">
-                            <component :is="store.dark ? Sunny : Moon"/>
-                        </el-icon>
-                    </div>
+                    <ThemeToggle/>
                     <div class="header-action-btn" @click="router.push('/index')" title="返回前台">
                         <el-icon :size="18"><Back/></el-icon>
                     </div>
@@ -127,6 +123,7 @@ import {
     Setting, Sunny, SwitchButton, User, UserFilled, Warning
 } from "@element-plus/icons-vue"
 import {ElMessage} from "element-plus"
+import ThemeToggle from "@/components/ThemeToggle.vue"
 
 const store = useStore()
 const loading = ref(true)

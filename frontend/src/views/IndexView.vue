@@ -22,11 +22,7 @@
                     </el-input>
                 </div>
                 <div class="user-info">
-                    <div class="theme-toggle" @click="store.toggleDark()">
-                        <el-icon :size="18">
-                            <component :is="store.dark ? Sunny : Moon"/>
-                        </el-icon>
-                    </div>
+                    <ThemeToggle/>
                     <el-popover placement="bottom" :width="350" trigger="click">
                         <template #reference>
                             <el-badge style="margin-right: 15px" is-dot :hidden="!notification.length">
@@ -210,6 +206,7 @@ import {
     User
 } from "@element-plus/icons-vue";
 import LightCard from "@/components/LightCard.vue";
+import ThemeToggle from "@/components/ThemeToggle.vue";
 import {ElMessage} from "element-plus";
 
 /** Pinia 全局状态 */
@@ -371,18 +368,6 @@ watch(() => route.path, async path => {
     &:hover {
         color: grey;
         cursor: pointer;
-    }
-}
-
-.theme-toggle {
-    font-size: 18px;
-    margin-right: 10px;
-    cursor: pointer;
-    color: var(--el-text-color-regular);
-    transition: color .3s;
-
-    &:hover {
-        color: var(--el-color-primary);
     }
 }
 

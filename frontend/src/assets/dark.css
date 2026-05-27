@@ -15,3 +15,10 @@ html.dark {
         color: #a0a3a8;
     }
 }
+
+/* View Transition 水滴扩散动画：禁用默认的交叉淡入效果 */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
