@@ -75,19 +75,21 @@ public class ImageServiceImpl extends ServiceImpl<ImageStoreMapper, StoreImage> 
         String key = Const.FORUM_IMAGE_COUNTER + id;
         if (!flowUtils.limitPeriodCounterCheck(key, 20, 3600))
             return null;
+        // 生成随机文件名
         String imageName = UUID.randomUUID().toString().replace("-", "");
         Date date = new Date();
         imageName = "/cache/" + format.format(date) + "/" + imageName;
         PutObjectArgs args = PutObjectArgs.builder()
-                .bucket("campus-forum")
-                .stream(file.getInputStream(), file.getSize(), -1)
-                .object(imageName)
-                .contentType(file.getContentType())
+                .bucket("campus-forum")         // 桶名
+                .stream(file.getInputStream(),  // 文件内容
+                 file.getSize(), -1)            // 文件大小 
+                .object(imageName)              // 存储路径
+                .contentType(file.getContentType())// 文件类型（image/jpeg等）
                 .build();
         try {
-            client.putObject(args);
+            client.putObject(args);           // 执行上传
             if (this.save(new StoreImage(id, imageName, date))) {
-                return imageName;
+                return imageName;              // 上传成功 + 记录成功 → 返回路径
             } else {
                 return null;
             }

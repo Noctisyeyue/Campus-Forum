@@ -30,13 +30,13 @@ public class FlowLimitingFilter extends HttpFilter {
     @Resource
     StringRedisTemplate template;
 
-    /** 时间周期内允许的最大请求次数 */
+    /** 时间周期内允许的最大请求次数 500 */
     @Value("${spring.web.flow.limit}")
     int limit;
-    /** 计数时间周期（秒） */
+    /** 计数时间周期 3（秒） */
     @Value("${spring.web.flow.period}")
     int period;
-    /** 超限后的封禁时间（秒） */
+    /** 超限后的封禁时间 10（秒） */
     @Value("${spring.web.flow.block}")
     int block;
 
