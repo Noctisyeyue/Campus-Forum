@@ -48,7 +48,8 @@ spring:
     username: 'minio'
     password: 'password'
   weather:
-    key: 7abbc24d3b4443b597a3b3c676e0f221
+    key: b310737402da45839329c006e5488085
+    host: 'mp4nmv62y8.re.qweatherapi.com'
 
 mybatis-plus:
   configuration:

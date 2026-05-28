@@ -12,7 +12,7 @@
             </div>
             <div style="margin-top: 13px">
                 <div style="font-size: 15px">{{`${data.location.country} ${data.location.adm1}`}}</div>
-                <div style="font-size: 14px;color: grey">{{`${data.location.adm2} ${data.location.name}区`}}</div>
+                <div style="font-size: 14px;color: grey">{{`${data.location.adm2} ${data.location.name}`}}</div>
             </div>
         </div>
         <div style="text-align: center;color: grey;padding-top: 30px"
