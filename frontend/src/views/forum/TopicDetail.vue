@@ -466,6 +466,11 @@ function deleteTopic() {
             line-height: 22px;
             opacity: 0.8;
             flex: 1;
+
+            :deep(img) {
+                max-width: 100%;
+                height: auto;
+            }
         }
     }
 }
