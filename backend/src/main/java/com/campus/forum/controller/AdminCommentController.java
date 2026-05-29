@@ -36,8 +36,9 @@ public class AdminCommentController {
                                                         @RequestParam(required = false) String status,
                                                         @RequestParam(required = false) String content,
                                                         @RequestParam(required = false) String author,
-                                                        @RequestParam(required = false) String topicTitle) {
-        return RestBean.success(topicService.adminListComments(page + 1, pageSize, status, content, author, topicTitle));
+                                                        @RequestParam(required = false) String topicTitle,
+                                                        @RequestParam(required = false) Integer tid) {
+        return RestBean.success(topicService.adminListComments(page + 1, pageSize, status, content, author, topicTitle, tid));
     }
 
     /**

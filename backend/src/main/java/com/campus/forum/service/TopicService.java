@@ -69,7 +69,7 @@ public interface TopicService extends IService<Topic> {
     String saveForumNotice(int adminId, ForumNoticeSaveVO vo);
 
     // 管理员方法：分页查询全部评论（支持状态/内容/用户名/帖子标题筛选）
-    PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle);
+    PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle, Integer tid);
     // 管理员方法：删除评论（软删除）
     void adminDeleteComment(int id);
 }

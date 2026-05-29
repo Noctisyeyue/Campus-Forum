@@ -53,13 +53,15 @@
         <div class="admin-form-card" style="margin-top: 16px" v-if="topic">
             <span style="font-weight: bold">评论 ({{ topic.comments }})</span>
             <el-divider/>
-            <div v-for="item in comments" style="margin-bottom: 15px">
+            <div v-for="item in comments" style="margin-bottom: 15px"
+                 :style="item.status === 'deleted' ? 'opacity: 0.45' : ''">
                 <div style="display: flex;justify-content: space-between;align-items: center">
                     <div>
                         <span style="font-weight: bold">{{ item.username }}</span>
                         <span style="color: grey;font-size: 12px;margin-left: 10px">
                             {{ new Date(item.time).toLocaleString() }}
                         </span>
+                        <el-tag v-if="item.status === 'deleted'" type="info" size="small" style="margin-left: 6px">已删除</el-tag>
                     </div>
                     <el-popconfirm title="确定删除该评论吗？" @confirm="deleteComment(item.id)"
                                    v-if="item.status === 'normal'">
@@ -151,7 +153,7 @@ function loadTopic() {
 loadTopic()
 
 function loadComments() {
-    get(`/api/admin/comments?page=0&tid=${tid}`, data => comments.value = data)
+    get(`/api/admin/comments?page=0&pageSize=50&tid=${tid}`, data => comments.value = data.list)
 }
 
 function doAction(action) {

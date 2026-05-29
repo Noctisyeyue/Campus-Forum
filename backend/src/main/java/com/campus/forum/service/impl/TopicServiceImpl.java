@@ -1008,9 +1008,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @return 评论列表
      */
     @Override
-    public PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle) {
+    public PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle, Integer tid) {
         Page<TopicComment> p = Page.of(page, pageSize);
         var wrapper = Wrappers.<TopicComment>query();
+        if (tid != null)
+            wrapper.eq("tid", tid);
         if (status != null && !status.isBlank())
             wrapper.eq("status", status);
         if (content != null && !content.isBlank())
