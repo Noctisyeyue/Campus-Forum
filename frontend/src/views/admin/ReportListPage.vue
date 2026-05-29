@@ -80,9 +80,15 @@
                 </el-table-column>
             </el-table>
             <div class="admin-pagination">
+                <el-select v-model="pageSize" style="width: 110px; margin-right: 12px" @change="loadReports(0)">
+                    <el-option :value="15" label="15 条/页"/>
+                    <el-option :value="30" label="30 条/页"/>
+                    <el-option :value="50" label="50 条/页"/>
+                    <el-option :value="100" label="100 条/页"/>
+                </el-select>
                 <el-pagination background layout="prev, pager, next"
                                v-model:current-page="page" @current-change="p => loadReports(p - 1)"
-                               :total="total" :page-size="15" hide-on-single-page/>
+                               :total="total" :page-size="pageSize"/>
             </div>
         </div>
 
@@ -112,18 +118,19 @@ const reports = ref([])
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
+const pageSize = ref(15)
 const filter = reactive({ status: '', targetType: '' })
 const route = useRoute()
 
 function loadReports(p) {
     loading.value = true
     page.value = p + 1
-    let url = `/api/admin/reports?page=${p}`
+    let url = `/api/admin/reports?page=${p}&pageSize=${pageSize.value}`
     if (filter.status) url += `&status=${filter.status}`
     if (filter.targetType) url += `&targetType=${filter.targetType}`
     get(url, data => {
-        reports.value = data
-        total.value = (p + 1) * 15
+        reports.value = data.list
+        total.value = data.total
         loading.value = false
     })
 }

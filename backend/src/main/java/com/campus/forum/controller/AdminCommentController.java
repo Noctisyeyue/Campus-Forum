@@ -2,6 +2,7 @@ package com.campus.forum.controller;
 
 import com.campus.forum.entity.RestBean;
 import com.campus.forum.entity.vo.response.AdminCommentVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.service.TopicService;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
@@ -22,6 +23,7 @@ public class AdminCommentController {
     /**
      * 分页查询评论列表（支持按状态/内容/用户名/帖子标题筛选）
      * @param page 页码（从0开始）
+     * @param pageSize 每页条数（默认15）
      * @param status 评论状态（可选）
      * @param content 评论内容关键词（可选）
      * @param author 用户名（可选）
@@ -29,12 +31,13 @@ public class AdminCommentController {
      * @return 评论列表
      */
     @GetMapping
-    public RestBean<List<AdminCommentVO>> listComments(@RequestParam(defaultValue = "0") @Min(0) int page,
+    public RestBean<PageResult<AdminCommentVO>> listComments(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                        @RequestParam(defaultValue = "15") @Min(1) int pageSize,
                                                         @RequestParam(required = false) String status,
                                                         @RequestParam(required = false) String content,
                                                         @RequestParam(required = false) String author,
                                                         @RequestParam(required = false) String topicTitle) {
-        return RestBean.success(topicService.adminListComments(page + 1, status, content, author, topicTitle));
+        return RestBean.success(topicService.adminListComments(page + 1, pageSize, status, content, author, topicTitle));
     }
 
     /**

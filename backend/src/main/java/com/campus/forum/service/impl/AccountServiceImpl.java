@@ -7,6 +7,7 @@ import com.campus.forum.entity.dto.AccountDetails;
 import com.campus.forum.entity.dto.AccountPrivacy;
 import com.campus.forum.entity.vo.request.*;
 import com.campus.forum.entity.vo.response.AdminUserVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.mapper.AccountDetailsMapper;
 import com.campus.forum.mapper.AccountMapper;
 import com.campus.forum.mapper.AccountPrivacyMapper;
@@ -308,8 +309,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
      * @return 用户列表
      */
     @Override
-    public List<AdminUserVO> adminListUsers(int page, String search, String status) {
-        Page<Account> p = Page.of(page, 10);
+    public PageResult<AdminUserVO> adminListUsers(int page, int pageSize, String search, String status) {
+        Page<Account> p = Page.of(page, pageSize);
         var wrapper = Wrappers.<Account>query();
         if (search != null && !search.isBlank()) {
             wrapper.and(query -> query.like("username", search).or().like("email", search));
@@ -319,11 +320,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         wrapper.orderByDesc("register_time");
         this.page(p, wrapper);
-        return p.getRecords().stream().map(account -> {
+        List<AdminUserVO> list = p.getRecords().stream().map(account -> {
             AdminUserVO vo = new AdminUserVO();
             BeanUtils.copyProperties(account, vo);
             return vo;
         }).toList();
+        return new PageResult<>(list, p.getTotal());
     }
 
     /**

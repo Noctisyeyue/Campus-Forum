@@ -4,6 +4,7 @@ import com.campus.forum.entity.RestBean;
 import com.campus.forum.entity.dto.Account;
 import com.campus.forum.entity.vo.response.AccountVO;
 import com.campus.forum.entity.vo.response.AdminUserVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.service.AccountService;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
@@ -24,15 +25,17 @@ public class AdminUserController {
     /**
      * 分页查询用户列表，支持按用户名或邮箱搜索
      * @param page 页码（从0开始）
+     * @param pageSize 每页条数（默认15）
      * @param search 搜索关键词（可选）
      * @param status 用户状态（可选）
      * @return 用户列表
      */
     @GetMapping
-    public RestBean<List<AdminUserVO>> listUsers(@RequestParam(defaultValue = "0") @Min(0) int page,
+    public RestBean<PageResult<AdminUserVO>> listUsers(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                  @RequestParam(defaultValue = "15") @Min(1) int pageSize,
                                                   @RequestParam(required = false) String search,
                                                   @RequestParam(required = false) String status) {
-        return RestBean.success(accountService.adminListUsers(page + 1, search, status));
+        return RestBean.success(accountService.adminListUsers(page + 1, pageSize, search, status));
     }
 
     /**

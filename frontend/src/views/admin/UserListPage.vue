@@ -69,9 +69,15 @@
                 </el-table-column>
             </el-table>
             <div class="admin-pagination">
+                <el-select v-model="pageSize" style="width: 110px; margin-right: 12px" @change="loadUsers(0)">
+                    <el-option :value="15" label="15 条/页"/>
+                    <el-option :value="30" label="30 条/页"/>
+                    <el-option :value="50" label="50 条/页"/>
+                    <el-option :value="100" label="100 条/页"/>
+                </el-select>
                 <el-pagination background layout="prev, pager, next"
                                v-model:current-page="page" @current-change="p => loadUsers(p - 1)"
-                               :total="total" :page-size="10" hide-on-single-page/>
+                               :total="total" :page-size="pageSize"/>
             </div>
         </div>
     </div>
@@ -91,6 +97,7 @@ const users = ref([])
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
+const pageSize = ref(15)
 const search = ref('')
 const status = ref('')
 const route = useRoute()
@@ -98,12 +105,12 @@ const route = useRoute()
 function loadUsers(p) {
     loading.value = true
     page.value = p + 1
-    let url = `/api/admin/users?page=${p}`
+    let url = `/api/admin/users?page=${p}&pageSize=${pageSize.value}`
     if (search.value) url += `&search=${encodeURIComponent(search.value)}`
     if (status.value) url += `&status=${status.value}`
     get(url, data => {
-        users.value = data
-        total.value = (p + 1) * 10
+        users.value = data.list
+        total.value = data.total
         loading.value = false
     })
 }

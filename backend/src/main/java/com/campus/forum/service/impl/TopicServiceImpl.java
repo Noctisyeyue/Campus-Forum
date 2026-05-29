@@ -19,6 +19,7 @@ import com.campus.forum.entity.vo.response.TopicPreviewVO;
 import com.campus.forum.entity.vo.response.TopicTopVO;
 import com.campus.forum.entity.vo.response.AdminTopicVO;
 import com.campus.forum.entity.vo.response.AdminCommentVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.entity.vo.response.UserTopicVO;
 import com.campus.forum.mapper.*;
 import com.campus.forum.service.NotificationService;
@@ -611,8 +612,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @return 帖子列表
      */
     @Override
-    public List<AdminTopicVO> adminListTopics(int page, String status, Integer type, String title, String author) {
-        Page<Topic> p = Page.of(page, 15);
+    public PageResult<AdminTopicVO> adminListTopics(int page, int pageSize, String status, Integer type, String title, String author) {
+        Page<Topic> p = Page.of(page, pageSize);
         var wrapper = Wrappers.<Topic>query();
         if (status != null && !status.isBlank())
             wrapper.eq("status", status);
@@ -621,26 +622,23 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (title != null && !title.isBlank())
             wrapper.like("title", title);
         if (author != null && !author.isBlank()) {
-            // 子查询匹配作者用户名
             wrapper.inSql("uid", "select id from db_account where username like '%" + author + "%'");
         }
         wrapper.orderByDesc("time");
         baseMapper.selectPage(p, wrapper);
-        return p.getRecords().stream().map(topic -> {
+        List<AdminTopicVO> list = p.getRecords().stream().map(topic -> {
             AdminTopicVO vo = new AdminTopicVO();
             BeanUtils.copyProperties(topic, vo);
-            // 填充作者用户名
             Account account = accountMapper.selectById(topic.getUid());
             if (account != null) vo.setUsername(account.getUsername());
-            // 填充分类名称
             TopicType topicType = mapper.selectById(topic.getType());
             if (topicType != null) vo.setTypeName(topicType.getName());
-            // 评论数
             vo.setCommentCount(commentMapper.selectCount(Wrappers.<TopicComment>query()
                     .eq("tid", topic.getId())
                     .eq("status", Const.COMMENT_STATUS_NORMAL)));
             return vo;
         }).toList();
+        return new PageResult<>(list, p.getTotal());
     }
 
     /**
@@ -1010,8 +1008,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @return 评论列表
      */
     @Override
-    public List<AdminCommentVO> adminListComments(int page, String status, String content, String author, String topicTitle) {
-        Page<TopicComment> p = Page.of(page, 15);
+    public PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle) {
+        Page<TopicComment> p = Page.of(page, pageSize);
         var wrapper = Wrappers.<TopicComment>query();
         if (status != null && !status.isBlank())
             wrapper.eq("status", status);
@@ -1023,10 +1021,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             wrapper.inSql("tid", "select id from db_topic where title like '%" + topicTitle + "%'");
         wrapper.orderByDesc("time");
         commentMapper.selectPage(p, wrapper);
-        return p.getRecords().stream().map(comment -> {
+        List<AdminCommentVO> list = p.getRecords().stream().map(comment -> {
             AdminCommentVO vo = new AdminCommentVO();
             BeanUtils.copyProperties(comment, vo);
-            // 提取纯文本内容
             try {
                 JSONObject json = JSONObject.parseObject(comment.getContent());
                 StringBuilder sb = new StringBuilder();
@@ -1035,14 +1032,13 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             } catch (Exception e) {
                 vo.setContent(comment.getContent());
             }
-            // 填充用户名
             Account account = accountMapper.selectById(comment.getUid());
             if (account != null) vo.setUsername(account.getUsername());
-            // 填充帖子标题
             Topic topic = baseMapper.selectById(comment.getTid());
             if (topic != null) vo.setTopicTitle(topic.getTitle());
             return vo;
         }).toList();
+        return new PageResult<>(list, p.getTotal());
     }
 
     /**

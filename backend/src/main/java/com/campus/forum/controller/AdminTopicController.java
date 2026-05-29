@@ -2,6 +2,7 @@ package com.campus.forum.controller;
 
 import com.campus.forum.entity.RestBean;
 import com.campus.forum.entity.vo.response.AdminTopicVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.entity.vo.response.TopicDetailVO;
 import com.campus.forum.service.TopicService;
 import com.campus.forum.utils.Const;
@@ -28,6 +29,7 @@ public class AdminTopicController {
     /**
      * 分页查询帖子列表（支持多条件筛选）
      * @param page 页码（从0开始）
+     * @param pageSize 每页条数（默认15）
      * @param status 帖子状态（可选）
      * @param type 分类ID（可选）
      * @param title 标题关键词（可选）
@@ -35,12 +37,13 @@ public class AdminTopicController {
      * @return 帖子列表
      */
     @GetMapping
-    public RestBean<List<AdminTopicVO>> listTopics(@RequestParam(defaultValue = "0") @Min(0) int page,
+    public RestBean<PageResult<AdminTopicVO>> listTopics(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                    @RequestParam(defaultValue = "15") @Min(1) int pageSize,
                                                     @RequestParam(required = false) String status,
                                                     @RequestParam(required = false) Integer type,
                                                     @RequestParam(required = false) String title,
                                                     @RequestParam(required = false) String author) {
-        return RestBean.success(topicService.adminListTopics(page + 1, status, type, title, author));
+        return RestBean.success(topicService.adminListTopics(page + 1, pageSize, status, type, title, author));
     }
 
     /**

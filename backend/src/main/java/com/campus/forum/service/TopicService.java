@@ -10,6 +10,7 @@ import com.campus.forum.entity.vo.request.PublishActivityVO;
 import com.campus.forum.entity.vo.request.PublishNoticeTopicVO;
 import com.campus.forum.entity.vo.request.TopicCreateVO;
 import com.campus.forum.entity.vo.request.TopicUpdateVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.entity.vo.response.AdminCommentVO;
 import com.campus.forum.entity.vo.response.AdminTopicVO;
 import com.campus.forum.entity.vo.response.CommentVO;
@@ -45,7 +46,7 @@ public interface TopicService extends IService<Topic> {
     String deleteTopic(int uid, int tid);
 
     // 管理员方法：分页查询全部帖子（支持状态/分类/标题/作者筛选）
-    List<AdminTopicVO> adminListTopics(int page, String status, Integer type, String title, String author);
+    PageResult<AdminTopicVO> adminListTopics(int page, int pageSize, String status, Integer type, String title, String author);
     // 管理员方法：审核通过帖子
     void adminApproveTopic(int tid, int adminId);
     // 管理员方法：审核拒绝帖子
@@ -68,7 +69,7 @@ public interface TopicService extends IService<Topic> {
     String saveForumNotice(int adminId, ForumNoticeSaveVO vo);
 
     // 管理员方法：分页查询全部评论（支持状态/内容/用户名/帖子标题筛选）
-    List<AdminCommentVO> adminListComments(int page, String status, String content, String author, String topicTitle);
+    PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle);
     // 管理员方法：删除评论（软删除）
     void adminDeleteComment(int id);
 }

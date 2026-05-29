@@ -104,9 +104,15 @@
                 </el-table-column>
             </el-table>
             <div class="admin-pagination">
+                <el-select v-model="pageSize" style="width: 110px; margin-right: 12px" @change="loadTopics(0)">
+                    <el-option :value="15" label="15 条/页"/>
+                    <el-option :value="30" label="30 条/页"/>
+                    <el-option :value="50" label="50 条/页"/>
+                    <el-option :value="100" label="100 条/页"/>
+                </el-select>
                 <el-pagination background layout="prev, pager, next"
                                v-model:current-page="page" @current-change="p => loadTopics(p - 1)"
-                               :total="total" :page-size="15" hide-on-single-page/>
+                               :total="total" :page-size="pageSize"/>
             </div>
         </div>
 
@@ -148,6 +154,7 @@ const types = ref([])
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
+const pageSize = ref(15)
 const route = useRoute()
 
 const filter = reactive({ status: '', type: '', title: '', author: '' })
@@ -169,14 +176,14 @@ function statusText(status) {
 function loadTopics(p) {
     loading.value = true
     page.value = p + 1
-    let url = `/api/admin/topics?page=${p}`
+    let url = `/api/admin/topics?page=${p}&pageSize=${pageSize.value}`
     if (filter.status) url += `&status=${filter.status}`
     if (filter.type) url += `&type=${filter.type}`
     if (filter.title) url += `&title=${encodeURIComponent(filter.title)}`
     if (filter.author) url += `&author=${encodeURIComponent(filter.author)}`
     get(url, data => {
-        topics.value = data
-        total.value = (p + 1) * 15
+        topics.value = data.list
+        total.value = data.total
         loading.value = false
     })
 }

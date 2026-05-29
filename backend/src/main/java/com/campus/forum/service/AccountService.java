@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.campus.forum.entity.dto.Account;
 import com.campus.forum.entity.vo.request.*;
 import com.campus.forum.entity.vo.response.AdminUserVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
@@ -89,7 +90,7 @@ public interface AccountService extends IService<Account>, UserDetailsService {
      * @param status 用户状态筛选，为空时返回全部
      * @return 用户列表
      */
-    List<AdminUserVO> adminListUsers(int page, String search, String status);
+    PageResult<AdminUserVO> adminListUsers(int page, int pageSize, String search, String status);
 
     /**
      * 管理员禁用用户

@@ -9,6 +9,7 @@ import com.campus.forum.entity.dto.Topic;
 import com.campus.forum.entity.dto.TopicComment;
 import com.campus.forum.entity.vo.request.ReportCreateVO;
 import com.campus.forum.entity.vo.response.AdminReportVO;
+import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.mapper.AccountMapper;
 import com.campus.forum.mapper.ReportMapper;
 import com.campus.forum.mapper.TopicCommentMapper;
@@ -75,8 +76,8 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     }
 
     @Override
-    public List<AdminReportVO> adminListReports(int page, String status, String targetType) {
-        Page<Report> p = Page.of(page, 15);
+    public PageResult<AdminReportVO> adminListReports(int page, int pageSize, String status, String targetType) {
+        Page<Report> p = Page.of(page, pageSize);
         var wrapper = Wrappers.<Report>query();
         if (status != null && !status.isBlank()) {
             wrapper.eq("status", status);
@@ -86,7 +87,8 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         }
         wrapper.orderByDesc("time");
         baseMapper.selectPage(p, wrapper);
-        return p.getRecords().stream().map(this::resolveToAdminVO).toList();
+        List<AdminReportVO> list = p.getRecords().stream().map(this::resolveToAdminVO).toList();
+        return new PageResult<>(list, p.getTotal());
     }
 
     @Override

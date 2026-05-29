@@ -60,9 +60,15 @@
                 </el-table-column>
             </el-table>
             <div class="admin-pagination">
+                <el-select v-model="pageSize" style="width: 110px; margin-right: 12px" @change="loadComments(0)">
+                    <el-option :value="15" label="15 条/页"/>
+                    <el-option :value="30" label="30 条/页"/>
+                    <el-option :value="50" label="50 条/页"/>
+                    <el-option :value="100" label="100 条/页"/>
+                </el-select>
                 <el-pagination background layout="prev, pager, next"
                                v-model:current-page="page" @current-change="p => loadComments(p - 1)"
-                               :total="total" :page-size="15" hide-on-single-page/>
+                               :total="total" :page-size="pageSize"/>
             </div>
         </div>
     </div>
@@ -79,20 +85,21 @@ const comments = ref([])
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
+const pageSize = ref(15)
 
 const filter = reactive({ status: '', content: '', author: '', topicTitle: '' })
 
 function loadComments(p) {
     loading.value = true
     page.value = p + 1
-    let url = `/api/admin/comments?page=${p}`
+    let url = `/api/admin/comments?page=${p}&pageSize=${pageSize.value}`
     if (filter.status) url += `&status=${filter.status}`
     if (filter.content) url += `&content=${encodeURIComponent(filter.content)}`
     if (filter.author) url += `&author=${encodeURIComponent(filter.author)}`
     if (filter.topicTitle) url += `&topicTitle=${encodeURIComponent(filter.topicTitle)}`
     get(url, data => {
-        comments.value = data
-        total.value = (p + 1) * 15
+        comments.value = data.list
+        total.value = data.total
         loading.value = false
     })
 }
