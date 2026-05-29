@@ -226,6 +226,11 @@ function deleteComment(id) {
     font-size: 14px;
     line-height: 22px;
     opacity: 0.85;
+
+    :deep(img) {
+        max-width: 100%;
+        height: auto;
+    }
 }
 
 .dialog-hint {
