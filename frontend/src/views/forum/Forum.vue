@@ -1,12 +1,17 @@
 <template>
     <div>
-        <!-- 路由视图：带滑动过渡动画 + keep-alive 缓存指定页面 -->
-        <router-view v-slot="{ Component }">
-            <transition name="forum-slide" mode="out-in">
-                <keep-alive include="TopicList,ActivityList,NoticeTopicList">
-                    <component :is="Component"/>
-                </keep-alive>
-            </transition>
+        <!-- 路由视图：列表页走 keep-alive 缓存，详情页直接渲染 -->
+        <router-view v-slot="{ Component, route }">
+            <keep-alive include="TopicList,ActivityList,NoticeTopicList">
+                <component
+                        v-if="Component && shouldKeepAlive(route)"
+                        :is="Component"
+                        :key="route.name"/>
+            </keep-alive>
+            <component
+                    v-if="Component && !shouldKeepAlive(route)"
+                    :is="Component"
+                    :key="route.fullPath"/>
         </router-view>
         <!-- 回到顶部按钮（绑定到 IndexView 的滚动容器） -->
         <el-backtop target=".main-content-page .el-scrollbar__wrap" :right="20" :bottom="70"/>
@@ -21,6 +26,16 @@ import {useStore} from "@/stores/index";
 const store = useStore()
 
 /**
+ * 判断当前论坛子路由是否需要被 keep-alive 缓存
+ *
+ * @param route 当前匹配到的子路由
+ * @return true 表示缓存列表页，false 表示详情页直接重新渲染
+ */
+function shouldKeepAlive(route) {
+    return ['topic-list', 'activity-list', 'notice-topic-list'].includes(route?.name)
+}
+
+/**
  * 加载论坛分类列表，在头部插入"全部"选项后存入全局状态
  * 分类数据供 TopicList 等子页面的分类筛选功能使用
  */
@@ -31,22 +46,6 @@ get('/api/forum/types', data => {
     store.forum.types = array
 })
 </script>
-
-<style scoped>
-/* 路由切换时的滑动淡入淡出动画 */
-.forum-slide-enter-active,
-.forum-slide-leave-active {
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-.forum-slide-enter-from {
-    opacity: 0;
-    transform: translateX(30px);
-}
-.forum-slide-leave-to {
-    opacity: 0;
-    transform: translateX(-30px);
-}
-</style>
 
 <style>
 /* 回到顶部按钮增强样式 */

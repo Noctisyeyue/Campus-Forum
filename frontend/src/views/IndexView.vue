@@ -174,6 +174,7 @@
                 <el-main class="main-content-page">
                     <el-scrollbar ref="mainScrollbar"
                                   style="height: calc(100vh - 55px)"
+                                  :style="{ visibility: restoringMainScroll ? 'hidden' : 'visible' }"
                                   @scroll="handleMainScroll">
                         <router-view v-slot="{ Component }">
                             <transition name="el-fade-in-linear" mode="out-in">
@@ -219,9 +220,14 @@ const loading = ref(true)
 const mainScrollbar = ref()
 /** 各列表页的滚动位置缓存（path → scrollTop） */
 const routeScrollState = new Map()
+/** 主内容区是否正在恢复历史滚动位置 */
+const restoringMainScroll = ref(false)
+/** 当前滚动恢复任务序号，用于丢弃过期恢复任务 */
+let mainScrollRestoreToken = 0
 /** 需要记忆滚动位置的列表页路由集合 */
 const RESTORE_SCROLL_ROUTE_SET = new Set([
     '/index',
+    '/index/',
     '/index/activity',
     '/index/notice-topic',
     '/index/my-topics',
@@ -315,6 +321,19 @@ function currentScrollWrap() {
 }
 
 /**
+ * 将主滚动容器滚动到指定位置
+ *
+ * @param top 滚动距离
+ * @return 是否成功拿到滚动容器并完成设置
+ */
+function setMainScrollTop(top) {
+    const wrap = currentScrollWrap()
+    if (!wrap) return false
+    wrap.scrollTop = top
+    return true
+}
+
+/**
  * 主滚动区域滚动事件处理：记录当前路由的滚动位置
  *
  * @param scrollTop 当前滚动距离
@@ -325,28 +344,46 @@ function handleMainScroll({ scrollTop }) {
 }
 
 /**
- * 恢复指定路由的滚动位置（多次重试，确保 DOM 渲染完成后再恢复）
+ * 恢复指定路由的滚动位置，并在恢复完成前暂时隐藏主内容避免闪屏
  *
  * @param path 路由路径
+ * @return Promise<void>
  */
 function restoreMainScroll(path) {
     if (!shouldRememberScroll(path)) return
     const top = routeScrollState.get(path)
     if (typeof top !== 'number') return
-    ;[0, 30, 80, 160, 320, 600].forEach(delay => {
-        window.setTimeout(() => {
-            const wrap = currentScrollWrap()
-            if (wrap) {
-                wrap.scrollTop = top
-            }
-        }, delay)
+    const token = ++mainScrollRestoreToken
+    restoringMainScroll.value = true
+    const finishRestore = () => {
+        if (token === mainScrollRestoreToken) {
+            restoringMainScroll.value = false
+        }
+    }
+    const tryRestore = () => {
+        if (token !== mainScrollRestoreToken) return
+        setMainScrollTop(top)
+    }
+    tryRestore()
+    window.requestAnimationFrame(() => {
+        tryRestore()
+        window.requestAnimationFrame(() => {
+            tryRestore()
+            finishRestore()
+        })
     })
+    window.setTimeout(finishRestore, 120)
 }
 
-/** 监听路由变化，切换页面时恢复滚动位置 */
+/** 监听路由变化，切换页面时恢复滚动位置或重置到顶部 */
 watch(() => route.path, async path => {
     await nextTick()
-    restoreMainScroll(path)
+    if (shouldRememberScroll(path) && routeScrollState.has(path)) {
+        restoreMainScroll(path)
+    } else {
+        restoringMainScroll.value = false
+        setMainScrollTop(0)
+    }
 })
 </script>
 
