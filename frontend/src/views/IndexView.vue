@@ -220,16 +220,12 @@ const loading = ref(true)
 const mainScrollbar = ref()
 /** 各列表页的滚动位置缓存（path → scrollTop） */
 const routeScrollState = new Map()
-/** 主内容区是否正在恢复历史滚动位置 */
+/** 是否正在恢复可记忆列表页的滚动位置 */
 const restoringMainScroll = ref(false)
 /** 当前滚动恢复任务序号，用于丢弃过期恢复任务 */
 let mainScrollRestoreToken = 0
 /** 需要记忆滚动位置的列表页路由集合 */
 const RESTORE_SCROLL_ROUTE_SET = new Set([
-    '/index',
-    '/index/',
-    '/index/activity',
-    '/index/notice-topic',
     '/index/my-topics',
     '/index/messages'
 ])
@@ -344,47 +340,83 @@ function handleMainScroll({ scrollTop }) {
 }
 
 /**
- * 恢复指定路由的滚动位置，并在恢复完成前暂时隐藏主内容避免闪屏
+ * 判断当前路由是否为论坛帖子详情页
  *
  * @param path 路由路径
- * @return Promise<void>
+ * @return true 表示论坛详情页
  */
-function restoreMainScroll(path) {
-    if (!shouldRememberScroll(path)) return
-    const top = routeScrollState.get(path)
-    if (typeof top !== 'number') return
+function isForumDetailRoute(path) {
+    return typeof path === 'string' && path.startsWith('/index/topic-detail/')
+}
+
+/**
+ * 对当前主内容路由应用滚动位置
+ *
+ * @param path 路由路径
+ * @param delays 延迟校准时间点
+ */
+function applyMainScroll(path, delays = [0]) {
     const token = ++mainScrollRestoreToken
+    const top = shouldRememberScroll(path) && routeScrollState.has(path)
+        ? routeScrollState.get(path)
+        : 0
+    delays.forEach(delay => {
+        window.setTimeout(() => {
+            if (token !== mainScrollRestoreToken) return
+            setMainScrollTop(top)
+        }, delay)
+    })
+}
+
+/**
+ * 恢复可记忆列表页的滚动位置，并在恢复完成前短暂隐藏内容，避免先露出顶部再跳回原处
+ *
+ * @param path 路由路径
+ */
+function restoreRememberedMainScroll(path) {
+    const top = routeScrollState.get(path)
+    if (typeof top !== 'number') {
+        restoringMainScroll.value = false
+        return
+    }
+    const token = ++mainScrollRestoreToken
+    const delays = [0, 40, 100, 180, 280, 380]
     restoringMainScroll.value = true
-    const finishRestore = () => {
+    delays.forEach(delay => {
+        window.setTimeout(() => {
+            if (token !== mainScrollRestoreToken) return
+            setMainScrollTop(top)
+            if (delay === delays[delays.length - 1]) {
+                restoringMainScroll.value = false
+            }
+        }, delay)
+    })
+    window.setTimeout(() => {
         if (token === mainScrollRestoreToken) {
             restoringMainScroll.value = false
         }
-    }
-    const tryRestore = () => {
-        if (token !== mainScrollRestoreToken) return
-        setMainScrollTop(top)
-    }
-    tryRestore()
-    window.requestAnimationFrame(() => {
-        tryRestore()
-        window.requestAnimationFrame(() => {
-            tryRestore()
-            finishRestore()
-        })
-    })
-    window.setTimeout(finishRestore, 120)
+    }, delays[delays.length - 1] + 80)
 }
 
-/** 监听路由变化，切换页面时恢复滚动位置或重置到顶部 */
+/**
+ * 监听主路由路径变化：
+ * 1. 切回可记忆列表页时恢复历史位置
+ * 2. 进入论坛详情页时保持当前滚动，交给详情页自身在挂载后置顶
+ * 3. 进入其他普通页面时回到顶部
+ */
 watch(() => route.path, async path => {
     await nextTick()
     if (shouldRememberScroll(path) && routeScrollState.has(path)) {
-        restoreMainScroll(path)
-    } else {
-        restoringMainScroll.value = false
-        setMainScrollTop(0)
+        restoreRememberedMainScroll(path)
+        return
     }
-})
+    if (isForumDetailRoute(path)) {
+        restoringMainScroll.value = false
+        return
+    }
+    restoringMainScroll.value = false
+    applyMainScroll(path, [0, 16])
+}, { immediate: true })
 </script>
 
 <style lang="less" scoped>

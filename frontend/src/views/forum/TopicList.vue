@@ -192,7 +192,7 @@ import {
     Microphone, CircleCheck, Star, FolderOpened, ArrowRightBold, View, ChatSquare
 } from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
-import {computed, onActivated, reactive, ref, watch} from "vue";
+import {computed, onActivated, onDeactivated, reactive, ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import {get} from "@/net";
 import {ElMessage} from "element-plus";
@@ -202,6 +202,7 @@ import ColorDot from "@/components/ColorDot.vue";
 import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
 import TopicCollectList from "@/components/TopicCollectList.vue";
+import {restoreForumScroll, saveForumScroll} from "@/utils/forumScroll";
 
 /** Pinia 全局状态 */
 const store = useStore()
@@ -266,7 +267,11 @@ watch(() => route.query.search, val => {
 /** 页面被激活时（keep-alive 缓存恢复），如果列表为空则加载 */
 onActivated(() => {
     if (!topics.list.length && !topics.end) updateList()
+    restoreForumScroll('/index')
 })
+
+/** 页面被缓存切走时记录当前滚动位置 */
+onDeactivated(() => saveForumScroll('/index'))
 
 /** 当前日期（格式：2026 年 5 月 27 日） */
 const today = computed(() => {
@@ -319,6 +324,7 @@ function onTopicCreate() {
  * @param id 帖子ID
  */
 function openTopicDetail(id) {
+    saveForumScroll('/index')
     router.push('/index/topic-detail/' + id)
 }
 

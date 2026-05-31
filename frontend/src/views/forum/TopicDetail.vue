@@ -229,7 +229,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { QuillDeltaToHtmlConverter } from "quill-delta-to-html";
 import { get, post } from "@/net";
@@ -292,6 +292,16 @@ const report = reactive({
     /** 补充说明 */
     detail: ''
 })
+
+/**
+ * 将主内容区滚动到顶部，避免进入详情页时沿用列表页的滚动位置
+ */
+function scrollMainContentToTop() {
+    const wrap = document.querySelector('.main-content-page .el-scrollbar__wrap')
+    if (wrap) {
+        wrap.scrollTop = 0
+    }
+}
 
 /**
  * 打开举报对话框，设置目标信息并重置表单
@@ -370,6 +380,9 @@ function init(id) {
 
 /** 监听路由参数变化，切换帖子时重新加载详情（immediate: true 确保首次进入也加载） */
 watch(() => route.params.tid, value => init(Number(value)), { immediate: true })
+
+/** 详情页挂载后将主滚动容器置顶 */
+onMounted(() => nextTick(scrollMainContentToTop))
 
 /**
  * 将 Quill Delta JSON 字符串转换为 HTML 用于渲染富文本内容

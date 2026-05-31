@@ -67,13 +67,14 @@
 <script setup>
 defineOptions({ name: 'NoticeTopicList' })
 
-import { reactive, watch } from "vue";
+import { onActivated, onDeactivated, reactive, watch } from "vue";
 import { useRoute } from "vue-router";
 import { CircleCheck, Star } from "@element-plus/icons-vue";
 import { get } from "@/net";
 import router from "@/router";
 import LightCard from "@/components/LightCard.vue";
 import TopicTag from "@/components/TopicTag.vue";
+import {restoreForumScroll, saveForumScroll} from "@/utils/forumScroll";
 
 const route = useRoute()
 
@@ -89,6 +90,10 @@ watch(() => route.query.search, val => {
     topics.search = val || ''
     resetList()
 }, { immediate: true })
+
+onActivated(() => restoreForumScroll('/index/notice-topic'))
+
+onDeactivated(() => saveForumScroll('/index/notice-topic'))
 
 function updateList() {
     if (topics.end || topics.loading) return
@@ -116,6 +121,7 @@ function updateList() {
 }
 
 function openTopicDetail(id) {
+    saveForumScroll('/index/notice-topic')
     router.push(`/index/topic-detail/${id}`)
 }
 
