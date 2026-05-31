@@ -146,16 +146,22 @@ function initEditor() {
 
 /**
  * 将 Quill Delta 对象转换为纯文本（用于字数统计）
- *
+ * {
+ *   "ops": [
+ *     { "insert": "你好，" },
+ *     { "insert": "世界", "attributes": { "bold": true } },
+ *     { "insert": "！\n" }
+ *   ]
+ * }
  * @param delta Quill Delta 对象
  * @return 纯文本字符串（去除空白字符）
  */
 function deltaToText(delta) {
-    if(!delta.ops) return ""
+    if(!delta.ops) return ""  // 没有 ops 字段 → 返回空字符串（防错）
     let str = ""
     for (let op of delta.ops)
-        str += op.insert
-    return str.replace(/\s/g, "")
+        str += op.insert     // 只取文字部分，拼接起来
+    return str.replace(/\s/g, "")   // 去掉所有空白字符（空格、换行等）
 }
 
 /** 当前内容纯文本字数 */

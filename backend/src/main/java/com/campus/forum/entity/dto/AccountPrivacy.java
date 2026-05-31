@@ -27,14 +27,14 @@ public class AccountPrivacy implements BaseData {
     /** 返回需要隐藏的字段名数组 */
     public String[] hiddenFields() {
         List<String> strings = new LinkedList<>();
-        Field[] fields = this.getClass().getDeclaredFields();
+        Field[] fields = this.getClass().getDeclaredFields();  // 反射：拿到这个类的所有字段
         for (Field field : fields) {
             try {
-                if (field.getType().equals(boolean.class) && !field.getBoolean(this))
-                    strings.add(field.getName());
+                if (field.getType().equals(boolean.class) && !field.getBoolean(this))    // 字段类型是 boolean 并且值是 false
+                    strings.add(field.getName());    // 记录这个字段名
             } catch (Exception ignored) {
             }
         }
-        return strings.toArray(String[]::new);
+        return strings.toArray(String[]::new);   // 转成数组返回
     }
 }

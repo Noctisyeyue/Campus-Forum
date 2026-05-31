@@ -232,6 +232,7 @@ const notice = reactive({
  * - sort: 排序方式（time/views/likes/collects/comments）
  * - page: 当前页码（从0开始，无限滚动翻页）
  * - end: 是否已加载完全部帖子
+ * - loading: 请求锁，true=正在请求中，防止并发重复加载  false=没在请求，可以发起新请求
  * - top: 置顶帖子列表
  * - search: 搜索关键词
  */
@@ -241,6 +242,7 @@ const topics = reactive({
     sort: 'time',
     page: 0,
     end: false,
+    loading: false,
     top: [],
     search: ''
 })
@@ -256,9 +258,10 @@ watch(() => topics.type, () => resetList())
 
 /** 监听路由中的搜索参数变化，更新搜索关键词并重新加载 */
 watch(() => route.query.search, val => {
+    // val 是变化后的新值   有值就赋值，没值就设为空字符串
     topics.search = val || ''
-    resetList()
-}, { immediate: true })
+    resetList()       // 重新加载列表
+}, { immediate: true })// 组件一创建就立即执行一次
 
 /** 页面被激活时（keep-alive 缓存恢复），如果列表为空则加载 */
 onActivated(() => {
@@ -282,8 +285,12 @@ get('/api/forum/notice', data => Object.assign(notice, data || {}))
  * 已加载完全部帖子时直接返回
  */
 function updateList(){
-    if(topics.end) return
+    // 防抖：数据已全部加载完 或 正在加载中 → 直接返回，不发请求
+    if(topics.end || topics.loading) return
+    // 标记为"正在加载"，防止重复请求
+    topics.loading = true
     let url = `/api/forum/list-topic?page=${topics.page}&type=${topics.type}&sort=${topics.sort}`
+    // 如果有搜索关键词，追加 &title=xxx（encodeURIComponent 防止特殊字符破坏 URL）
     if (topics.search) url += `&title=${encodeURIComponent(topics.search)}`
     get(url, data => {
         if(data) {
@@ -292,6 +299,9 @@ function updateList(){
         }
         if(!data || data.length < 10)
             topics.end = true
+        topics.loading = false  // 加载完成，解除锁定
+    }, () => {
+        topics.loading = false   // 请求失败也要解除锁定
     })
 }
 
@@ -316,6 +326,7 @@ function openTopicDetail(id) {
 function resetList() {
     topics.page = 0
     topics.end = false
+    topics.loading = false
     topics.list = []
     updateList()
 }
