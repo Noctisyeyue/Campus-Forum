@@ -177,7 +177,9 @@
                                   :style="{ visibility: restoringMainScroll ? 'hidden' : 'visible' }"
                                   @scroll="handleMainScroll">
                         <router-view v-slot="{ Component }">
-                            <transition name="el-fade-in-linear" mode="out-in">
+                            <transition name="el-fade-in-linear"
+                                        mode="out-in"
+                                        @before-enter="handleMainViewBeforeEnter">
                                 <component :is="Component" style="height: 100%"/>
                             </transition>
                         </router-view>
@@ -224,6 +226,8 @@ const routeScrollState = new Map()
 const restoringMainScroll = ref(false)
 /** 当前滚动恢复任务序号，用于丢弃过期恢复任务 */
 let mainScrollRestoreToken = 0
+/** 等待在外层页面进入前应用的滚动重置路径 */
+const pendingMainScrollPath = ref('')
 /** 需要记忆滚动位置的列表页路由集合 */
 const RESTORE_SCROLL_ROUTE_SET = new Set([
     '/index/my-topics',
@@ -350,6 +354,16 @@ function isForumDetailRoute(path) {
 }
 
 /**
+ * 判断当前路由是否为论坛列表页
+ *
+ * @param path 路由路径
+ * @return true 表示论坛列表页
+ */
+function isForumListRoute(path) {
+    return ['/index', '/index/', '/index/activity', '/index/notice-topic'].includes(path)
+}
+
+/**
  * 对当前主内容路由应用滚动位置
  *
  * @param path 路由路径
@@ -399,13 +413,23 @@ function restoreRememberedMainScroll(path) {
 }
 
 /**
+ * 外层新页面进入前应用延迟的滚动重置，避免旧的论坛列表页在离场时先闪到顶部
+ */
+function handleMainViewBeforeEnter() {
+    if (!pendingMainScrollPath.value) return
+    applyMainScroll(pendingMainScrollPath.value, [0, 16])
+    pendingMainScrollPath.value = ''
+}
+
+/**
  * 监听主路由路径变化：
  * 1. 切回可记忆列表页时恢复历史位置
  * 2. 进入论坛详情页时保持当前滚动，交给详情页自身在挂载后置顶
  * 3. 进入其他普通页面时回到顶部
  */
-watch(() => route.path, async path => {
+watch(() => route.path, async (path, oldPath) => {
     await nextTick()
+    pendingMainScrollPath.value = ''
     if (shouldRememberScroll(path) && routeScrollState.has(path)) {
         restoreRememberedMainScroll(path)
         return
@@ -415,6 +439,10 @@ watch(() => route.path, async path => {
         return
     }
     restoringMainScroll.value = false
+    if (isForumListRoute(oldPath)) {
+        pendingMainScrollPath.value = path
+        return
+    }
     applyMainScroll(path, [0, 16])
 }, { immediate: true })
 </script>
