@@ -54,7 +54,7 @@
                 </el-table-column>
                 <el-table-column label="操作" width="90">
                     <template #default="{ row }">
-                        <el-button v-if="row.status === 'normal'" type="danger" size="small" plain round
+                        <el-button type="danger" size="small" plain round
                                    @click="confirmDelete(row.id)">删除</el-button>
                     </template>
                 </el-table-column>
@@ -106,11 +106,13 @@ function loadComments(p) {
 loadComments(0)
 
 function confirmDelete(id) {
-    ElMessageBox.confirm('确定删除该评论吗？此操作不可逆。', '删除评论', {
-        confirmButtonText: '确定删除',
-        cancelButtonText: '取消',
-        type: 'warning'
-    }).then(() => deleteComment(id)).catch(() => {})
+    const row = comments.value.find(c => c.id === id)
+    const isDeleted = row && row.status === 'deleted'
+    ElMessageBox.confirm(
+        isDeleted ? '该评论已被用户删除，确定要彻底删除吗？此操作不可逆。' : '确定删除该评论吗？此操作不可逆。',
+        '删除评论',
+        { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
+    ).then(() => deleteComment(id)).catch(() => {})
 }
 
 function deleteComment(id) {

@@ -1318,13 +1318,19 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 管理员删除评论（软删除）
+     * 管理员删除评论（物理删除，级联清理关联举报）
+     *
      * @param id 评论ID
+     * @return null 表示成功，非 null 为错误信息
      */
     @Override
-    public void adminDeleteComment(int id) {
-        commentMapper.update(null, Wrappers.<TopicComment>update()
-                .eq("id", id)
-                .set("status", Const.COMMENT_STATUS_DELETED));
+    public String adminDeleteComment(int id) {
+        TopicComment comment = commentMapper.selectById(id);
+        if (comment == null) return "评论不存在";
+        reportMapper.delete(Wrappers.<Report>query()
+                .eq("target_type", Const.REPORT_TARGET_COMMENT)
+                .eq("target_id", id));
+        commentMapper.deleteById(id);
+        return null;
     }
 }

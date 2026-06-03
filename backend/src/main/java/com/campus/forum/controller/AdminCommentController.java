@@ -4,6 +4,7 @@ import com.campus.forum.entity.RestBean;
 import com.campus.forum.entity.vo.response.AdminCommentVO;
 import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.service.TopicService;
+import com.campus.forum.utils.ControllerUtils;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,9 @@ public class AdminCommentController {
 
     @Resource
     TopicService topicService;
+
+    @Resource
+    ControllerUtils utils;
 
     /**
      * 分页查询评论列表（支持按状态/内容/用户名/帖子标题筛选）
@@ -42,13 +46,12 @@ public class AdminCommentController {
     }
 
     /**
-     * 删除评论（软删除）
+     * 删除评论（物理删除，级联清理关联举报）
      * @param id 评论ID
      * @return 操作结果
      */
     @PostMapping("/{id}/delete")
     public RestBean<Void> deleteComment(@PathVariable int id) {
-        topicService.adminDeleteComment(id);
-        return RestBean.success();
+        return utils.messageHandle(() -> topicService.adminDeleteComment(id));
     }
 }
