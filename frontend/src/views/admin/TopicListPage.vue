@@ -95,6 +95,8 @@
                             <template v-else-if="row.status === 'deleted'">
                                 <el-button type="success" size="small" plain round
                                            @click="doAction(row.id, 'restore')">恢复</el-button>
+                                <el-button type="danger" size="small" plain round
+                                           @click="confirmDelete(row.id)">删除</el-button>
                             </template>
                             <template v-else>
                                 <span class="text-muted">-</span>
