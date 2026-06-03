@@ -24,29 +24,57 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin/forum")
 public class AdminForumController {
 
+    /** 帖子服务 */
     @Resource
     TopicService topicService;
 
+    /** 通用控制器工具 */
     @Resource
     ControllerUtils utils;
 
+    /**
+     * 发布校园活动帖子
+     *
+     * @param vo       活动发布参数
+     * @param adminId  操作管理员ID
+     * @return 操作结果
+     */
     @PostMapping("/publish-activity")
     public RestBean<Void> publishActivity(@Valid @RequestBody PublishActivityVO vo,
                                           @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
         return utils.messageHandle(() -> topicService.publishActivity(adminId, vo));
     }
 
+    /**
+     * 发布教务通知帖子
+     *
+     * @param vo       通知发布参数
+     * @param adminId  操作管理员ID
+     * @return 操作结果
+     */
     @PostMapping("/publish-notice-topic")
     public RestBean<Void> publishNoticeTopic(@Valid @RequestBody PublishNoticeTopicVO vo,
                                              @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
         return utils.messageHandle(() -> topicService.publishNoticeTopic(adminId, vo));
     }
 
+    /**
+     * 获取论坛公告
+     *
+     * @return 论坛公告内容
+     */
     @GetMapping("/notice")
     public RestBean<ForumNoticeVO> notice() {
         return RestBean.success(topicService.getForumNotice());
     }
 
+    /**
+     * 保存论坛公告
+     *
+     * @param vo       公告保存参数
+     * @param adminId  操作管理员ID
+     * @return 操作结果
+     */
     @PostMapping("/notice")
     public RestBean<Void> saveNotice(@Valid @RequestBody ForumNoticeSaveVO vo,
                                      @RequestAttribute(Const.ATTR_USER_ID) int adminId) {

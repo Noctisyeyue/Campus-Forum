@@ -28,10 +28,19 @@ public class SnowflakeIdGenerator {
     private long lastTimestamp = -1L;    // 上次生成 ID 的时间戳
     private long sequence = 0L;         // 同一毫秒内的序列号
 
+    /**
+     * 默认构造，数据中心ID和机器ID均为1
+     */
     public SnowflakeIdGenerator() {
         this(1, 1);
     }
 
+    /**
+     * 指定数据中心ID和机器ID构造
+     *
+     * @param dataCenterId 数据中心ID（0~31）
+     * @param workerId     机器ID（0~31）
+     */
     private SnowflakeIdGenerator(long dataCenterId, long workerId) {
         if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0) {
             throw new IllegalArgumentException("Data center ID can't be greater than " + MAX_DATA_CENTER_ID + " or less than 0");
@@ -45,6 +54,8 @@ public class SnowflakeIdGenerator {
 
     /**
      * 生成下一个唯一 ID（线程安全）
+     *
+     * @return 全局唯一的 64 位 ID
      */
     public synchronized long nextId() {
         long timestamp = getCurrentTimestamp();
@@ -66,11 +77,21 @@ public class SnowflakeIdGenerator {
                 sequence;
     }
 
+    /**
+     * 获取当前时间戳
+     *
+     * @return 当前毫秒时间戳
+     */
     private long getCurrentTimestamp() {
         return System.currentTimeMillis();
     }
 
-    // 自旋等待直到超过上次时间戳
+    /**
+     * 自旋等待直到超过上次时间戳
+     *
+     * @param lastTimestamp 上次生成ID的时间戳
+     * @return 新的时间戳
+     */
     private long getNextTimestamp(long lastTimestamp) {
         long timestamp = getCurrentTimestamp();
         while (timestamp <= lastTimestamp) {

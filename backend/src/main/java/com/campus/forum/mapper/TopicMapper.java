@@ -20,6 +20,8 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 批量插入点赞记录
+     *
+     * @param interacts 点赞记录列表
      */
     @Insert("""
             <script>
@@ -33,6 +35,8 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 批量插入收藏记录
+     *
+     * @param interacts 收藏记录列表
      */
     @Insert("""
             <script>
@@ -60,6 +64,9 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 批量删除点赞记录
+     *
+     * @param interacts 点赞记录列表
+     * @return 实际删除条数
      */
     @Delete("""
             <script>
@@ -73,6 +80,9 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 批量删除收藏记录
+     *
+     * @param interacts 收藏记录列表
+     * @return 实际删除条数
      */
     @Delete("""
             <script>
@@ -86,12 +96,18 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 删除帖子全部点赞记录
+     *
+     * @param tid 帖子ID
+     * @return 实际删除条数
      */
     @Delete("delete from db_topic_interact_like where tid = #{tid}")
     int deleteLikeByTid(@Param("tid") int tid);
 
     /**
      * 删除帖子全部收藏记录
+     *
+     * @param tid 帖子ID
+     * @return 实际删除条数
      */
     @Delete("delete from db_topic_interact_collect where tid = #{tid}")
     int deleteCollectByTid(@Param("tid") int tid);
@@ -225,12 +241,20 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 查询用户对帖子是否点过赞
+     *
+     * @param tid 帖子ID
+     * @param uid 用户ID
+     * @return 点赞数量（0或1）
      */
     @Select("select count(*) from db_topic_interact_like where tid = #{tid} and uid = #{uid}")
     int userLikeCount(@Param("tid") int tid, @Param("uid") int uid);
 
     /**
      * 查询用户对帖子是否收藏过
+     *
+     * @param tid 帖子ID
+     * @param uid 用户ID
+     * @return 收藏数量（0或1）
      */
     @Select("select count(*) from db_topic_interact_collect where tid = #{tid} and uid = #{uid}")
     int userCollectCount(@Param("tid") int tid, @Param("uid") int uid);
@@ -253,6 +277,9 @@ public interface TopicMapper extends BaseMapper<Topic> {
 
     /**
      * 查询用户收藏的帖子列表
+     *
+     * @param uid 用户ID
+     * @return 收藏的帖子列表
      */
     @Select("""
             select t.* from db_topic_interact_collect c

@@ -18,6 +18,12 @@ public class PageResult<T> {
     /** 总记录数 */
     private long total;
 
+    /**
+     * 构造分页结果
+     *
+     * @param list  当前页数据列表
+     * @param total 总记录数
+     */
     public PageResult(List<T> list, long total) {
         this.list = list;
         this.total = total;

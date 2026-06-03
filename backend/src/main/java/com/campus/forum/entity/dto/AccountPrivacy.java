@@ -24,7 +24,11 @@ public class AccountPrivacy implements BaseData {
     boolean qq = true;      // QQ是否公开
     boolean gender = true;  // 性别是否公开
 
-    /** 返回需要隐藏的字段名数组 */
+    /**
+     * 返回需要隐藏的字段名数组
+     *
+     * @return 隐藏字段名数组
+     */
     public String[] hiddenFields() {
         List<String> strings = new LinkedList<>();
         Field[] fields = this.getClass().getDeclaredFields();  // 反射：拿到这个类的所有字段

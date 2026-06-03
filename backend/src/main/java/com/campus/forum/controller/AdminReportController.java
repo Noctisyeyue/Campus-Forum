@@ -10,13 +10,18 @@ import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 管理员举报管理控制器
+ */
 @RestController
 @RequestMapping("/api/admin/reports")
 public class AdminReportController {
 
+    /** 举报服务 */
     @Resource
     ReportService reportService;
 
+    /** 通用控制器工具 */
     @Resource
     ControllerUtils utils;
 
@@ -37,6 +42,15 @@ public class AdminReportController {
         return RestBean.success(reportService.adminListReports(page + 1, pageSize, status, targetType));
     }
 
+    /**
+     * 处理举报（通过或驳回）
+     *
+     * @param id      举报ID
+     * @param action  处理动作（approve/dismiss）
+     * @param note    管理员备注（可选）
+     * @param adminId 操作管理员ID
+     * @return 操作结果
+     */
     @PostMapping("/{id}/resolve")
     public RestBean<Void> resolveReport(@PathVariable int id,
                                         @RequestParam String action,

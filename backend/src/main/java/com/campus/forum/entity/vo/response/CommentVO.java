@@ -15,6 +15,9 @@ public class CommentVO {
     String quote;       // 引用内容
     User user;          // 评论用户信息
 
+    /**
+     * 评论用户信息
+     */
     @Data
     public static class User {
         Integer id;         // 用户ID

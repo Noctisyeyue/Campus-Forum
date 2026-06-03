@@ -28,6 +28,9 @@ public class TopicDetailVO {
     Interact interact;      // 当前用户互动状态（点赞/收藏）
     Long comments;          // 评论数量
 
+    /**
+     * 当前用户互动状态
+     */
     @Data
     @AllArgsConstructor
     public static class Interact {
@@ -35,6 +38,9 @@ public class TopicDetailVO {
         Boolean collect;    // 是否已收藏
     }
 
+    /**
+     * 发帖用户信息
+     */
     @Data
     public static class User {
         Integer id;         // 用户ID

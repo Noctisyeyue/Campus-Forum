@@ -17,11 +17,15 @@ import java.util.List;
 @RequestMapping("/api/notification")
 public class NotificationController {
 
+    /** 通知服务 */
     @Resource
     NotificationService service;
 
     /**
      * 获取当前用户的全部消息（已读+未读）
+     *
+     * @param id 当前用户ID
+     * @return 消息列表
      */
     @GetMapping("/list")
     public RestBean<List<NotificationVO>> listNotification(@RequestAttribute(Const.ATTR_USER_ID) int id) {
@@ -30,6 +34,9 @@ public class NotificationController {
 
     /**
      * 获取当前用户的未读消息
+     *
+     * @param id 当前用户ID
+     * @return 未读消息列表
      */
     @GetMapping("/unread")
     public RestBean<List<NotificationVO>> listUnreadNotification(@RequestAttribute(Const.ATTR_USER_ID) int id) {
@@ -39,7 +46,9 @@ public class NotificationController {
     /**
      * 将指定消息标记为已读
      *
-     * @param id 消息 ID
+     * @param id  消息ID
+     * @param uid 当前用户ID
+     * @return 操作结果
      */
     @GetMapping("/read")
     public RestBean<Void> readNotification(@RequestParam @Min(0) int id,
@@ -50,6 +59,9 @@ public class NotificationController {
 
     /**
      * 将当前用户全部消息标记为已读
+     *
+     * @param uid 当前用户ID
+     * @return 操作结果
      */
     @GetMapping("/read-all")
     public RestBean<Void> readAllNotification(@RequestAttribute(Const.ATTR_USER_ID) int uid) {
@@ -60,7 +72,9 @@ public class NotificationController {
     /**
      * 删除指定消息
      *
-     * @param id 消息 ID
+     * @param id  消息ID
+     * @param uid 当前用户ID
+     * @return 操作结果
      */
     @GetMapping("/delete")
     public RestBean<Void> deleteNotification(@RequestParam @Min(0) int id,
@@ -72,7 +86,9 @@ public class NotificationController {
     /**
      * 批量删除指定消息
      *
-     * @param ids 消息 ID 列表
+     * @param ids 消息ID列表
+     * @param uid 当前用户ID
+     * @return 操作结果
      */
     @PostMapping("/delete-batch")
     public RestBean<Void> deleteBatchNotification(@RequestBody List<Integer> ids,
@@ -83,6 +99,9 @@ public class NotificationController {
 
     /**
      * 删除当前用户全部消息
+     *
+     * @param uid 当前用户ID
+     * @return 操作结果
      */
     @GetMapping("/delete-all")
     public RestBean<Void> deleteAllNotification(@RequestAttribute(Const.ATTR_USER_ID) int uid) {

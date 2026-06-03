@@ -53,6 +53,11 @@ public class SwaggerConfiguration {
         return api -> this.authorizePathItems().forEach(api.getPaths()::addPathItem);
     }
 
+    /**
+     * 手动构建登录/登出接口的 Swagger PathItem
+     *
+     * @return 路径与 PathItem 的映射
+     */
     private Map<String, PathItem> authorizePathItems() {
         Map<String, PathItem> map = new HashMap<>();
         map.put("/api/auth/login", new PathItem()
