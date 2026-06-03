@@ -42,7 +42,7 @@ public interface TopicService extends IService<Topic> {
     String updateTopic(int uid, TopicUpdateVO vo);
     String createComment(int uid, AddCommentVO vo);
     List<CommentVO> comments(int tid, int pageNumber);
-    void deleteComment(int id, int uid);
+    String deleteComment(int id, int uid);
     String deleteTopic(int uid, int tid);
 
     // 管理员方法：分页查询全部帖子（支持状态/分类/标题/作者筛选）

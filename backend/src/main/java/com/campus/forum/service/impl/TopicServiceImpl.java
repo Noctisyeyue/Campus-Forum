@@ -361,13 +361,15 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      *
      * @param id  评论ID
      * @param uid 用户ID
+     * @return null 表示成功，非 null 为错误信息
      */
     @Override
-    public void deleteComment(int id, int uid) {
-        commentMapper.update(null, Wrappers.<TopicComment>update()
+    public String deleteComment(int id, int uid) {
+        int rows = commentMapper.update(null, Wrappers.<TopicComment>update()
                 .eq("id", id)
                 .eq("uid", uid)
                 .set("status", Const.COMMENT_STATUS_DELETED));
+        if (rows == 0) return "删除失败，评论不存在或无权删除";
         // 评论删除后，自动关闭该评论的 pending 举报并通知举报人
         var pendingReports = reportMapper.selectList(Wrappers.<Report>query()
                 .eq("target_type", Const.REPORT_TARGET_COMMENT)
@@ -384,6 +386,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                     "您举报的评论已被作者删除，举报自动关闭",
                     "info", null);
         }
+        return null;
     }
 
     /**
