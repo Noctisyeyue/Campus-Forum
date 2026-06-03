@@ -38,9 +38,9 @@
                     'is-editing': editing
                 }">
                 <div class="message-card-layout">
-                    <label v-if="editing" class="message-select">
+                    <label v-if="editing" class="message-select" @click.stop>
                         <el-checkbox
-                            :value="selectedIds.includes(item.id)"
+                            :model-value="selectedIds.includes(item.id)"
                             @change="val => toggleSelect(item.id, val)"/>
                     </label>
                     <div class="message-card-accent"></div>
