@@ -351,7 +351,7 @@ function resetTopicState() {
  */
 function init(id) {
     if (!id) {
-        resetTopicState()
+        resetTopicState()  // 清空所有状态
         notFound.value = true
         return
     }
@@ -363,12 +363,12 @@ function init(id) {
             notFound.value = true
             return
         }
-        topic.data = data
-        topic.like = !!data.interact?.like
-        topic.collect = !!data.interact?.collect
+        topic.data = data                                        // 存帖子数据
+        topic.like = !!data.interact?.like                       // 存点赞状态
+        topic.collect = !!data.interact?.collect                 // 存收藏状态
         topic.commentEnabled = data.allowComment !== false
         if (topic.commentEnabled) {
-            loadComments(1)
+            loadComments(1)    // 加载第1页评论
         } else {
             topic.comments = []
         }

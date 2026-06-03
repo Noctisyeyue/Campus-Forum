@@ -291,8 +291,10 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         comment.setStatus(Const.COMMENT_STATUS_NORMAL);
         commentMapper.insert(comment);
         // 发送通知
+        // 查询评论者信息（为了拿到用户名）
         Account account = accountMapper.selectById(uid);
         if (vo.getQuote() > 0) {
+            // 回复别人的评论 → 通知被回复的人
             TopicComment com = commentMapper.selectById(vo.getQuote());
             if (com != null && !Objects.equals(account.getId(), com.getUid())) {
                 notificationService.addNotification(
@@ -303,6 +305,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                 );
             }
         } else if (!Objects.equals(account.getId(), topic.getUid())) {
+            // 直接评论帖子（不是回复）→ 通知帖子作者
             notificationService.addNotification(
                     topic.getUid(),
                     "您有新的帖子回复",
@@ -333,15 +336,17 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             CommentVO vo = new CommentVO();
             BeanUtils.copyProperties(dto, vo);
             if (dto.getQuote() > 0) {
+                // 根据 quote ID 查到被引用的那条评论
                 TopicComment comment = commentMapper.selectOne(Wrappers.<TopicComment>query()
                         .eq("id", dto.getQuote()));
                 if (comment != null) {
+                    // 从评论内容（Quill Delta JSON）中提取纯文字
                     JSONObject object = JSONObject.parseObject(comment.getContent());
                     StringBuilder builder = new StringBuilder();
                     this.shortContent(object.getJSONArray("ops"), builder, ignore -> {});
-                    vo.setQuote(builder.toString());
+                    vo.setQuote(builder.toString());  // 设置为文字内容
                 } else {
-                    vo.setQuote("此评论已被删除");
+                    vo.setQuote("此评论已被删除");  // 被引用的评论已删除
                 }
             }
             CommentVO.User user = new CommentVO.User();
@@ -551,22 +556,28 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", topic.getId())
                 .setSql("view_count = view_count + 1"));
+        // 创建 VO 对象，复制帖子基础字段
         TopicDetailVO vo = new TopicDetailVO();
         BeanUtils.copyProperties(topic, vo);
         vo.setViewCount(topic.getViewCount() == null ? 1 : topic.getViewCount() + 1);
+        // 查询是否允许评论
         vo.setAllowComment(this.allowComment(topic));
+        // 查询当前用户的点赞/收藏状态
         TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
                 uid > 0 && hasInteract(topic.getId(), uid, "like"),
                 uid > 0 && hasInteract(topic.getId(), uid, "collect")
         );
         vo.setInteract(interact);
+        // 查询帖子作者信息（按隐私设置过滤）
         TopicDetailVO.User user = new TopicDetailVO.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
+        // 查询评论总数  允许评论 → 查评论数量；不允许 → 直接设为 0
         vo.setComments(Boolean.TRUE.equals(vo.getAllowComment())
                 ? commentMapper.selectCount(Wrappers.<TopicComment>query()
                 .eq("tid", topic.getId())
                 .eq("status", Const.COMMENT_STATUS_NORMAL))
                 : 0L);
+        // 填充活动扩展信息
         this.fillActivityFields(topic, vo);
         return vo;
     }
@@ -579,10 +590,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public void interact(Interact interact, boolean state) {
+        // 取出互动类型
         String type = interact.getType();
         synchronized (type.intern()) {
             template.opsForHash().put(type, interact.toKey(), Boolean.toString(state));
-            this.saveInteractSchedule(type);
+            this.saveInteractSchedule(type);  // 安排延迟批量同步任务
         }
         // 立即同步该条互动到数据库，确保列表数量实时更新
         if (state) {
@@ -590,6 +602,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         } else {
             baseMapper.deleteInteract(List.of(interact), type);
         }
+        // 清除帖子列表缓存（让首页看到最新数据）
         cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
     }
 
@@ -619,11 +632,13 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      * @param type 互动类型（like/collect）
      */
     private void saveInteractSchedule(String type) {
+        // 1. 如果这个类型已经有一个 3 秒后的任务在等了，就不再创建新的
         if (!state.getOrDefault(type, false)) {
-            state.put(type, true);
+            state.put(type, true); // 标记：已安排
+            // 2. 安排 3 秒后执行
             service.schedule(() -> {
-                this.saveInteract(type);
-                state.put(type, false);
+                this.saveInteract(type);        // 3秒后，批量同步到数据库
+                state.put(type, false);  // 标记：任务完成，可以安排下一个了
             }, 3, TimeUnit.SECONDS);
         }
     }
@@ -635,19 +650,21 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     private void saveInteract(String type) {
         synchronized (type.intern()) {
-            List<Interact> check = new LinkedList<>();
-            List<Interact> uncheck = new LinkedList<>();
+            List<Interact> check = new LinkedList<>();        // 要新增的
+            List<Interact> uncheck = new LinkedList<>();      // 要删除的
+            // 遍历 Redis Hash 里的所有互动数据
             template.opsForHash().entries(type).forEach((k, v) -> {
                 if (Boolean.parseBoolean(v.toString()))
-                    check.add(Interact.parseInteract(k.toString(), type));
+                    check.add(Interact.parseInteract(k.toString(), type));    // "true" → 新增列表
                 else
-                    uncheck.add(Interact.parseInteract(k.toString(), type));
+                    uncheck.add(Interact.parseInteract(k.toString(), type));  // "false" → 删除列表
             });
+            // 批量写数据库
             if (!check.isEmpty())
-                baseMapper.addInteract(check, type);
+                baseMapper.addInteract(check, type);   // 一次 INSERT 多条
             if (!uncheck.isEmpty())
-                baseMapper.deleteInteract(uncheck, type);
-            template.delete(type);
+                baseMapper.deleteInteract(uncheck, type);  // 一次 DELETE 多条
+            template.delete(type);   // 清空 Redis Hash，等下一轮
         }
     }
 

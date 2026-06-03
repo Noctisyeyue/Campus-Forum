@@ -28,18 +28,28 @@ import {ref} from "vue";
 import {post} from "@/net";
 import {ElMessage} from "element-plus";
 
+/** 组件属性定义 */
 const props = defineProps({
+    /** 是否显示评论编辑器抽屉 */
     show: Boolean,
+    /** 所属帖子ID */
     tid: String,
+    /** 回复目标评论对象（null 为顶级评论） */
     quote: Object
 })
 
+/** 评论编辑器内容（Quill Delta 格式） */
 const content = ref()
 
+/** 声明组件事件 */
 const emit = defineEmits(['close', 'comment'])
 
+/** 抽屉打开时重置编辑器内容 */
 const init = () => content.value = new Delta()
 
+/**
+ * 提交评论，校验字数后发送请求
+ */
 function submitComment() {
     if (deltaToText(content.value).length > 2000) {
         ElMessage.warning('评论字数已经超出最大限制，请缩减评论内容！')
@@ -55,12 +65,24 @@ function submitComment() {
     })
 }
 
+/**
+ * 将 Quill Delta JSON 转为简短纯文本（截取前35字），用于抽屉标题显示
+ *
+ * @param delta Quill Delta JSON 字符串
+ * @return 截断后的纯文本
+ */
 function deltaToSimpleText(delta) {
     let str = deltaToText(JSON.parse(delta))
     if(str.length > 35) str = str.substring(0, 35) + "..."
     return str
 }
 
+/**
+ * 将 Quill Delta 对象转为纯文本（去除空白字符），用于字数统计
+ *
+ * @param delta Quill Delta 对象
+ * @return 纯文本字符串
+ */
 function deltaToText(delta) {
     if(!delta?.ops) return ""
     let str = ""

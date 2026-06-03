@@ -21,18 +21,31 @@ import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
 import {ElMessage} from "element-plus";
 
+/** 组件属性定义 */
 defineProps({
+    /** 是否显示收藏列表抽屉 */
     show: Boolean
 })
 
+/** 声明组件事件 */
 const emit = defineEmits(['close'])
 
+/** 收藏的帖子列表 */
 const list = ref([])
 
+/**
+ * 加载收藏列表，抽屉打开时调用
+ */
 function init() {
     get('/api/forum/collects', data => list.value = data)
 }
 
+/**
+ * 取消收藏指定帖子，成功后从列表中移除
+ *
+ * @param index 帖子在列表中的下标
+ * @param tid   帖子ID
+ */
 function deleteCollect(index, tid) {
     get(`/api/forum/interact?tid=${tid}&type=collect&state=false`, () => {
         ElMessage.success('已取消收藏！')
