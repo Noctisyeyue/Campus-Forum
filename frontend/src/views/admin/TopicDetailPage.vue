@@ -32,7 +32,9 @@
             <div style="margin-bottom: 10px;display: flex;gap: 10px;align-items: center">
                 <el-tag :type="statusTag(topic.status)" size="small">{{ statusText(topic.status) }}</el-tag>
                 <el-tag v-if="topic.top" type="warning" size="small">置顶</el-tag>
-                <topic-tag v-if="topic.type" :type="findType(topic.type)"/>
+                <el-tag v-if="topic.type && findTypeName(topic.type)" size="small" effect="light">
+                    {{ findTypeName(topic.type) }}
+                </el-tag>
                 <span style="color: grey;font-size: 13px">{{ new Date(topic.time).toLocaleString() }}</span>
             </div>
             <h2>{{ topic.title }}</h2>
@@ -128,11 +130,11 @@ import {computed, ref} from "vue"
 import {ElMessage} from "element-plus"
 import {ArrowLeft, EditPen, Warning} from "@element-plus/icons-vue"
 import {QuillDeltaToHtmlConverter} from "quill-delta-to-html"
-import Card from "@/components/Card.vue"
-import TopicTag from "@/components/TopicTag.vue"
 
 const route = useRoute()
 const store = useStore()
+/** 所有分类列表 */
+const types = ref([])
 /** 帖子详情数据 */
 const topic = ref(null)
 /** 帖子评论列表 */
@@ -171,6 +173,16 @@ function statusText(status) {
 }
 
 /**
+ * 根据分类 ID 查找分类名称
+ * @param {number} typeId 分类 ID
+ * @return {string|undefined} 分类名称
+ */
+function findTypeName(typeId) {
+    const t = types.value.find(t => t.id === typeId)
+    return t ? t.name : undefined
+}
+
+/**
  * 将 Quill Delta JSON 内容转换为 HTML 字符串
  * @param {string} content - Quill Delta JSON 字符串
  * @return {string} 转换后的 HTML
@@ -181,15 +193,7 @@ function convertToHtml(content) {
     return converter.convert()
 }
 
-/**
- * 根据 ID 在 store 分类列表中查找分类对象，未找到时返回默认值
- * @param {number} typeId - 分类 ID
- * @return {Object} 分类对象（包含 id/name/color/desc）
- */
-function findType(typeId) {
-    const t = store.forum.types.find(t => t.id === typeId)
-    return t || { id: typeId, name: '未知', color: '#999', desc: '' }
-}
+get('/api/admin/types', data => types.value = data)
 
 /**
  * 加载帖子详情数据，加载完成后自动加载评论
