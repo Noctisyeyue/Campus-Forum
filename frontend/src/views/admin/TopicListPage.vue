@@ -48,7 +48,7 @@
                 </el-table-column>
                 <el-table-column label="置顶" width="65">
                     <template #default="{ row }">
-                        <el-tag v-if="row.top" type="warning" size="small" effect="light">是</el-tag>
+                        <el-tag v-if="row.top && !isSystemTopic(row)" type="warning" size="small" effect="light">是</el-tag>
                         <span v-else class="text-muted">-</span>
                     </template>
                 </el-table-column>
@@ -73,10 +73,10 @@
                                         管理<el-icon class="el-icon--right"><ArrowDown/></el-icon>
                                     </el-button>
                                     <template #dropdown>
-                                        <el-dropdown-item v-if="!row.top" @click="doAction(row.id, 'top')">
+                                        <el-dropdown-item v-if="!row.top && !isSystemTopic(row)" @click="doAction(row.id, 'top')">
                                             置顶
                                         </el-dropdown-item>
-                                        <el-dropdown-item v-if="row.top" @click="doAction(row.id, 'untop')">
+                                        <el-dropdown-item v-if="row.top && !isSystemTopic(row)" @click="doAction(row.id, 'untop')">
                                             取消置顶
                                         </el-dropdown-item>
                                         <el-dropdown-item @click="openHide(row.id)">
@@ -145,7 +145,7 @@
 
 <script setup>
 import {get, post} from "@/net"
-import {reactive, ref, watch} from "vue"
+import {computed, reactive, ref, watch} from "vue"
 import {ElMessage, ElMessageBox} from "element-plus"
 import {ArrowDown, Search, Warning} from "@element-plus/icons-vue"
 import router from "@/router"
@@ -171,6 +171,16 @@ const filter = reactive({ status: '', type: '', title: '', author: '' })
 const reject = reactive({ show: false, id: null, reason: '' })
 /** 下架帖子弹窗状态 */
 const hideDialog = reactive({ show: false, id: null, reason: '' })
+
+/** 系统（活动/通知）分类 ID 集合 */
+const systemTypeIds = computed(() =>
+    types.value.filter(t => t.systemKey).map(t => t.id)
+)
+
+/** 判断帖子是否属于系统分类（校园活动/教务通知） */
+function isSystemTopic(row) {
+    return systemTypeIds.value.includes(row.type)
+}
 
 get('/api/admin/types', data => types.value = data)
 
