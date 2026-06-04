@@ -10,9 +10,6 @@
                 <div style="flex: 1"></div>
                 <div class="admin-header-actions">
                     <ThemeToggle/>
-                    <div class="header-action-btn" @click="router.push('/index')" title="返回前台">
-                        <el-icon :size="18"><Back/></el-icon>
-                    </div>
                     <div class="header-divider"></div>
                     <div class="header-profile">
                         <span class="header-profile-name">{{ store.user.username }}</span>

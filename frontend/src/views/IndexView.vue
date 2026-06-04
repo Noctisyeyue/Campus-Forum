@@ -70,6 +70,12 @@
                                 </el-icon>
                                 消息列表
                             </el-dropdown-item>
+                            <el-dropdown-item v-if="store.isAdmin" @click="router.push('/admin')">
+                                <el-icon>
+                                    <Monitor/>
+                                </el-icon>
+                                管理后台
+                            </el-dropdown-item>
                             <el-dropdown-item @click="userLogout" divided>
                                 <el-icon>
                                     <Back/>
@@ -251,11 +257,10 @@ function doSearch() {
 /** 未读消息通知列表 */
 const notification = ref([])
 
-/** 页面初始化：获取当前登录用户信息，管理员自动跳转管理后台 */
+/** 页面初始化：获取当前登录用户信息 */
 get('/api/user/info', (data) => {
     store.user = data
     loading.value = false
-    if (data.role === 'admin') router.replace('/admin')
 })
 
 /** 加载未读消息列表 */
