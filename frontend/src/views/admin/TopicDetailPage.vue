@@ -50,6 +50,24 @@
             <el-alert v-if="topic.status === 'rejected' && topic.reviewReason"
                       :title="`拒绝原因：${topic.reviewReason}`"
                       type="error" :closable="false" style="margin-bottom: 15px"/>
+            <div v-if="topic.activityTime || topic.location || topic.organizer" class="activity-box">
+                <div class="activity-item">
+                    <span>活动时间</span>
+                    <span>{{ topic.activityTime ? new Date(topic.activityTime).toLocaleString() : '待补充' }}</span>
+                </div>
+                <div class="activity-item">
+                    <span>活动地点</span>
+                    <span>{{ topic.location || '待补充' }}</span>
+                </div>
+                <div class="activity-item">
+                    <span>主办方</span>
+                    <span>{{ topic.organizer || '待补充' }}</span>
+                </div>
+                <div class="activity-item" v-if="topic.signupDeadline">
+                    <span>报名截止</span>
+                    <span>{{ new Date(topic.signupDeadline).toLocaleString() }}</span>
+                </div>
+            </div>
             <div class="topic-content" v-html="convertToHtml(topic.content)"></div>
         </div>
         <div class="admin-form-card" style="margin-top: 16px" v-if="topic">
@@ -296,6 +314,23 @@ function deleteComment(id) {
         max-width: 100%;
         height: auto;
     }
+}
+
+.activity-box {
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+    line-height: 1.9;
 }
 
 .dialog-hint {
