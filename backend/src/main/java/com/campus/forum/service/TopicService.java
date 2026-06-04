@@ -116,6 +116,15 @@ public interface TopicService extends IService<Topic> {
     TopicDetailVO adminGetTopic(int tid);
 
     /**
+     * 管理员获取自己发布的帖子详情（用于编辑回填，校验作者身份）
+     *
+     * @param tid     帖子ID
+     * @param adminId 当前管理员ID
+     * @return 帖子详情
+     */
+    TopicDetailVO adminGetOwnTopic(int tid, int adminId);
+
+    /**
      * 获取论坛公告
      *
      * @return 论坛公告内容
@@ -252,6 +261,18 @@ public interface TopicService extends IService<Topic> {
      * @param tid 帖子ID
      */
     void adminUntopTopic(int tid);
+
+    /**
+     * 管理员编辑自己发布的帖子（标题、正文，活动帖子可同步更新扩展字段）
+     *
+     * @param adminId 当前管理员ID
+     * @param tid     帖子ID
+     * @param title   新标题
+     * @param content 新正文（JSON Delta）
+     * @param vo      活动扩展数据（非活动帖子传 null）
+     * @return null 表示成功，非 null 为错误信息
+     */
+    String adminUpdateTopic(int adminId, int tid, String title, String content, PublishActivityVO vo);
 
     /**
      * 发布校园活动

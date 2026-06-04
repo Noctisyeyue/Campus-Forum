@@ -20,6 +20,8 @@
                            @click="doAction('top')">置顶</el-button>
                 <el-button v-if="topic.top" type="info"
                            @click="doAction('untop')">取消置顶</el-button>
+                <el-button v-if="isOwnTopic" type="primary" plain
+                           @click="editTopic">编辑帖子</el-button>
                 <el-popconfirm title="此操作不可逆，帖子将永久删除，确定继续？" @confirm="doAction('delete')"
                                v-if="topic.status !== 'pending_review'">
                     <template #reference>
@@ -104,9 +106,9 @@ import {get, post} from "@/net"
 import {useRoute} from "vue-router"
 import router from "@/router"
 import {useStore} from "@/stores/index"
-import {ref} from "vue"
+import {computed, ref} from "vue"
 import {ElMessage} from "element-plus"
-import {ArrowLeft, Warning} from "@element-plus/icons-vue"
+import {ArrowLeft, EditPen, Warning} from "@element-plus/icons-vue"
 import {QuillDeltaToHtmlConverter} from "quill-delta-to-html"
 import Card from "@/components/Card.vue"
 import TopicTag from "@/components/TopicTag.vue"
@@ -183,6 +185,20 @@ function loadTopic() {
     })
 }
 loadTopic()
+
+/** 判断当前管理员是否是帖子作者 */
+const isOwnTopic = computed(() => topic.value && store.user.id === topic.value.user.id)
+
+/**
+ * 跳转到对应发布页进行编辑（根据是否有活动扩展字段区分活动/通知）
+ */
+function editTopic() {
+    if (topic.value.activityTime) {
+        router.push({ path: '/admin/publish-activity', query: { id: tid } })
+    } else {
+        router.push({ path: '/admin/publish-notice-topic', query: { id: tid } })
+    }
+}
 
 /**
  * 加载当前帖子的评论列表（取前 50 条）

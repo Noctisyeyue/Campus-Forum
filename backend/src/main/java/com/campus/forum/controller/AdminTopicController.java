@@ -1,6 +1,8 @@
 package com.campus.forum.controller;
 
 import com.campus.forum.entity.RestBean;
+import com.campus.forum.entity.dto.TopicActivity;
+import com.campus.forum.entity.vo.request.PublishActivityVO;
 import com.campus.forum.entity.vo.response.AdminTopicVO;
 import com.campus.forum.entity.vo.response.PageResult;
 import com.campus.forum.entity.vo.response.TopicDetailVO;
@@ -138,5 +140,20 @@ public class AdminTopicController {
     public RestBean<Void> untopTopic(@PathVariable int id) {
         topicService.adminUntopTopic(id);
         return RestBean.success();
+    }
+
+    /**
+     * 管理员编辑自己发布的帖子
+     * @param id 帖子ID
+     * @param adminId 当前管理员ID
+     * @param vo 编辑内容（标题、正文，活动帖子含扩展字段）
+     * @return 操作结果
+     */
+    @PostMapping("/{id}/edit")
+    public RestBean<Void> editTopic(@PathVariable int id,
+                                    @RequestAttribute(Const.ATTR_USER_ID) int adminId,
+                                    @RequestBody PublishActivityVO vo) {
+        return utils.messageHandle(() -> topicService.adminUpdateTopic(
+                adminId, id, vo.getTitle(), vo.getContent().toJSONString(), vo));
     }
 }

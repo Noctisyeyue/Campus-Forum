@@ -11,6 +11,7 @@ import com.campus.forum.utils.ControllerUtils;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -79,5 +80,33 @@ public class AdminForumController {
     public RestBean<Void> saveNotice(@Valid @RequestBody ForumNoticeSaveVO vo,
                                      @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
         return utils.messageHandle(() -> topicService.saveForumNotice(adminId, vo));
+    }
+
+    /**
+     * 获取校园活动帖子数据用于编辑回填
+     *
+     * @param id       帖子ID
+     * @param adminId  当前管理员ID
+     * @return 帖子详情（含活动扩展字段）
+     */
+    @GetMapping("/activity/{id}")
+    public RestBean<com.campus.forum.entity.vo.response.TopicDetailVO> getActivityForEdit(
+            @PathVariable int id,
+            @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
+        return RestBean.success(topicService.adminGetOwnTopic(id, adminId));
+    }
+
+    /**
+     * 获取教务通知帖子数据用于编辑回填
+     *
+     * @param id       帖子ID
+     * @param adminId  当前管理员ID
+     * @return 帖子详情
+     */
+    @GetMapping("/notice-topic/{id}")
+    public RestBean<com.campus.forum.entity.vo.response.TopicDetailVO> getNoticeForEdit(
+            @PathVariable int id,
+            @RequestAttribute(Const.ATTR_USER_ID) int adminId) {
+        return RestBean.success(topicService.adminGetOwnTopic(id, adminId));
     }
 }

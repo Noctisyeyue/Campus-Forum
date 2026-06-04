@@ -548,6 +548,20 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
+     * 管理员获取自己发布的帖子详情（用于编辑回填，校验作者身份）
+     *
+     * @param tid     帖子ID
+     * @param adminId 当前管理员ID
+     * @return 帖子详情，无权限时返回 null
+     */
+    @Override
+    public TopicDetailVO adminGetOwnTopic(int tid, int adminId) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null || !Objects.equals(topic.getUid(), adminId)) return null;
+        return this.buildTopicDetail(topic, 0);
+    }
+
+    /**
      * 构建帖子详情，累加浏览量并填充互动、用户信息及活动扩展字段
      *
      * @param topic 帖子实体
@@ -971,6 +985,41 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
                 .set("top", 0));
+    }
+
+    /**
+     * 管理员编辑自己发布的帖子（标题、正文，活动帖子可同步更新扩展字段）
+     *
+     * @param adminId 当前管理员ID
+     * @param tid     帖子ID
+     * @param title   新标题
+     * @param content 新正文（JSON Delta）
+     * @param vo      活动扩展数据（非活动帖子传 null）
+     * @return null 表示成功，非 null 为错误信息
+     */
+    @Override
+    public String adminUpdateTopic(int adminId, int tid, String title, String content, PublishActivityVO vo) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return "帖子不存在";
+        if (!Objects.equals(topic.getUid(), adminId)) return "只能编辑自己发布的帖子";
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("id", tid)
+                .set("title", title)
+                .set("content", content)
+                .set("last_submit_time", new Date()));
+        // 如果是活动帖子且有扩展数据，同步更新活动扩展表
+        if (vo != null) {
+            TopicActivity activity = topicActivityMapper.selectById(tid);
+            if (activity != null) {
+                activity.setActivityTime(vo.getActivityTime());
+                activity.setLocation(vo.getLocation());
+                activity.setOrganizer(vo.getOrganizer());
+                activity.setSignupDeadline(vo.getSignupDeadline());
+                topicActivityMapper.updateById(activity);
+            }
+        }
+        cacheUtils.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+        return null;
     }
 
     /**
