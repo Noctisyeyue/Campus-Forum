@@ -499,8 +499,8 @@ function deleteTopic() {
 }
 
 .activity-box {
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
     border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 14px;
@@ -511,7 +511,7 @@ function deleteTopic() {
     justify-content: space-between;
     gap: 12px;
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     line-height: 1.9;
 }
 
@@ -588,16 +588,6 @@ function deleteTopic() {
 
 :global(.dark) .comment-disabled {
     color: #909399;
-}
-
-:global(.dark) .activity-box {
-    background: #2a2a2e;
-    border-color: #3a3a3e;
-    color: #c0c4cc;
-}
-
-:global(.dark) .activity-item {
-    color: #a0a4a8;
 }
 
 :global(.dark) .topic-main .topic-main-left .desc {
