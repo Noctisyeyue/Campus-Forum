@@ -14,9 +14,13 @@
 </template>
 
 <script setup>
+/** 组件属性定义 */
 defineProps({
+  /** 标题图标组件 */
   icon: Object,
+  /** 卡片标题 */
   title: String,
+  /** 标题右侧描述文字 */
   desc: String
 })
 </script>

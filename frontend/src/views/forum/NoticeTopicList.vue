@@ -76,25 +76,40 @@ import LightCard from "@/components/LightCard.vue";
 import TopicTag from "@/components/TopicTag.vue";
 import {restoreForumScroll, saveForumScroll} from "@/utils/forumScroll";
 
+/** 当前路由对象 */
 const route = useRoute()
 
+/** 通知列表分页状态 */
 const topics = reactive({
+    /** 通知数据列表 */
     list: [],
+    /** 当前页码 */
     page: 0,
+    /** 是否已加载完全部数据 */
     end: false,
+    /** 是否正在加载 */
     loading: false,
+    /** 当前搜索关键词 */
     search: ''
 })
 
+/** 监听路由搜索参数变化，重新加载列表 */
 watch(() => route.query.search, val => {
     topics.search = val || ''
     resetList()
 }, { immediate: true })
 
+/** 页面激活时恢复滚动位置 */
 onActivated(() => restoreForumScroll('/index/notice-topic'))
 
+/** 页面失活时保存滚动位置 */
 onDeactivated(() => saveForumScroll('/index/notice-topic'))
 
+/**
+ * 无限滚动加载教务通知列表，支持按标题搜索，使用 Set 去重防止数据重复
+ *
+ * @return {void}
+ */
 function updateList() {
     if (topics.end || topics.loading) return
     topics.loading = true
@@ -120,11 +135,22 @@ function updateList() {
     })
 }
 
+/**
+ * 打开通知详情页，跳转前保存当前滚动位置
+ *
+ * @param {number} id 帖子 ID
+ * @return {void}
+ */
 function openTopicDetail(id) {
     saveForumScroll('/index/notice-topic')
     router.push(`/index/topic-detail/${id}`)
 }
 
+/**
+ * 重置列表状态并重新加载第一页数据
+ *
+ * @return {void}
+ */
 function resetList() {
     topics.page = 0
     topics.end = false
@@ -132,6 +158,11 @@ function resetList() {
     updateList()
 }
 
+/**
+ * 清除搜索关键词并重置路由参数
+ *
+ * @return {void}
+ */
 function clearSearch() {
     topics.search = ''
     router.replace({ path: '/index/notice-topic' })

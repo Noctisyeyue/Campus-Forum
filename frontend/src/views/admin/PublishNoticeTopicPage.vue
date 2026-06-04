@@ -35,12 +35,18 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { post } from "@/net";
 import { ElMessage } from "element-plus";
 
+/** 是否正在提交表单 */
 const submitting = ref(false)
+/** 教务通知发布表单数据 */
 const form = reactive({
     title: '',
     content: new Delta()
 })
 
+/**
+ * 提交教务通知表单
+ * 校验标题非空后调用后端接口发布通知，成功后重置表单
+ */
 function submit() {
     if (!form.title) {
         ElMessage.warning('请先填写通知标题')

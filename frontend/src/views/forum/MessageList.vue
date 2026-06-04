@@ -103,7 +103,11 @@ const isAllSelected = computed(() => messages.value.length > 0 && selectedIds.va
 /** 加载状态 */
 const loading = ref(true)
 
-/** 加载全部消息 */
+/**
+ * 加载全部消息列表
+ *
+ * @return {void}
+ */
 function loadMessages() {
     loading.value = true
     get('/api/notification/list', data => {
@@ -132,7 +136,11 @@ function onItemClick(item) {
     }
 }
 
-/** 全选/取消全选 */
+/**
+ * 全选或取消全选消息
+ *
+ * @return {void}
+ */
 function toggleSelectAll() {
     if (isAllSelected.value) {
         selectedIds.value = []
@@ -141,7 +149,13 @@ function toggleSelectAll() {
     }
 }
 
-/** 勾选/取消勾选消息 */
+/**
+ * 勾选或取消勾选单条消息
+ *
+ * @param {number} id 消息 ID
+ * @param {boolean} checked 是否选中
+ * @return {void}
+ */
 function toggleSelect(id, checked) {
     if (checked) {
         if (!selectedIds.value.includes(id)) selectedIds.value.push(id)
@@ -150,7 +164,11 @@ function toggleSelect(id, checked) {
     }
 }
 
-/** 批量删除选中的消息 */
+/**
+ * 批量删除选中的消息
+ *
+ * @return {void}
+ */
 function deleteSelected() {
     if (!selectedIds.value.length) return
     post('/api/notification/delete-batch', selectedIds.value, () => {
@@ -160,7 +178,11 @@ function deleteSelected() {
     })
 }
 
-/** 全部标记已读 */
+/**
+ * 将全部消息标记为已读
+ *
+ * @return {void}
+ */
 function readAll() {
     get('/api/notification/read-all', () => {
         ElMessage.success('已全部标记为已读')
@@ -168,7 +190,11 @@ function readAll() {
     })
 }
 
-/** 退出编辑模式 */
+/**
+ * 退出编辑模式并清空选中列表
+ *
+ * @return {void}
+ */
 function cancelEdit() {
     editing.value = false
     selectedIds.value = []

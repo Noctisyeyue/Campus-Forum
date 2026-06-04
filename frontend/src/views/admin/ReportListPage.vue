@@ -114,14 +114,24 @@ import {Search, Warning} from "@element-plus/icons-vue"
 import router from "@/router"
 import {useRoute} from "vue-router"
 
+/** 举报列表数据 */
 const reports = ref([])
+/** 表格加载状态 */
 const loading = ref(false)
+/** 当前页码（1-based） */
 const page = ref(1)
+/** 举报总数 */
 const total = ref(0)
+/** 每页条数 */
 const pageSize = ref(15)
+/** 筛选条件 */
 const filter = reactive({ status: '', targetType: '' })
 const route = useRoute()
 
+/**
+ * 加载举报列表
+ * @param {number} p - 页码（0-based）
+ */
 function loadReports(p) {
     loading.value = true
     page.value = p + 1
@@ -135,6 +145,10 @@ function loadReports(p) {
     })
 }
 
+/**
+ * 确认采纳举报，弹出确认框后执行删除操作
+ * @param {number} id - 举报 ID
+ */
 function confirmResolve(id) {
     ElMessageBox.confirm('采纳举报后将下架/删除被举报的内容，确定继续？', '采纳举报', {
         confirmButtonText: '确定采纳',
@@ -143,6 +157,12 @@ function confirmResolve(id) {
     }).then(() => resolveReport(id, 'delete', null)).catch(() => {})
 }
 
+/**
+ * 处理举报（采纳或驳回）
+ * @param {number} id - 举报 ID
+ * @param {string} action - 处理动作（'delete' 采纳 / 'dismiss' 驳回）
+ * @param {string|null} note - 管理员备注
+ */
 function resolveReport(id, action, note) {
     let url = `/api/admin/reports/${id}/resolve?action=${action}`
     if (note) url += `&note=${encodeURIComponent(note)}`
@@ -152,31 +172,52 @@ function resolveReport(id, action, note) {
     })
 }
 
+/** 驳回举报弹窗状态 */
 const dismiss = reactive({ show: false, id: null, note: '' })
 
+/**
+ * 打开驳回举报弹窗
+ * @param {Object} row - 举报行数据对象
+ */
 function openDismiss(row) {
     dismiss.id = row.id
     dismiss.note = ''
     dismiss.show = true
 }
 
+/**
+ * 确认驳回举报，调用 resolveReport 并关闭弹窗
+ */
 function confirmDismiss() {
     resolveReport(dismiss.id, 'dismiss', dismiss.note)
     dismiss.show = false
 }
 
+/**
+ * 根据举报状态返回 Tag 组件的类型
+ * @param {string} status - 举报状态枚举值
+ * @return {string} Element Plus Tag 类型
+ */
 function statusType(status) {
     if (status === 'pending') return 'warning'
     if (status === 'resolved') return 'success'
     return 'info'
 }
 
+/**
+ * 根据举报状态返回中文显示文本
+ * @param {string} status - 举报状态枚举值
+ * @return {string} 状态中文文本
+ */
 function statusLabel(status) {
     if (status === 'pending') return '待处理'
     if (status === 'resolved') return '已处理'
     return '已驳回'
 }
 
+/**
+ * 从路由 query 参数中恢复筛选条件并加载举报列表
+ */
 function applyRouteQuery() {
     filter.status = typeof route.query.status === 'string' ? route.query.status : ''
     filter.targetType = typeof route.query.targetType === 'string' ? route.query.targetType : ''

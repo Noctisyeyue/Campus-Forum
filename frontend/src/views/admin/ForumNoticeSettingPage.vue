@@ -37,15 +37,23 @@ import { reactive, ref } from "vue";
 import { get, post } from "@/net";
 import { ElMessage } from "element-plus";
 
+/** 是否正在提交表单 */
 const submitting = ref(false)
+/** 论坛公告元信息（更新时间、更新人） */
 const notice = reactive({
     updateTime: null,
     updateByName: ''
 })
+/** 论坛公告表单数据 */
 const form = reactive({
     content: ''
 })
 
+/**
+ * 从后端加载当前论坛公告内容和元信息
+ * @param {Function} callback - 请求成功后的回调函数，接收公告数据对象
+ * @return {void}
+ */
 function loadNotice() {
     get('/api/admin/forum/notice', data => {
         Object.assign(notice, data || {})
@@ -53,6 +61,11 @@ function loadNotice() {
     })
 }
 
+/**
+ * 提交论坛公告
+ * 校验内容非空后调用后端接口保存公告，成功后重新加载公告数据
+ * @return {void}
+ */
 function submit() {
     if (!form.content.trim()) {
         ElMessage.warning('公告正文不能为空')

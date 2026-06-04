@@ -151,30 +151,53 @@ import {ArrowDown, Search, Warning} from "@element-plus/icons-vue"
 import router from "@/router"
 import {useRoute} from "vue-router"
 
+/** 帖子列表数据 */
 const topics = ref([])
+/** 所有帖子分类列表 */
 const types = ref([])
+/** 表格加载状态 */
 const loading = ref(false)
+/** 当前页码（1-based） */
 const page = ref(1)
+/** 帖子总数 */
 const total = ref(0)
+/** 每页条数 */
 const pageSize = ref(15)
 const route = useRoute()
 
+/** 筛选条件 */
 const filter = reactive({ status: '', type: '', title: '', author: '' })
+/** 拒绝帖子弹窗状态 */
 const reject = reactive({ show: false, id: null, reason: '' })
+/** 下架帖子弹窗状态 */
 const hideDialog = reactive({ show: false, id: null, reason: '' })
 
 get('/api/admin/types', data => types.value = data)
 
+/**
+ * 根据帖子状态返回 Tag 组件的类型
+ * @param {string} status - 帖子状态枚举值
+ * @return {string} Element Plus Tag 类型
+ */
 function statusTag(status) {
     const map = { pending_review: 'warning', published: 'success', rejected: 'danger', hidden: 'info', deleted: 'info' }
     return map[status] || 'info'
 }
 
+/**
+ * 根据帖子状态返回中文显示文本
+ * @param {string} status - 帖子状态枚举值
+ * @return {string} 状态中文文本
+ */
 function statusText(status) {
     const map = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已下架', deleted: '已删除' }
     return map[status] || status
 }
 
+/**
+ * 加载帖子列表
+ * @param {number} p - 页码（0-based）
+ */
 function loadTopics(p) {
     loading.value = true
     page.value = p + 1
@@ -190,6 +213,11 @@ function loadTopics(p) {
     })
 }
 
+/**
+ * 执行帖子操作（通过/拒绝/删除/置顶/取消置顶/恢复）
+ * @param {number} id - 帖子 ID
+ * @param {string} action - 操作类型（approve/reject/delete/top/untop/restore）
+ */
 function doAction(id, action) {
     post(`/api/admin/topics/${id}/${action}`, null, () => {
         ElMessage.success('操作成功')
@@ -197,6 +225,10 @@ function doAction(id, action) {
     })
 }
 
+/**
+ * 确认删除帖子，弹出二次确认框
+ * @param {number} id - 帖子 ID
+ */
 function confirmDelete(id) {
     ElMessageBox.confirm('此操作不可逆，帖子将永久删除，确定继续？', '删除帖子', {
         confirmButtonText: '确定删除',
@@ -205,12 +237,19 @@ function confirmDelete(id) {
     }).then(() => doAction(id, 'delete')).catch(() => {})
 }
 
+/**
+ * 打开拒绝帖子弹窗
+ * @param {number} id - 帖子 ID
+ */
 function openReject(id) {
     reject.id = id
     reject.reason = ''
     reject.show = true
 }
 
+/**
+ * 确认拒绝帖子，校验拒绝理由后提交
+ */
 function confirmReject() {
     if (!reject.reason.trim()) {
         ElMessage.warning('请填写拒绝理由')
@@ -224,12 +263,19 @@ function confirmReject() {
     })
 }
 
+/**
+ * 打开下架帖子弹窗
+ * @param {number} id - 帖子 ID
+ */
 function openHide(id) {
     hideDialog.id = id
     hideDialog.reason = ''
     hideDialog.show = true
 }
 
+/**
+ * 确认下架帖子，校验下架原因后提交
+ */
 function confirmHide() {
     if (!hideDialog.reason) {
         ElMessage.warning('请填写下架原因')
@@ -242,6 +288,9 @@ function confirmHide() {
     })
 }
 
+/**
+ * 从路由 query 参数中恢复筛选条件并加载帖子列表
+ */
 function applyRouteQuery() {
     filter.status = typeof route.query.status === 'string' ? route.query.status : ''
     filter.type = route.query.type ? Number(route.query.type) : ''

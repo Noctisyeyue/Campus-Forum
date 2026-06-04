@@ -112,25 +112,40 @@ import TopicTag from "@/components/TopicTag.vue";
 import TopicEditor from "@/components/TopicEditor.vue";
 import {useStore} from "@/stores/index";
 
+/** 全局状态管理实例 */
 const store = useStore()
 
+/** 当前激活的 Tab 标签，值为状态类型或 'all' */
 const activeTab = ref('all')
+/** 当前筛选下的帖子列表 */
 const topics = ref([])
+/** 首次加载中状态 */
 const loading = ref(false)
+/** 加载更多中状态 */
 const loadingMore = ref(false)
+/** 当前页码 */
 const page = ref(0)
+/** 是否已加载完全部数据 */
 const end = ref(false)
 
+/** 编辑器弹窗状态及待编辑帖子数据 */
 const editor = reactive({
+    /** 是否显示编辑器 */
     show: false,
+    /** 待编辑帖子 ID */
     id: null,
+    /** 待编辑帖子类型 */
     type: null,
+    /** 待编辑帖子标题 */
     title: '',
+    /** 待编辑帖子内容 */
     text: ''
 })
 
+/** 监听 Tab 切换，重置并重新加载列表 */
 watch(activeTab, () => resetList(), { immediate: true })
 
+/** 首次加载时获取帖子分类列表并存入全局 store */
 if (!store.forum.types.length) {
     get('/api/forum/types', data => {
         const array = []
@@ -140,6 +155,11 @@ if (!store.forum.types.length) {
     })
 }
 
+/**
+ * 重置列表状态（清空数据、重置页码）并重新加载
+ *
+ * @return {void}
+ */
 function resetList() {
     topics.value = []
     page.value = 0
@@ -147,6 +167,12 @@ function resetList() {
     loadList(false)
 }
 
+/**
+ * 加载我的帖子列表，支持追加或替换模式
+ *
+ * @param {boolean} append 是否追加模式（加载更多时为 true）
+ * @return {void}
+ */
 function loadList(append) {
     if (end.value) return
     const status = activeTab.value === 'all' ? '' : `&status=${activeTab.value}`
@@ -166,10 +192,21 @@ function loadList(append) {
     })
 }
 
+/**
+ * 加载更多帖子（追加模式）
+ *
+ * @return {void}
+ */
 function loadMore() {
     loadList(true)
 }
 
+/**
+ * 根据帖子状态返回对应的 Tag 类型（用于 el-tag 组件）
+ *
+ * @param {string} status 帖子状态
+ * @return {string} el-tag 类型名称
+ */
 function statusTag(status) {
     const map = {
         pending_review: 'warning',
@@ -181,6 +218,12 @@ function statusTag(status) {
     return map[status] || 'info'
 }
 
+/**
+ * 根据帖子状态返回中文显示文本
+ *
+ * @param {string} status 帖子状态
+ * @return {string} 状态中文描述
+ */
 function statusText(status) {
     const map = {
         pending_review: '待审核',
@@ -192,18 +235,42 @@ function statusText(status) {
     return map[status] || status
 }
 
+/**
+ * 判断帖子是否可以打开详情
+ *
+ * @param {string} status 帖子状态
+ * @return {boolean} 是否可打开
+ */
 function canOpen(status) {
     return status === 'published'
 }
 
+/**
+ * 判断帖子是否可以编辑
+ *
+ * @param {string} status 帖子状态
+ * @return {boolean} 是否可编辑
+ */
 function canEdit(status) {
     return status === 'published' || status === 'rejected'
 }
 
+/**
+ * 判断帖子是否可以删除
+ *
+ * @param {string} status 帖子状态
+ * @return {boolean} 是否可删除
+ */
 function canDelete(status) {
     return status === 'published' || status === 'pending_review'
 }
 
+/**
+ * 打开编辑器，先从后端获取帖子完整内容再填充编辑器表单
+ *
+ * @param {Object} item 帖子摘要对象
+ * @return {void}
+ */
 function openEditor(item) {
     get(`/api/forum/my-topic?tid=${item.id}`, data => {
         if (!data) {
@@ -218,6 +285,13 @@ function openEditor(item) {
     })
 }
 
+/**
+ * 提交帖子更新，调用后端更新接口
+ *
+ * @param {Object} form 编辑器表单数据
+ * @param {Function} success 更新成功后的回调
+ * @return {void}
+ */
 function submitUpdate(form, success) {
     post('/api/forum/update-topic', {
         id: editor.id,
@@ -230,11 +304,22 @@ function submitUpdate(form, success) {
     })
 }
 
+/**
+ * 编辑器提交成功后的回调，关闭编辑器并刷新列表
+ *
+ * @return {void}
+ */
 function onEditorSuccess() {
     editor.show = false
     resetList()
 }
 
+/**
+ * 删除指定帖子，成功后刷新列表
+ *
+ * @param {number} id 帖子 ID
+ * @return {void}
+ */
 function deleteTopic(id) {
     post(`/api/forum/delete-topic?tid=${id}`, null, () => {
         ElMessage.success('帖子已删除')

@@ -226,10 +226,14 @@ import {GridComponent, LegendComponent, TooltipComponent} from "echarts/componen
 use([CanvasRenderer, PieChart, BarChart, LineChart, TooltipComponent, LegendComponent, GridComponent])
 
 const store = useStore()
+/** 页面数据加载状态 */
 const loading = ref(true)
+/** 活跃趋势的时间范围模式（'7d' / '30d' / 'custom'） */
 const rangeMode = ref('7d')
+/** 自定义日期范围选择值 */
 const customRange = ref([])
 
+/** 看板聚合数据 */
 const dashboard = ref({
     overview: {
         totalUsers: 0,
@@ -255,11 +259,13 @@ const dashboard = ref({
     latestUsers: []
 })
 
+/** 举报目标类型名称映射 */
 const targetTypeName = {
     topic: '帖子',
     comment: '评论'
 }
 
+/** 帖子状态名称映射 */
 const statusName = {
     pending_review: '待审核',
     published: '已发布',
@@ -268,6 +274,7 @@ const statusName = {
     deleted: '已删除'
 }
 
+/** 顶部统计卡片配置列表，根据看板概览数据动态生成 */
 const statCards = computed(() => {
     const d = store.dark
     const overview = dashboard.value.overview
@@ -281,6 +288,7 @@ const statCards = computed(() => {
     ]
 })
 
+/** 活跃趋势汇总卡片配置列表（发帖、评论、注册） */
 const trendCards = computed(() => {
     const trend = dashboard.value.activityTrend
     const label = trendSummaryLabel.value
@@ -291,6 +299,7 @@ const trendCards = computed(() => {
     ]
 })
 
+/** 当前选中时间范围的中文标签 */
 const rangeLabel = computed(() => {
     if (rangeMode.value === '30d') return '近 30 天'
     if (rangeMode.value === 'custom') {
@@ -301,10 +310,13 @@ const rangeLabel = computed(() => {
     return '近 7 天'
 })
 
+/** 趋势汇总卡片的前缀标签（区间/近 N 天） */
 const trendSummaryLabel = computed(() => rangeMode.value === 'custom' ? '区间' : rangeLabel.value)
 
+/** 活跃趋势面板标题 */
 const trendTitle = computed(() => `${rangeLabel.value}活跃趋势`)
 
+/** 活跃趋势折线图 ECharts 配置（发帖/评论/注册） */
 const activityTrendOption = computed(() => {
     const points = dashboard.value.activityTrend.points
     return {
@@ -356,6 +368,7 @@ const activityTrendOption = computed(() => {
     }
 })
 
+/** 帖子状态分布饼图 ECharts 配置 */
 const statusChartOption = computed(() => {
     const data = Object.entries(dashboard.value.topicStatusMap).map(([key, value]) => ({
         name: statusName[key] || key,
@@ -381,6 +394,7 @@ const statusChartOption = computed(() => {
     }
 })
 
+/** 分类发帖 Top 5 横向柱状图 ECharts 配置 */
 const typeChartOption = computed(() => {
     const rows = [...dashboard.value.topicTypeTop].reverse()
     return {
@@ -407,6 +421,7 @@ const typeChartOption = computed(() => {
     }
 })
 
+/** 举报原因分布横向柱状图 ECharts 配置 */
 const reportReasonChartOption = computed(() => {
     const data = Object.entries(dashboard.value.reportReasonMap)
         .map(([name, value]) => ({ name, value }))
@@ -435,6 +450,9 @@ const reportReasonChartOption = computed(() => {
     }
 })
 
+/**
+ * 加载看板数据，根据当前时间范围向后台请求聚合数据
+ */
 function loadDashboard() {
     loading.value = true
     const params = buildRangeQuery()
@@ -444,15 +462,30 @@ function loadDashboard() {
     }, () => loading.value = false)
 }
 
+/**
+ * 将时间字符串格式化为本地可读时间
+ * @param {string} time - ISO 时间字符串
+ * @return {string} 格式化后的本地时间，无值时返回 '暂无时间'
+ */
 function formatTime(time) {
     if (!time) return '暂无时间'
     return new Date(time).toLocaleString()
 }
 
+/**
+ * 禁用未来日期，用于日期选择器的 disabled-date 回调
+ * @param {Date} date - 待判断的日期
+ * @return {boolean} 是否为未来日期
+ */
 function disableFutureDate(date) {
     return date.getTime() > Date.now()
 }
 
+/**
+ * 根据帖子状态返回对应的 Tag 类型名
+ * @param {string} status - 帖子状态枚举值
+ * @return {string} Element Plus Tag 类型（warning/success/danger/info）
+ */
 function topicStatusTagType(status) {
     return ({
         pending_review: 'warning',
@@ -463,10 +496,19 @@ function topicStatusTagType(status) {
     })[status] || 'info'
 }
 
+/**
+ * 根据用户状态返回对应的 Tag 类型名
+ * @param {string} status - 用户状态枚举值（active/其他）
+ * @return {string} Element Plus Tag 类型（success/danger）
+ */
 function userStatusTagType(status) {
     return status === 'active' ? 'success' : 'danger'
 }
 
+/**
+ * 统计卡片点击处理，根据卡片 key 跳转到对应管理页面
+ * @param {string} key - 卡片标识（topics/users/comments/pendingTopics/pendingReports/disabledUsers）
+ */
 function handleStatCardClick(key) {
     switch (key) {
         case 'topics':
@@ -490,6 +532,13 @@ function handleStatCardClick(key) {
     }
 }
 
+/**
+ * 构建趋势汇总卡片对象
+ * @param {string} label - 卡片标题
+ * @param {Object} summary - 汇总数据对象，包含 current 字段
+ * @param {string} desc - 卡片描述文字
+ * @return {{ label: string, current: number, desc: string }} 趋势卡片配置
+ */
 function buildTrendCard(label, summary = {}, desc) {
     const current = summary.current ?? 0
     return {
@@ -499,11 +548,19 @@ function buildTrendCard(label, summary = {}, desc) {
     }
 }
 
+/**
+ * 根据当前时间范围模式构建查询参数字符串
+ * @return {string} 以 ? 开头的 URL 查询参数
+ */
 function buildRangeQuery() {
     const { startDate, endDate } = resolveRange()
     return `?startDate=${startDate}&endDate=${endDate}`
 }
 
+/**
+ * 根据当前范围模式解析出具体的起止日期
+ * @return {{ startDate: string, endDate: string }} 起止日期字符串（YYYY-MM-DD 格式）
+ */
 function resolveRange() {
     const today = new Date()
     const format = date => {
@@ -526,6 +583,9 @@ function resolveRange() {
     return { startDate: format(shiftDate(-6)), endDate: format(today) }
 }
 
+/**
+ * 快捷范围模式切换处理，切换到预设模式时清空自定义范围并刷新数据
+ */
 function handleRangeModeChange() {
     if (rangeMode.value === '7d' || rangeMode.value === '30d') {
         customRange.value = []
@@ -533,6 +593,9 @@ function handleRangeModeChange() {
     }
 }
 
+/**
+ * 自定义日期范围变更处理，选择完整范围后切换到 custom 模式并刷新
+ */
 function handleCustomRangeChange() {
     if (customRange.value?.length === 2) {
         rangeMode.value = 'custom'

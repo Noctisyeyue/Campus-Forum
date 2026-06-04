@@ -18,6 +18,9 @@ public class AccountPrivacyServiceImpl extends ServiceImpl<AccountPrivacyMapper,
 
     /**
      * 切换指定隐私字段的公开/隐藏状态
+     *
+     * @param id 用户ID
+     * @param vo 隐私设置参数（含字段类型和目标状态）
      */
     @Override
     @Transactional
@@ -34,6 +37,12 @@ public class AccountPrivacyServiceImpl extends ServiceImpl<AccountPrivacyMapper,
         this.saveOrUpdate(privacy);
     }
 
+    /**
+     * 查询用户隐私设置，不存在时返回默认值
+     *
+     * @param id 用户ID
+     * @return 用户隐私设置实体
+     */
     public AccountPrivacy accountPrivacy(int id) {
         return Optional.ofNullable(this.getById(id)).orElse(new AccountPrivacy(id));
     }

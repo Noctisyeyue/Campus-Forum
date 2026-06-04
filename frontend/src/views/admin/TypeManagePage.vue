@@ -64,8 +64,10 @@ import {ElMessage, ElMessageBox} from "element-plus"
 import {Plus} from "@element-plus/icons-vue"
 import ColorDot from "@/components/ColorDot.vue"
 
+/** 分类列表数据 */
 const types = ref([])
 
+/** 新增/编辑分类弹窗状态 */
 const dialog = reactive({
     show: false,
     edit: false,
@@ -73,11 +75,18 @@ const dialog = reactive({
     form: { name: '', desc: '', color: '#409EFF', systemKey: null }
 })
 
+/**
+ * 加载分类列表
+ */
 function loadTypes() {
     get('/api/admin/types', data => types.value = data)
 }
 loadTypes()
 
+/**
+ * 打开新增/编辑分类弹窗
+ * @param {Object} [row] - 传入行数据时为编辑模式，不传为新增模式
+ */
 function openDialog(row) {
     if (row) {
         dialog.edit = true
@@ -91,6 +100,9 @@ function openDialog(row) {
     dialog.show = true
 }
 
+/**
+ * 提交分类表单，校验名称后根据模式调用新增或编辑接口
+ */
 function submitType() {
     if (!dialog.form.name) {
         ElMessage.warning('请填写分类名称')
@@ -117,6 +129,10 @@ function submitType() {
     }
 }
 
+/**
+ * 确认删除分类，弹出二次确认框
+ * @param {number} id - 分类 ID
+ */
 function confirmDeleteType(id) {
     ElMessageBox.confirm('确定删除该分类吗？', '删除分类', {
         confirmButtonText: '确定删除',
@@ -125,6 +141,10 @@ function confirmDeleteType(id) {
     }).then(() => deleteType(id)).catch(() => {})
 }
 
+/**
+ * 删除指定分类，成功后刷新列表
+ * @param {number} id - 分类 ID
+ */
 function deleteType(id) {
     axios.delete(`/api/admin/types/${id}`, { headers: accessHeader() })
         .then(({data}) => {

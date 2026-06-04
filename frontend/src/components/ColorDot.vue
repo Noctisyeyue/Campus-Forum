@@ -3,8 +3,10 @@
 </template>
 
 <script setup>
+/** 组件属性定义 */
 defineProps({
-    color: String
+  /** 圆点颜色 */
+  color: String
 })
 </script>
 

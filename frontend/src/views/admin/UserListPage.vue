@@ -93,15 +93,26 @@ import {useStore} from "@/stores/index"
 import {useRoute} from "vue-router"
 
 const store = useStore()
+/** 用户列表数据 */
 const users = ref([])
+/** 表格加载状态 */
 const loading = ref(false)
+/** 当前页码（1-based） */
 const page = ref(1)
+/** 用户总数 */
 const total = ref(0)
+/** 每页条数 */
 const pageSize = ref(15)
+/** 搜索关键词 */
 const search = ref('')
+/** 状态筛选值 */
 const status = ref('')
 const route = useRoute()
 
+/**
+ * 加载用户列表
+ * @param {number} p - 页码（0-based）
+ */
 function loadUsers(p) {
     loading.value = true
     page.value = p + 1
@@ -115,6 +126,10 @@ function loadUsers(p) {
     })
 }
 
+/**
+ * 确认启用/禁用用户，弹出二次确认框
+ * @param {Object} user - 用户行数据对象
+ */
 function confirmToggle(user) {
     const action = user.status === 'active' ? '禁用' : '启用'
     ElMessageBox.confirm(`确定${action}用户「${user.username}」吗？`, `${action}用户`, {
@@ -124,6 +139,10 @@ function confirmToggle(user) {
     }).then(() => toggleStatus(user)).catch(() => {})
 }
 
+/**
+ * 切换用户状态（启用/禁用）
+ * @param {Object} user - 用户行数据对象
+ */
 function toggleStatus(user) {
     const action = user.status === 'active' ? 'disable' : 'enable'
     post(`/api/admin/users/${user.id}/${action}`, null, () => {
@@ -132,6 +151,10 @@ function toggleStatus(user) {
     })
 }
 
+/**
+ * 确认重置用户密码，弹出二次确认框
+ * @param {number} id - 用户 ID
+ */
 function confirmReset(id) {
     ElMessageBox.confirm('确定重置该用户密码为 123456 吗？', '重置密码', {
         confirmButtonText: '确定重置',
@@ -140,12 +163,19 @@ function confirmReset(id) {
     }).then(() => resetPassword(id)).catch(() => {})
 }
 
+/**
+ * 重置用户密码为默认密码 123456
+ * @param {number} id - 用户 ID
+ */
 function resetPassword(id) {
     post(`/api/admin/users/${id}/reset-password`, null, () => {
         ElMessage.success('密码已重置为 123456')
     })
 }
 
+/**
+ * 从路由 query 参数中恢复筛选条件并加载用户列表
+ */
 function applyRouteQuery() {
     search.value = typeof route.query.search === 'string' ? route.query.search : ''
     status.value = typeof route.query.status === 'string' ? route.query.status : ''

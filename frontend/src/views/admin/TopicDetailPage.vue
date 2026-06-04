@@ -113,35 +113,67 @@ import TopicTag from "@/components/TopicTag.vue"
 
 const route = useRoute()
 const store = useStore()
+/** 帖子详情数据 */
 const topic = ref(null)
+/** 帖子评论列表 */
 const comments = ref([])
+/** 页面加载状态 */
 const loading = ref(true)
+/** 当前帖子 ID */
 const tid = route.params.id
+/** 拒绝帖子弹窗可见性 */
 const rejectVisible = ref(false)
+/** 拒绝理由 */
 const rejectReason = ref('')
+/** 下架帖子弹窗可见性 */
 const hideVisible = ref(false)
+/** 下架原因 */
 const hideReason = ref('')
+
+/**
+ * 根据帖子状态返回 Tag 组件的类型
+ * @param {string} status - 帖子状态枚举值
+ * @return {string} Element Plus Tag 类型
+ */
 function statusTag(status) {
     const map = { pending_review: 'warning', published: 'success', rejected: 'danger', hidden: 'info', deleted: 'info' }
     return map[status] || 'info'
 }
 
+/**
+ * 根据帖子状态返回中文显示文本
+ * @param {string} status - 帖子状态枚举值
+ * @return {string} 状态中文文本
+ */
 function statusText(status) {
     const map = { pending_review: '待审核', published: '已发布', rejected: '已拒绝', hidden: '已下架', deleted: '已删除' }
     return map[status] || status
 }
 
+/**
+ * 将 Quill Delta JSON 内容转换为 HTML 字符串
+ * @param {string} content - Quill Delta JSON 字符串
+ * @return {string} 转换后的 HTML
+ */
 function convertToHtml(content) {
     const ops = JSON.parse(content).ops
     const converter = new QuillDeltaToHtmlConverter(ops, { inlineStyles: true })
     return converter.convert()
 }
 
+/**
+ * 根据 ID 在 store 分类列表中查找分类对象，未找到时返回默认值
+ * @param {number} typeId - 分类 ID
+ * @return {Object} 分类对象（包含 id/name/color/desc）
+ */
 function findType(typeId) {
     const t = store.forum.types.find(t => t.id === typeId)
     return t || { id: typeId, name: '未知', color: '#999', desc: '' }
 }
 
+/**
+ * 加载帖子详情数据，加载完成后自动加载评论
+ */
 function loadTopic() {
     loading.value = true
     get(`/api/admin/topics/${tid}`, data => {
@@ -152,10 +184,17 @@ function loadTopic() {
 }
 loadTopic()
 
+/**
+ * 加载当前帖子的评论列表（取前 50 条）
+ */
 function loadComments() {
     get(`/api/admin/comments?page=0&pageSize=50&tid=${tid}`, data => comments.value = data.list)
 }
 
+/**
+ * 执行帖子操作（审核/下架/恢复/置顶/取消置顶/删除）
+ * @param {string} action - 操作类型
+ */
 function doAction(action) {
     post(`/api/admin/topics/${tid}/${action}`, null, () => {
         ElMessage.success('操作成功')
@@ -167,6 +206,9 @@ function doAction(action) {
     })
 }
 
+/**
+ * 确认拒绝帖子，将拒绝理由作为参数提交
+ */
 function confirmReject() {
     let url = `/api/admin/topics/${tid}/reject`
     if (rejectReason.value) url += `?reason=${encodeURIComponent(rejectReason.value)}`
@@ -177,6 +219,9 @@ function confirmReject() {
     })
 }
 
+/**
+ * 确认下架帖子，校验下架原因后提交
+ */
 function confirmHide() {
     if (!hideReason.value) {
         ElMessage.warning('请填写下架原因')
@@ -189,6 +234,10 @@ function confirmHide() {
     })
 }
 
+/**
+ * 删除指定评论并刷新评论列表
+ * @param {number} id - 评论 ID
+ */
 function deleteComment(id) {
     post(`/api/admin/comments/${id}/delete`, null, () => {
         ElMessage.success('删除成功')

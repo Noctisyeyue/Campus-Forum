@@ -23,28 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 /**
- * 天气服务实现，调用和风天气 API（QWeather）
- * 
- * geo
- * {
-  "code":"200",
-  "location":[
-    {
-      "name":"北京",
-      "id":"101010100",
-      "lat":"39.90499",
-      "lon":"116.40529",
-      "adm2":"北京",
-      "adm1":"北京市",
-      "country":"中国",
-      "tz":"Asia/Shanghai",
-      "utcOffset":"+08:00",
-      "isDst":"0",
-      "type":"city",
-      "rank":"10",
-      "fxLink":"https://www.qweather.com/weather/beijing-101010100.html"
-    },
- * 
+ * 天气服务实现，调用和风天气 API（QWeather）获取实时天气和逐时预报
  */
 @Slf4j
 @Service
@@ -191,82 +170,3 @@ public class WeatherServiceImpl implements WeatherService {
         }
     }
 }
-
-/**
- * now
- * 当前天气预报
- * {
-  "code": "200",
-  "updateTime": "2020-06-30T22:00+08:00",
-  "fxLink": "http://hfx.link/2ax1",
-  "now": {
-    "obsTime": "2020-06-30T21:40+08:00",
-    "temp": "24",
-    "feelsLike": "26",
-    "icon": "101",
-    "text": "多云",
-    "wind360": "123",
-    "windDir": "东南风",
-    "windScale": "1",
-    "windSpeed": "3",
-    "humidity": "72",
-    "precip": "0.0",
-    "pressure": "1003",
-    "vis": "16",
-    "cloud": "10",
-    "dew": "21"
-  },
-  "refer": {
-    "sources": [
-      "QWeather",
-      "NMC",
-      "ECMWF"
-    ],
-    "license": [
-      "QWeather Developers License"
-    ]
-  }
-}
- * 
- *下面是小时预报
- *
- * {
-  "code": "200",
-  "updateTime": "2021-02-16T13:35+08:00",
-  "fxLink": "http://hfx.link/2ax1",
-  "hourly": [
-    {
-      "fxTime": "2021-02-16T15:00+08:00",
-      "temp": "2",
-      "icon": "100",
-      "text": "晴",
-      "wind360": "335",
-      "windDir": "西北风",
-      "windScale": "3-4",
-      "windSpeed": "20",
-      "humidity": "11",
-      "pop": "0",
-      "precip": "0.0",
-      "pressure": "1025",
-      "cloud": "0",
-      "dew": "-25"
-    },
-    {
-      "fxTime": "2021-02-16T16:00+08:00",
-      "temp": "1",
-      "icon": "100",
-      "text": "晴",
-      "wind360": "339",
-      "windDir": "西北风",
-      "windScale": "3-4",
-      "windSpeed": "24",
-      "humidity": "11",
-      "pop": "0",
-      "precip": "0.0",
-      "pressure": "1025",
-      "cloud": "0",
-      "dew": "-26"
-    },
- * 
- * 
-*/

@@ -34,7 +34,9 @@
 </template>
 
 <script setup>
+/** 组件属性定义 */
 defineProps({
+    /** 天气数据对象（含 now、hourly、location、success） */
     data: Object
 })
 </script>

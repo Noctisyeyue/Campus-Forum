@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { unauthorized } from "@/net";
 
+/** 应用路由实例，包含所有页面路由配置 */
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
@@ -128,6 +129,18 @@ const router = createRouter({
     ]
 })
 
+/**
+ * 全局前置路由守卫
+ * 根据登录状态和目标路由进行访问控制：
+ * - 已登录用户访问登录页 → 重定向到首页
+ * - 未登录用户访问管理后台或用户端 → 重定向到登录页
+ * - 其他情况正常放行
+ *
+ * @param {import('vue-router').RouteLocationNormalized} to - 目标路由
+ * @param {import('vue-router').RouteLocationNormalized} from - 来源路由
+ * @param {import('vue-router').NavigationGuardNext} next - 放行/重定向函数
+ * @return {void}
+ */
 router.beforeEach((to, from, next) => {
     const isUnauthorized = unauthorized()
     if(to.name.startsWith('welcome') && !isUnauthorized) {

@@ -81,14 +81,24 @@ import {ElMessage, ElMessageBox} from "element-plus"
 import {Search} from "@element-plus/icons-vue"
 import router from "@/router"
 
+/** 评论列表数据 */
 const comments = ref([])
+/** 表格加载状态 */
 const loading = ref(false)
+/** 当前页码（1-based） */
 const page = ref(1)
+/** 评论总数 */
 const total = ref(0)
+/** 每页条数 */
 const pageSize = ref(15)
 
+/** 筛选条件 */
 const filter = reactive({ status: '', content: '', author: '', topicTitle: '' })
 
+/**
+ * 加载评论列表
+ * @param {number} p - 页码（0-based）
+ */
 function loadComments(p) {
     loading.value = true
     page.value = p + 1
@@ -105,6 +115,10 @@ function loadComments(p) {
 }
 loadComments(0)
 
+/**
+ * 确认删除评论，根据评论当前状态展示不同的确认提示
+ * @param {number} id - 评论 ID
+ */
 function confirmDelete(id) {
     const row = comments.value.find(c => c.id === id)
     const isDeleted = row && row.status === 'deleted'
@@ -115,6 +129,10 @@ function confirmDelete(id) {
     ).then(() => deleteComment(id)).catch(() => {})
 }
 
+/**
+ * 删除指定评论并刷新列表
+ * @param {number} id - 评论 ID
+ */
 function deleteComment(id) {
     post(`/api/admin/comments/${id}/delete`, null, () => {
         ElMessage.success('删除成功')

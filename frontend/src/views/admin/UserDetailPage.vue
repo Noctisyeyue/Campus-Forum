@@ -51,8 +51,11 @@ import {ArrowLeft} from "@element-plus/icons-vue"
 
 const route = useRoute()
 const store = useStore()
+/** 用户详情数据 */
 const user = ref(null)
+/** 页面加载状态 */
 const loading = ref(true)
+/** 当前用户 ID */
 const uid = route.params.id
 
 get(`/api/admin/users/${uid}`, data => {
@@ -60,6 +63,9 @@ get(`/api/admin/users/${uid}`, data => {
     loading.value = false
 })
 
+/**
+ * 切换用户状态（启用/禁用），操作成功后刷新用户详情
+ */
 function toggleStatus() {
     const action = user.value.status === 'active' ? 'disable' : 'enable'
     post(`/api/admin/users/${uid}/${action}`, null, () => {
@@ -68,6 +74,9 @@ function toggleStatus() {
     })
 }
 
+/**
+ * 重置用户密码为默认密码 123456
+ */
 function resetPassword() {
     post(`/api/admin/users/${uid}/reset-password`, null, () => {
         ElMessage.success('密码已重置为 123456')

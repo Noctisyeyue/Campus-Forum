@@ -17,9 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AccountDetailsServiceImpl extends ServiceImpl<AccountDetailsMapper, AccountDetails> implements AccountDetailsService {
 
+    /** 用户账号服务 */
     @Resource
     AccountService service;
 
+    /**
+     * 根据用户ID查询用户详情
+     *
+     * @param id 用户ID
+     * @return 用户详情实体，不存在时返回 null
+     */
     @Override
     public AccountDetails findAccountDetailsById(int id) {
         return this.getById(id);
@@ -27,6 +34,10 @@ public class AccountDetailsServiceImpl extends ServiceImpl<AccountDetailsMapper,
 
     /**
      * 保存用户详情，同时更新用户名（需检查用户名唯一性）
+     *
+     * @param id 用户ID
+     * @param vo 用户详情保存参数
+     * @return 保存成功返回 true，用户名已被占用返回 false
      */
     @Override
     @Transactional

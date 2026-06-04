@@ -12,9 +12,12 @@
 <script setup>
 import {useStore} from "@/stores/index";
 
+/** Pinia 全局状态 */
 const store = useStore()
 
+/** 组件属性定义 */
 defineProps({
+    /** 分类ID */
     type: Number
 })
 </script>

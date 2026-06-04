@@ -54,13 +54,20 @@ import router from "@/router";
 import {reactive, ref} from "vue";
 import {login} from '@/net'
 
+/** 表单组件引用，用于调用 validate 方法 */
 const formRef = ref()
+
+/** 登录表单响应式数据 */
 const form = reactive({
+  /** 用户名或邮箱 */
   username: '',
+  /** 登录密码 */
   password: '',
+  /** 是否记住登录状态 */
   remember: false
 })
 
+/** 表单校验规则 */
 const rules = {
   username: [
     { required: true, message: '请输入用户名' }
@@ -70,6 +77,11 @@ const rules = {
   ]
 }
 
+/**
+ * 用户登录：校验表单后调用登录接口，根据角色跳转对应页面
+ *
+ * @return {void}
+ */
 function userLogin() {
   formRef.value.validate((isValid) => {
     if(isValid) {

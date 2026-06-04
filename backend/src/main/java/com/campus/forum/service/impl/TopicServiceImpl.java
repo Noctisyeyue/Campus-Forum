@@ -776,8 +776,6 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         return true;
     }
 
-    // ==================== 管理员方法 ====================
-
     /**
      * 管理员分页查询全部帖子（支持多条件筛选）
      * @param page 页码
