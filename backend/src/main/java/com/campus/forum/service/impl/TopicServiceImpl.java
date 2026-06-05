@@ -176,7 +176,14 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         topic.setUid(uid);
         topic.setTime(new Date());
         topic.setAllowComment(1);
-        topic.setStatus(Const.TOPIC_STATUS_PENDING);     // 新发帖为待审核
+        // 管理员发帖直接发布，普通用户需要审核
+        Account account = accountMapper.selectById(uid);
+        boolean isAdmin = account != null && "admin".equals(account.getRole());
+        topic.setStatus(isAdmin ? Const.TOPIC_STATUS_PUBLISHED : Const.TOPIC_STATUS_PENDING);
+        if (isAdmin) {
+            topic.setReviewTime(new Date());
+            topic.setReviewBy(uid);
+        }
         topic.setTop(0);                                  // 默认不置顶
         topic.setLastSubmitTime(new Date());
         if (this.save(topic)) {

@@ -99,13 +99,13 @@ const props = defineProps({
     },
     /** 提交回调函数，默认为发帖逻辑 */
     submit: {
-        default: (editor, success) => {
+        default: (editor, success, isAdmin) => {
             post('/api/forum/create-topic', {
                 type: editor.type.id,
                 title: editor.title,
                 content: editor.text
             }, () => {
-                ElMessage.success("帖子发表成功，等待管理员审核！")
+                ElMessage.success(isAdmin ? "帖子发表成功！" : "帖子发表成功，等待管理员审核！")
                 success()
             })
         },
@@ -197,7 +197,7 @@ function submitTopic() {
         ElMessage.warning('请选择一个合适的帖子类型！')
         return
     }
-    props.submit(editor, () => emit('success'))
+    props.submit(editor, () => emit('success'), store.isAdmin)
 }
 
 /** 注册 Quill 图片上传扩展模块 */
