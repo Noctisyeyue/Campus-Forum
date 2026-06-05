@@ -14,5 +14,6 @@ public class AccountVO {
     String email;           // 邮箱
     String role;            // 角色
     String avatar;          // 头像路径
+    String status;          // 账号状态：active/disabled
     Date registerTime;      // 注册时间
 }
