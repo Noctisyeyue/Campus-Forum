@@ -817,7 +817,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (title != null && !title.isBlank())
             wrapper.like("title", title);
         if (author != null && !author.isBlank()) {
-            wrapper.inSql("uid", "select id from db_account where username like '%" + author + "%'");
+            List<Integer> uids = accountMapper.selectList(
+                    Wrappers.<Account>query().like("username", author)
+            ).stream().map(Account::getId).toList();
+            if (uids.isEmpty()) return new PageResult<>(List.of(), 0);
+            wrapper.in("uid", uids);
         }
         wrapper.orderByDesc("time");
         baseMapper.selectPage(p, wrapper);
@@ -1345,10 +1349,20 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             wrapper.eq("status", status);
         if (content != null && !content.isBlank())
             wrapper.like("content", content);
-        if (author != null && !author.isBlank())
-            wrapper.inSql("uid", "select id from db_account where username like '%" + author + "%'");
-        if (topicTitle != null && !topicTitle.isBlank())
-            wrapper.inSql("tid", "select id from db_topic where title like '%" + topicTitle + "%'");
+        if (author != null && !author.isBlank()) {
+            List<Integer> uids = accountMapper.selectList(
+                    Wrappers.<Account>query().like("username", author)
+            ).stream().map(Account::getId).toList();
+            if (uids.isEmpty()) return new PageResult<>(List.of(), 0);
+            wrapper.in("uid", uids);
+        }
+        if (topicTitle != null && !topicTitle.isBlank()) {
+            List<Integer> tids = baseMapper.selectList(
+                    Wrappers.<Topic>query().like("title", topicTitle)
+            ).stream().map(Topic::getId).toList();
+            if (tids.isEmpty()) return new PageResult<>(List.of(), 0);
+            wrapper.in("tid", tids);
+        }
         wrapper.orderByDesc("time");
         commentMapper.selectPage(p, wrapper);
         List<AdminCommentVO> list = p.getRecords().stream().map(comment -> {
