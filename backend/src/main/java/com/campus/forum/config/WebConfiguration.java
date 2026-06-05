@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -21,10 +22,13 @@ public class WebConfiguration implements WebMvcConfigurer {
         return new BCryptPasswordEncoder();
     }
 
-    /** HTTP 请求客户端 */
+    /** HTTP 请求客户端（连接超时 5 秒，读取超时 10 秒，防止外部 API 无响应时线程阻塞） */
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(10000);
+        return new RestTemplate(factory);
     }
 
     /** MyBatis-Plus 分页插件 */
