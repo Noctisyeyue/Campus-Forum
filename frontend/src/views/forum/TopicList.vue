@@ -140,15 +140,11 @@
                     <el-divider style="margin: 10px 0"/>
                     <weather :data="weather"/>
                 </light-card>
-                <!-- 日期和IP信息 -->
+                <!-- 日期信息 -->
                 <light-card style="margin-top: 10px">
                     <div class="info-text">
                         <div>当前日期</div>
                         <div>{{today}}</div>
-                    </div>
-                    <div class="info-text">
-                        <div>当期IP地址</div>
-                        <div>127.0.0.1</div>
                     </div>
                 </light-card>
                 <!-- 友情链接 -->
