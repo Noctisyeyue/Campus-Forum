@@ -266,8 +266,12 @@ onActivated(() => {
     restoreForumScroll('/index')
 })
 
-/** 页面被缓存切走时记录当前滚动位置 */
-onDeactivated(() => saveForumScroll('/index'))
+/** 页面被缓存切走时关闭抽屉并记录滚动位置 */
+onDeactivated(() => {
+    collects.value = false
+    editor.value = false
+    saveForumScroll('/index')
+})
 
 /** 当前日期（格式：2026 年 5 月 27 日） */
 const today = computed(() => {
