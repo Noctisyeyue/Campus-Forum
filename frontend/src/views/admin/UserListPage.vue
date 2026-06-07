@@ -57,7 +57,7 @@
                 </el-table-column>
                 <el-table-column label="操作" width="200">
                     <template #default="{ row }">
-                        <div class="action-cell">
+                        <div class="action-cell" v-if="row.role !== 'admin'">
                             <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
                                        @click="confirmToggle(row)">
                                 {{ row.status === 'active' ? '禁用' : '启用' }}
@@ -65,6 +65,7 @@
                             <el-button type="warning" size="small" plain round
                                        @click="confirmReset(row.id)">重置密码</el-button>
                         </div>
+                        <div v-else class="text-secondary" style="font-size: 13px">—</div>
                     </template>
                 </el-table-column>
             </el-table>
