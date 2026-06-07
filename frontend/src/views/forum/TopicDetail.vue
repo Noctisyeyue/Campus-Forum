@@ -391,9 +391,9 @@ onMounted(() => nextTick(scrollMainContentToTop))
  * @return 转换后的 HTML 字符串，解析失败返回空字符串
  */
 function convertToHtml(content) {
-    if (!content) return ''
+    if (!content) return ''            // 没内容就返回空
     try {
-        const ops = JSON.parse(content).ops || []
+        const ops = JSON.parse(content).ops || []               // 从 JSON 字符串中取出 ops 数组
         return new QuillDeltaToHtmlConverter(ops, { inlineStyles: true }).convert()
     } catch (e) {
         console.error(e)
