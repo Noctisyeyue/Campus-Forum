@@ -63,12 +63,12 @@
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="150">
+                <el-table-column label="操作" width="190">
                     <template #default="{ row }">
                         <div class="action-cell">
                             <template v-if="row.status === 'pending'">
-                                <el-button type="success" size="small" plain round
-                                           @click="confirmResolve(row.id)">采纳</el-button>
+                                <el-button type="danger" size="small" plain round
+                                           @click="confirmResolve(row)">下架内容</el-button>
                                 <el-button type="warning" size="small" plain round
                                            @click="openDismiss(row)">驳回</el-button>
                             </template>
@@ -146,15 +146,16 @@ function loadReports(p) {
 }
 
 /**
- * 确认采纳举报，弹出确认框后执行删除操作
- * @param {number} id - 举报 ID
+ * 确认下架被举报内容，弹出确认框后执行操作
+ * @param {Object} row - 举报行数据对象
  */
-function confirmResolve(id) {
-    ElMessageBox.confirm('采纳举报后将下架/删除被举报的内容，确定继续？', '采纳举报', {
-        confirmButtonText: '确定采纳',
+function confirmResolve(row) {
+    const target = row.targetType === 'topic' ? '帖子' : '评论'
+    ElMessageBox.confirm(`确定要下架该${target}吗？下架后用户端将不可见。`, '下架内容', {
+        confirmButtonText: '确定下架',
         cancelButtonText: '取消',
         type: 'warning'
-    }).then(() => resolveReport(id, 'delete', null)).catch(() => {})
+    }).then(() => resolveReport(row.id, 'delete', null)).catch(() => {})
 }
 
 /**
@@ -167,7 +168,7 @@ function resolveReport(id, action, note) {
     let url = `/api/admin/reports/${id}/resolve?action=${action}`
     if (note) url += `&note=${encodeURIComponent(note)}`
     post(url, null, () => {
-        ElMessage.success(action === 'delete' ? '已处理' : '已驳回')
+        ElMessage.success(action === 'delete' ? '已处理（内容已下架）' : '已驳回')
         loadReports(page.value - 1)
     })
 }

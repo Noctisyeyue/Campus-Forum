@@ -1386,7 +1386,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 管理员删除评论（物理删除，级联清理关联举报）
+     * 管理员删除评论（软删除，用户端不可见，管理端仍可查看）
      *
      * @param id 评论ID
      * @return null 表示成功，非 null 为错误信息
@@ -1395,10 +1395,28 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     public String adminDeleteComment(int id) {
         TopicComment comment = commentMapper.selectById(id);
         if (comment == null) return "评论不存在";
-        reportMapper.delete(Wrappers.<Report>query()
+        if (Const.COMMENT_STATUS_DELETED.equals(comment.getStatus()))
+            return "该评论已被删除";
+        // 软删除：status 改为 deleted，用户端不可见，管理端仍可查看
+        commentMapper.update(null, Wrappers.<TopicComment>update()
+                .eq("id", id)
+                .set("status", Const.COMMENT_STATUS_DELETED));
+        // 关闭该评论的所有 pending 举报并通知举报人
+        var pendingReports = reportMapper.selectList(Wrappers.<Report>query()
                 .eq("target_type", Const.REPORT_TARGET_COMMENT)
-                .eq("target_id", id));
-        commentMapper.deleteById(id);
+                .eq("target_id", id)
+                .eq("status", Const.REPORT_STATUS_PENDING));
+        for (Report report : pendingReports) {
+            reportMapper.update(null, Wrappers.<Report>update()
+                    .eq("id", report.getId())
+                    .set("status", Const.REPORT_STATUS_RESOLVED)
+                    .set("admin_note", "举报处理：评论已被管理员删除"));
+            notificationService.addNotification(
+                    report.getUid(),
+                    "举报处理结果",
+                    "您举报的评论已被处理",
+                    "success", null);
+        }
         return null;
     }
 }
