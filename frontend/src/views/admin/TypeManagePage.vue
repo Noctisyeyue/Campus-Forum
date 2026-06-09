@@ -37,11 +37,12 @@
         <el-dialog v-model="dialog.show" :title="dialog.edit ? '编辑分类' : '新增分类'" width="450px">
             <el-form label-width="80px">
                 <el-form-item label="名称">
-                    <el-input v-model="dialog.form.name" placeholder="请输入分类名称" :disabled="dialog.form.systemKey"/>
+                    <el-input v-model="dialog.form.name" placeholder="请输入分类名称" :disabled="dialog.form.systemKey"
+                              maxlength="10" show-word-limit/>
                 </el-form-item>
                 <el-form-item label="描述">
                     <el-input v-model="dialog.form.desc" type="textarea" :rows="3" placeholder="请输入分类描述"
-                              :disabled="dialog.form.systemKey"/>
+                              :disabled="dialog.form.systemKey" maxlength="30" show-word-limit/>
                 </el-form-item>
                 <el-form-item label="颜色">
                     <el-color-picker v-model="dialog.form.color"/>

@@ -46,6 +46,9 @@ public class AdminTypeController {
     public RestBean<TopicTypeVO> createType(@RequestParam String name,
                                              @RequestParam(required = false) String desc,
                                              @RequestParam(required = false) String color) {
+        if (name == null || name.isBlank()) return RestBean.failure(400, "分类名称不能为空");
+        if (name.length() > 10) return RestBean.failure(400, "分类名称不能超过10个字符");
+        if (desc != null && desc.length() > 30) return RestBean.failure(400, "分类描述不能超过30个字符");
         TopicType type = new TopicType();
         type.setName(name);
         type.setDesc(desc);
@@ -68,6 +71,9 @@ public class AdminTypeController {
                                       @RequestParam String name,
                                       @RequestParam(required = false) String desc,
                                       @RequestParam(required = false) String color) {
+        if (name == null || name.isBlank()) return RestBean.failure(400, "分类名称不能为空");
+        if (name.length() > 10) return RestBean.failure(400, "分类名称不能超过10个字符");
+        if (desc != null && desc.length() > 30) return RestBean.failure(400, "分类描述不能超过30个字符");
         TopicType type = topicTypeMapper.selectById(id);
         if (type == null) return RestBean.failure(404, "分类不存在");
         if (type.getSystemKey() == null || type.getSystemKey().isBlank()) {
