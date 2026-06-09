@@ -79,7 +79,7 @@ const rules = {
     ],
     new_password: [
         { required: true, message: '请输入新的密码', trigger: 'blur' },
-        { min: 6, max: 16, message: '密码的长度必须在6-16个字符之间', trigger: ['blur'] }
+        { min: 6, max: 20, message: '密码的长度必须在6-20个字符之间', trigger: ['blur'] }
     ],
     new_password_repeat: [
         { required: true, message: '请再次输入新的密码', trigger: 'blur' },
