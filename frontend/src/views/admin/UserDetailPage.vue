@@ -7,7 +7,10 @@
         <div class="admin-form-card" v-if="user">
             <el-descriptions :column="2" border>
                 <el-descriptions-item label="头像">
-                    <el-avatar :src="store.avatarUserUrl(user.avatar)" :size="60"/>
+                    <el-avatar :src="store.avatarUserUrl(user.avatar)" :size="60"
+                               :style="!user.avatar ? { background: store.avatarColor(user.username) } : {}">
+                        {{ user.avatar ? '' : (user.username?.[0] || '') }}
+                    </el-avatar>
                 </el-descriptions-item>
                 <el-descriptions-item label="ID">{{ user.id }}</el-descriptions-item>
                 <el-descriptions-item label="用户名">{{ user.username }}</el-descriptions-item>

@@ -24,7 +24,10 @@
         <div class="topic-main">
             <!-- 左侧：作者头像、昵称、性别、联系方式、个人简介 -->
             <div class="topic-main-left">
-                <el-avatar :src="store.avatarUserUrl(topic.data.user.avatar)" :size="60"/>
+                <el-avatar :src="store.avatarUserUrl(topic.data.user.avatar)" :size="60"
+                           :style="!topic.data.user.avatar ? { background: store.avatarColor(topic.data.user.username), fontSize: '24px' } : {}">
+                    {{ topic.data.user.avatar ? '' : (topic.data.user.username?.[0] || '') }}
+                </el-avatar>
                 <div>
                     <div style="font-size: 18px;font-weight: bold">
                         {{ topic.data.user.username }}
@@ -117,7 +120,10 @@
                 <div class="topic-main" style="margin-top: 10px" v-for="item in topic.comments" :key="item.id">
                     <!-- 评论左侧：评论者头像、昵称、性别、联系方式 -->
                     <div class="topic-main-left">
-                        <el-avatar :src="store.avatarUserUrl(item.user.avatar)" :size="60"/>
+                        <el-avatar :src="store.avatarUserUrl(item.user.avatar)" :size="60"
+                                   :style="!item.user.avatar ? { background: store.avatarColor(item.user.username), fontSize: '24px' } : {}">
+                            {{ item.user.avatar ? '' : (item.user.username?.[0] || '') }}
+                        </el-avatar>
                         <div>
                             <div style="font-size: 18px;font-weight: bold">
                                 {{ item.user.username }}

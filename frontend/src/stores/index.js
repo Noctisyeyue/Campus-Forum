@@ -31,14 +31,12 @@ export const useStore = defineStore('general', {
     getters: {
         /**
          * 当前登录用户的头像完整 URL
-         * 有头像时拼接后端地址，无头像时使用 Element Plus 默认头像
+         * 有头像时拼接后端地址，无头像时返回 null（前端显示首字文字头像）
          */
         avatarUrl() {
             if(this.user.avatar)
-                /**  http://localhost:8081/images/avatar/123.png   */
                 return `${axios.defaults.baseURL}/images${this.user.avatar}`
-            else
-                return 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+            return null
         },
         /** 当前登录用户是否为管理员 */
         isAdmin() {
@@ -63,13 +61,25 @@ export const useStore = defineStore('general', {
          * 根据头像路径生成完整 URL（用于列表中其他用户的头像）
          *
          * @param avatar 头像路径（如 /avatar/xxx.png）
-         * @return 完整的头像 URL
+         * @return 完整的头像 URL，无头像时返回 null
          */
         avatarUserUrl(avatar) {
             if(avatar)
                 return `${axios.defaults.baseURL}/images${avatar}`
-            else
-                return 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+            return null
+        },
+        /**
+         * 根据用户名生成固定的头像背景色（同一用户每次颜色一致）
+         *
+         * @param username 用户名
+         * @return 十六进制颜色值
+         */
+        avatarColor(username) {
+            if(!username) return '#409EFF'                       // 没有用户名就用默认蓝色
+            const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#9B59B6', '#1ABC9C']// 7 种颜色备选
+            let hash = 0                                           // 初始值 0
+            for(let c of username) hash += c.charCodeAt(0)         // 遍历用户名的每个字符  把字符转成数字，累加
+            return colors[hash % colors.length]                    // 取余数 → 得到颜色下标
         }
     }
 })

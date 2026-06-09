@@ -16,7 +16,10 @@
                         <el-tag size="small" type="danger" effect="dark">管理员</el-tag>
                     </div>
                     <el-dropdown>
-                        <el-avatar :src="store.avatarUrl" :size="34" class="header-avatar"/>
+                        <el-avatar :src="store.avatarUrl" :size="34" class="header-avatar"
+                                   :style="!store.avatarUrl ? { background: store.avatarColor(store.user.username) } : {}">
+                            {{ store.avatarUrl ? '' : (store.user.username?.[0] || '') }}
+                        </el-avatar>
                         <template #dropdown>
                             <el-dropdown-item @click="router.push('/index')">
                                 <el-icon><Back/></el-icon>

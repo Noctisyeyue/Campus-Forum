@@ -58,6 +58,7 @@ public class FlowLimitingFilter extends HttpFilter {
         if (!"OPTIONS".equals(request.getMethod()) && !tryCount(address))
             this.writeBlockMessage(response);
         else
+        // 放行，交给下一个过滤器
             chain.doFilter(request, response);
     }
 

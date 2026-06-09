@@ -47,7 +47,7 @@ public class ObjectController {
         ServletOutputStream stream = response.getOutputStream();
         if(imagePath.length() <= 13) {
             response.setStatus(404);
-            stream.println(RestBean.failure(404, "Not found").toString());
+                stream.println(RestBean.failure(404, "Not found").toString());
         } else {
             try {
                 // 从 MinIO 读取图片数据写入 stream

@@ -58,7 +58,10 @@
                             <!-- 帖子作者头像和名称 -->
                             <div style="display: flex">
                                 <div>
-                                    <el-avatar :size="30" :src="store.avatarUserUrl(item.avatar)"/>
+                                    <el-avatar :size="30" :src="store.avatarUserUrl(item.avatar)"
+                                               :style="!item.avatar ? { background: store.avatarColor(item.username) } : {}">
+                                        {{ item.avatar ? '' : (item.username?.[0] || '') }}
+                                    </el-avatar>
                                 </div>
                                 <div style="margin-left: 7px;transform: translateY(-2px)">
                                     <div style="font-size: 13px;font-weight: bold">{{item.username}}</div>

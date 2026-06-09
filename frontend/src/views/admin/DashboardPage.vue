@@ -184,8 +184,9 @@
                          :key="item.id"
                          class="ranking-item"
                          @click="router.push(`/admin/user-detail/${item.id}`)">
-                        <el-avatar :src="store.avatarUserUrl(item.avatar)" :size="38" class="ranking-avatar">
-                            {{ item.username?.charAt(0) }}
+                        <el-avatar :src="store.avatarUserUrl(item.avatar)" :size="38" class="ranking-avatar"
+                                   :style="!item.avatar ? { background: store.avatarColor(item.username) } : {}">
+                            {{ item.avatar ? '' : (item.username?.[0] || '') }}
                         </el-avatar>
                         <div class="ranking-main">
                             <div class="ranking-title-row">

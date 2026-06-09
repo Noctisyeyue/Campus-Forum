@@ -25,7 +25,10 @@
                 <el-table-column prop="id" label="ID" width="70"/>
                 <el-table-column label="头像" width="65">
                     <template #default="{ row }">
-                        <el-avatar :src="store.avatarUserUrl(row.avatar)" :size="34"/>
+                        <el-avatar :src="store.avatarUserUrl(row.avatar)" :size="34"
+                                   :style="!row.avatar ? { background: store.avatarColor(row.username) } : {}">
+                            {{ row.avatar ? '' : (row.username?.[0] || '') }}
+                        </el-avatar>
                     </template>
                 </el-table-column>
                 <el-table-column label="用户名" width="150">
