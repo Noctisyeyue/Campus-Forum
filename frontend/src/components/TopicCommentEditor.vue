@@ -51,6 +51,10 @@ const init = () => content.value = new Delta()
  * 提交评论，校验字数后发送请求
  */
 function submitComment() {
+    if (!deltaToText(content.value).trim()) {
+        ElMessage.warning('评论内容不能为空')
+        return
+    }
     if (deltaToText(content.value).length > 2000) {
         ElMessage.warning('评论字数已经超出最大限制，请缩减评论内容！')
         return

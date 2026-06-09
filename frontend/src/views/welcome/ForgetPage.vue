@@ -15,7 +15,7 @@
                 <div style="margin-top: 50px">
                     <el-form :model="form" :rules="rules" @validate="onValidate" ref="formRef">
                         <el-form-item prop="email">
-                            <el-input v-model="form.email" type="email" placeholder="电子邮件地址">
+                            <el-input v-model="form.email" type="email" placeholder="电子邮件地址" maxlength="50">
                                 <template #prefix>
                                     <el-icon><Message /></el-icon>
                                 </template>
@@ -58,14 +58,14 @@
                 <div style="margin-top: 50px">
                     <el-form :model="form" :rules="rules" @validate="onValidate" ref="formRef">
                         <el-form-item prop="password">
-                            <el-input v-model="form.password" :maxlength="16" type="password" placeholder="新密码">
+                            <el-input v-model="form.password" :maxlength="20" type="password" placeholder="新密码">
                                 <template #prefix>
                                     <el-icon><Lock /></el-icon>
                                 </template>
                             </el-input>
                         </el-form-item>
                         <el-form-item prop="password_repeat">
-                            <el-input v-model="form.password_repeat" :maxlength="16" type="password" placeholder="重复新密码">
+                            <el-input v-model="form.password_repeat" :maxlength="20" type="password" placeholder="重复新密码">
                                 <template #prefix>
                                     <el-icon><Lock /></el-icon>
                                 </template>
@@ -125,7 +125,7 @@ const rules = {
     ],
     password: [
         { required: true, message: '请输入密码', trigger: 'blur' },
-        { min: 6, max: 16, message: '密码的长度必须在6-16个字符之间', trigger: ['blur'] }
+        { min: 6, max: 20, message: '密码的长度必须在6-20个字符之间', trigger: ['blur'] }
     ],
     password_repeat: [
         { validator: validatePassword, trigger: ['blur', 'change'] },

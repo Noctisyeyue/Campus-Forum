@@ -97,7 +97,7 @@
                 <el-icon :size="18" color="#909399"><Warning/></el-icon>
                 <span>驳回后该举报将被关闭，请说明驳回原因</span>
             </div>
-            <el-input type="textarea" v-model="dismiss.note" :rows="3" placeholder="请填写驳回原因（必填）"/>
+            <el-input type="textarea" v-model="dismiss.note" :rows="3" placeholder="请填写驳回原因（必填）" maxlength="200"/>
             <template #footer>
                 <el-button @click="dismiss.show = false">取消</el-button>
                 <el-button type="primary" @click="confirmDismiss" :disabled="!dismiss.note.trim()">确定驳回</el-button>

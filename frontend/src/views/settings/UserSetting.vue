@@ -38,12 +38,12 @@
                 <el-form :rules="rules" @validate="onValidate" :model="emailForm" ref="emailFormRef"
                          label-position="top" style="margin: 0 10px 10px 10px">
                     <el-form-item label="电子邮件" prop="email">
-                        <el-input v-model="emailForm.email"/>
+                        <el-input v-model="emailForm.email" maxlength="50"/>
                     </el-form-item>
                     <el-form-item prop="code">
                         <el-row style="width: 100%" :gutter="10">
                             <el-col :span="18">
-                                <el-input placeholder="请获取验证码" v-model="emailForm.code"/>
+                                <el-input placeholder="请获取验证码" v-model="emailForm.code" maxlength="6"/>
                             </el-col>
                             <el-col :span="6">
                                 <el-button type="success" style="width: 100%" :disabled="!isEmailValid || coldTime > 0"
@@ -158,6 +158,10 @@ const rules = {
     ], email: [
         {required: true, message: '请输入邮件地址', trigger: 'blur'},
         {type: 'email', message: '请输入合法的电子邮件地址', trigger: ['blur', 'change']}
+    ], phone: [
+        {pattern: /^1\d{10}$/, message: '请输入正确的手机号格式', trigger: 'blur'}
+    ], qq: [
+        {pattern: /^\d{0,13}$/, message: 'QQ号只能包含数字', trigger: 'blur'}
     ]
 }
 

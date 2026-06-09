@@ -20,15 +20,15 @@
                 <el-form :rules="rules" :model="form" ref="formRef" @validate="onValidate" label-width="100" style="margin: 20px">
                     <el-form-item label="当前密码" prop="password">
                         <el-input type="password" :prefix-icon="Lock" v-model="form.password"
-                                  placeholder="当前密码" maxlength="16"/>
+                                  placeholder="当前密码" maxlength="20"/>
                     </el-form-item>
                     <el-form-item label="新密码" prop="new_password">
                         <el-input type="password" :prefix-icon="Lock" v-model="form.new_password"
-                                  placeholder="新密码" maxlength="16"/>
+                                  placeholder="新密码" maxlength="20"/>
                     </el-form-item>
                     <el-form-item label="重复新密码" prop="new_password_repeat">
                         <el-input type="password" :prefix-icon="Lock" v-model="form.new_password_repeat"
-                                  placeholder="重新输入新密码" maxlength="16"/>
+                                  placeholder="重新输入新密码" maxlength="20"/>
                     </el-form-item>
                     <div style="text-align: center">
                         <el-button @click="resetPassword" :icon="Switch" type="success">立即重置密码</el-button>

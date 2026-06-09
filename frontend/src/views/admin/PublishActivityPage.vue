@@ -105,6 +105,15 @@ function submit() {
         ElMessage.warning('请先填写完整的活动信息')
         return
     }
+    const text = deltaToText(form.content)
+    if (!text.trim()) {
+        ElMessage.warning('活动正文不能为空')
+        return
+    }
+    if (text.length > 20000) {
+        ElMessage.warning('活动正文不能超过20000字')
+        return
+    }
     submitting.value = true
     const body = {
         title: form.title,
@@ -136,6 +145,17 @@ function submit() {
             submitting.value = false
         })
     }
+}
+
+/**
+ * 将 Quill Delta 对象转为纯文本（去除空白字符），用于字数统计
+ */
+function deltaToText(delta) {
+    if (!delta?.ops) return ""
+    let str = ""
+    for (let op of delta.ops)
+        str += op.insert
+    return str.replace(/\s/g, "")
 }
 </script>
 

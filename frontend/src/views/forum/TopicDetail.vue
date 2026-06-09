@@ -218,7 +218,7 @@
             </div>
             <div>
                 <div style="margin-bottom: 8px;font-weight: bold">补充说明（可选）</div>
-                <el-input type="textarea" v-model="report.detail" :rows="3" placeholder="请描述具体情况"/>
+                <el-input type="textarea" v-model="report.detail" :rows="3" placeholder="请描述具体情况" maxlength="500"/>
             </div>
             <template #footer>
                 <el-button @click="report.show = false">取消</el-button>
