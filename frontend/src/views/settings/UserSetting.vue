@@ -65,7 +65,7 @@
                     <div style="text-align: center;padding: 5px 15px 0 15px">
                         <el-avatar :size="70" :src="store.avatarUrl"
                                    :style="!store.avatarUrl ? { background: store.avatarColor(store.user.username) } : {}">
-                            {{ store.avatarUrl ? '' : (store.user.username?.[0] || '') }}
+                            {{ store.avatarUrl ? '' : store.avatarText(store.user.username) }}
                         </el-avatar>
                         <div style="margin: 5px 0">
                             <el-upload

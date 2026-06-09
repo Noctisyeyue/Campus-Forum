@@ -58,7 +58,7 @@
                     <el-dropdown>
                         <el-avatar :src="store.avatarUrl"
                                    :style="!store.avatarUrl ? { background: store.avatarColor(store.user.username) } : {}">
-                            {{ store.avatarUrl ? '' : (store.user.username?.[0] || '') }}
+                            {{ store.avatarUrl ? '' : store.avatarText(store.user.username) }}
                         </el-avatar>
                         <template #dropdown>
                             <el-dropdown-item @click="router.push('/index/user-setting')">

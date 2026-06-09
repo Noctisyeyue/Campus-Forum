@@ -9,7 +9,7 @@
                 <el-descriptions-item label="头像">
                     <el-avatar :src="store.avatarUserUrl(user.avatar)" :size="60"
                                :style="!user.avatar ? { background: store.avatarColor(user.username) } : {}">
-                        {{ user.avatar ? '' : (user.username?.[0] || '') }}
+                        {{ user.avatar ? '' : store.avatarText(user.username) }}
                     </el-avatar>
                 </el-descriptions-item>
                 <el-descriptions-item label="ID">{{ user.id }}</el-descriptions-item>

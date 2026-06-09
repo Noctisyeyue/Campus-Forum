@@ -26,7 +26,7 @@
             <div class="topic-main-left">
                 <el-avatar :src="store.avatarUserUrl(topic.data.user.avatar)" :size="60"
                            :style="!topic.data.user.avatar ? { background: store.avatarColor(topic.data.user.username), fontSize: '24px' } : {}">
-                    {{ topic.data.user.avatar ? '' : (topic.data.user.username?.[0] || '') }}
+                    {{ topic.data.user.avatar ? '' : store.avatarText(topic.data.user.username) }}
                 </el-avatar>
                 <div>
                     <div style="font-size: 18px;font-weight: bold">
@@ -122,7 +122,7 @@
                     <div class="topic-main-left">
                         <el-avatar :src="store.avatarUserUrl(item.user.avatar)" :size="60"
                                    :style="!item.user.avatar ? { background: store.avatarColor(item.user.username), fontSize: '24px' } : {}">
-                            {{ item.user.avatar ? '' : (item.user.username?.[0] || '') }}
+                            {{ item.user.avatar ? '' : store.avatarText(item.user.username) }}
                         </el-avatar>
                         <div>
                             <div style="font-size: 18px;font-weight: bold">

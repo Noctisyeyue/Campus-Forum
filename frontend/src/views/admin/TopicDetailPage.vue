@@ -42,7 +42,7 @@
             <div style="display: flex;gap: 15px;margin-bottom: 15px">
                 <el-avatar :src="store.avatarUserUrl(topic.user.avatar)" :size="40"
                            :style="!topic.user.avatar ? { background: store.avatarColor(topic.user.username) } : {}">
-                    {{ topic.user.avatar ? '' : (topic.user.username?.[0] || '') }}
+                    {{ topic.user.avatar ? '' : store.avatarText(topic.user.username) }}
                 </el-avatar>
                 <div>
                     <div style="font-weight: bold">{{ topic.user.username }}</div>

@@ -60,7 +60,7 @@
                                 <div>
                                     <el-avatar :size="30" :src="store.avatarUserUrl(item.avatar)"
                                                :style="!item.avatar ? { background: store.avatarColor(item.username) } : {}">
-                                        {{ item.avatar ? '' : (item.username?.[0] || '') }}
+                                        {{ item.avatar ? '' : store.avatarText(item.username) }}
                                     </el-avatar>
                                 </div>
                                 <div style="margin-left: 7px;transform: translateY(-2px)">

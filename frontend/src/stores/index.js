@@ -69,6 +69,15 @@ export const useStore = defineStore('general', {
             return null
         },
         /**
+         * 根据用户名生成文字头像内容：中文取首字，英文首字母转大写
+         *
+         * @param username 用户名
+         * @return 文字头像内容
+         */
+        avatarText(username) {
+            return (username?.[0] || '').toUpperCase()
+        },
+        /**
          * 根据用户名生成固定的头像背景色（同一用户每次颜色一致）
          *
          * @param username 用户名

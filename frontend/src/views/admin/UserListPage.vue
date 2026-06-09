@@ -27,7 +27,7 @@
                     <template #default="{ row }">
                         <el-avatar :src="store.avatarUserUrl(row.avatar)" :size="34"
                                    :style="!row.avatar ? { background: store.avatarColor(row.username) } : {}">
-                            {{ row.avatar ? '' : (row.username?.[0] || '') }}
+                            {{ row.avatar ? '' : store.avatarText(row.username) }}
                         </el-avatar>
                     </template>
                 </el-table-column>
