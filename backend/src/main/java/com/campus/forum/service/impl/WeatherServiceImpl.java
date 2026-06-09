@@ -163,7 +163,7 @@ public class WeatherServiceImpl implements WeatherService {
             gzip.close();
             stream.close();
              // 输出流的内容 → 转字符串 → 解析为 JSON 对象
-            return JSONObject.parseObject(stream.toString());
+            return JSONObject.parseObject(stream.toString("UTF-8"));
         } catch (IOException e) {
             log.warn("天气API请求失败，静默降级: {}", e.getMessage());
             return null;
