@@ -331,31 +331,114 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     /**
      * 管理员禁用用户，将 status 设为 disabled
      *
-     * @param id 用户 ID
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
      */
     @Override
-    public void adminDisableUser(int id) {
-        this.update(Wrappers.<Account>update().eq("id", id).set("status", "disabled"));
+    public String adminDisableUser(int operatorId, int targetId) {
+        String error = checkOperatePermission(operatorId, targetId);
+        if (error != null) return error;
+        this.update(Wrappers.<Account>update().eq("id", targetId).set("status", "disabled"));
+        return null;
     }
 
     /**
      * 管理员启用用户，将 status 设为 active
      *
-     * @param id 用户 ID
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
      */
     @Override
-    public void adminEnableUser(int id) {
-        this.update(Wrappers.<Account>update().eq("id", id).set("status", "active"));
+    public String adminEnableUser(int operatorId, int targetId) {
+        String error = checkOperatePermission(operatorId, targetId);
+        if (error != null) return error;
+        this.update(Wrappers.<Account>update().eq("id", targetId).set("status", "active"));
+        return null;
     }
 
     /**
      * 管理员重置用户密码为默认密码 123456
      *
-     * @param id 用户 ID
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
      */
     @Override
-    public void adminResetPassword(int id) {
+    public String adminResetPassword(int operatorId, int targetId) {
+        String error = checkOperatePermission(operatorId, targetId);
+        if (error != null) return error;
         String encoded = passwordEncoder.encode("123456");
-        this.update(Wrappers.<Account>update().eq("id", id).set("password", encoded));
+        this.update(Wrappers.<Account>update().eq("id", targetId).set("password", encoded));
+        return null;
+    }
+
+    /**
+     * 超级管理员提升普通用户为管理员
+     *
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
+     */
+    @Override
+    public String adminPromoteUser(int operatorId, int targetId) {
+        Account operator = this.findAccountById(operatorId);
+        if (operator == null) return "操作者不存在";
+        if (!Const.ROLE_SUPER_ADMIN.equals(operator.getRole())) return "仅超级管理员可提升用户角色";
+        Account target = this.findAccountById(targetId);
+        if (target == null) return "目标用户不存在";
+        if (!Const.ROLE_DEFAULT.equals(target.getRole())) return "只能提升普通用户为管理员";
+        this.update(Wrappers.<Account>update().eq("id", targetId).set("role", Const.ROLE_ADMIN));
+        return null;
+    }
+
+    /**
+     * 超级管理员将管理员降级为普通用户
+     *
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
+     */
+    @Override
+    public String adminDemoteUser(int operatorId, int targetId) {
+        Account operator = this.findAccountById(operatorId);
+        if (operator == null) return "操作者不存在";
+        if (!Const.ROLE_SUPER_ADMIN.equals(operator.getRole())) return "仅超级管理员可降级用户角色";
+        Account target = this.findAccountById(targetId);
+        if (target == null) return "目标用户不存在";
+        if (!Const.ROLE_ADMIN.equals(target.getRole())) return "只能将管理员降级为普通用户";
+        this.update(Wrappers.<Account>update().eq("id", targetId).set("role", Const.ROLE_DEFAULT));
+        return null;
+    }
+
+    /**
+     * 检查操作者是否有权操作目标用户（用于禁用/启用/重置密码）
+     *
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示允许操作，非 null 为错误信息
+     */
+    private String checkOperatePermission(int operatorId, int targetId) {
+        Account operator = this.findAccountById(operatorId);
+        Account target = this.findAccountById(targetId);
+        if (operator == null) return "操作者不存在";
+        if (target == null) return "目标用户不存在";
+        if (operatorId == targetId) return "不能操作自己的账号";
+        // 非管理员不能执行管理操作
+        if (!Const.ROLE_ADMIN.equals(operator.getRole())
+                && !Const.ROLE_SUPER_ADMIN.equals(operator.getRole())) {
+            return "无权执行管理操作";
+        }
+        // 任何人都不能操作超级管理员
+        if (Const.ROLE_SUPER_ADMIN.equals(target.getRole())) {
+            return "不能操作超级管理员账号";
+        }
+        // 普通管理员只能操作普通用户
+        if (!Const.ROLE_SUPER_ADMIN.equals(operator.getRole())
+                && !Const.ROLE_DEFAULT.equals(target.getRole())) {
+            return "无权操作管理员账号";
+        }
+        return null;
     }
 }

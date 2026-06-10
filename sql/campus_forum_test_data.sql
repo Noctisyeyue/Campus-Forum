@@ -26,17 +26,18 @@ DELETE FROM `db_account_details`;
 DELETE FROM `db_account`;
 
 -- ----------------------------
--- 用户账户（7人：1管理员 + 5正常用户 + 1禁用用户）
+-- 用户账户（8人：1超级管理员 + 1管理员 + 5正常用户 + 1禁用用户）
 -- ----------------------------
 BEGIN;
 INSERT INTO `db_account` (`id`, `username`, `password`, `email`, `role`, `status`, `avatar`, `register_time`) VALUES
-(1, 'admin', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'admin@campus.com', 'admin', 'active', NULL, '2025-08-01 08:00:00'),
+(1, 'super_admin', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'super_admin@campus.com', 'super_admin', 'active', NULL, '2025-08-01 08:00:00'),
 (2, 'test', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'test@campus.com', 'user', 'active', NULL, '2025-08-27 00:18:20'),
 (3, '张三', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'zhangsan@163.com', 'user', 'active', NULL, '2025-09-10 10:30:00'),
 (4, '李四', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'lisi@qq.com', 'user', 'active', NULL, '2025-09-15 14:20:00'),
 (5, '王五', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'wangwu@163.com', 'user', 'active', NULL, '2025-10-01 09:00:00'),
 (6, '赵六', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'zhaoliu@qq.com', 'user', 'disabled', NULL, '2025-10-20 16:45:00'),
-(7, '孙七', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'sunqi@163.com', 'user', 'active', NULL, '2025-11-05 11:15:00');
+(7, '孙七', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'sunqi@163.com', 'user', 'active', NULL, '2025-11-05 11:15:00'),
+(8, 'admin', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'admin@campus.com', 'admin', 'active', NULL, '2025-12-01 09:30:00');
 COMMIT;
 
 -- ----------------------------
@@ -44,13 +45,14 @@ COMMIT;
 -- ----------------------------
 BEGIN;
 INSERT INTO `db_account_details` (`id`, `gender`, `phone`, `qq`, `wx`, `desc`) VALUES
-(1, 0, NULL, NULL, NULL, '系统管理员，负责论坛日常管理'),
+(1, 0, NULL, NULL, NULL, '超级管理员，拥有最高权限'),
 (2, 1, '13800000002', '123456789', 'test_wx', '热爱编程的测试用户'),
 (3, 1, '13800000003', '987654321', 'zhangsan_wx', '计科大三，喜欢打篮球'),
 (4, 2, '13800000004', '112233445', 'lisi_wx', '软件工程大二，爱好摄影'),
 (5, 1, '13800000005', '556677889', 'wangwu_wx', '数媒大三，会剪辑会拍照'),
 (6, 1, '13800000006', '998877665', 'zhaoliu_wx', '已被禁用的用户'),
-(7, 2, '13800000007', '334455667', 'sunqi_wx', '刚注册的新用户，请多关照');
+(7, 2, '13800000007', '334455667', 'sunqi_wx', '刚注册的新用户，请多关照'),
+(8, 0, NULL, NULL, NULL, '论坛管理员，负责日常管理');
 COMMIT;
 
 -- ----------------------------
@@ -64,7 +66,8 @@ INSERT INTO `db_account_privacy` (`id`, `phone`, `email`, `wx`, `qq`, `gender`) 
 (4, 0, 0, 0, 1, 1),
 (5, 1, 1, 1, 1, 1),
 (6, 0, 0, 0, 0, 0),
-(7, 0, 1, 0, 0, 1);
+(7, 0, 1, 0, 0, 1),
+(8, 0, 0, 0, 0, 0);
 COMMIT;
 
 -- ----------------------------
@@ -210,7 +213,7 @@ INSERT INTO `db_notification` (`id`, `uid`, `title`, `content`, `type`, `url`, `
 (4, 3, '帖子已被隐藏', '您的帖子《关于某老师的课程评价》已被管理员隐藏，原因：涉及具体教师评价，为避免争议暂时下架', 'topic_review', NULL, '2025-11-02 10:00:00', 'unread'),
 (5, 2, '收到评论回复', '张三 回复了你在《食堂二楼新开的麻辣烫太好吃了》中的评论', 'comment_reply', '/index/topic-detail/3', '2025-10-15 14:00:00', 'read'),
 (6, 2, '收到评论回复', 'test 回复了你在《期末复习有没有什么好方法》中的评论', 'comment_reply', '/index/topic-detail/15', '2025-11-04 22:00:00', 'unread'),
-(7, 2, '收到活动评论回复', 'admin 回复了你在《创新创业讲座报名开始啦》中的评论', 'comment_reply', '/index/topic-detail/16', '2025-11-05 10:20:00', 'unread');
+(7, 2, '收到活动评论回复', 'super_admin 回复了你在《创新创业讲座报名开始啦》中的评论', 'comment_reply', '/index/topic-detail/16', '2025-11-05 10:20:00', 'unread');
 COMMIT;
 
 -- ----------------------------

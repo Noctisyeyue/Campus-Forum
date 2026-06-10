@@ -22,7 +22,7 @@ CREATE TABLE `db_account` (
   `username`      varchar(255) DEFAULT NULL     COMMENT '用户名',
   `password`      varchar(255) DEFAULT NULL     COMMENT '密码（BCrypt加密存储）',
   `email`         varchar(255) DEFAULT NULL     COMMENT '邮箱地址，用于注册和找回密码',
-  `role`          varchar(255) DEFAULT 'user'   COMMENT '角色：user=普通用户, admin=管理员',
+  `role`          varchar(255) DEFAULT 'user'   COMMENT '角色：user=普通用户, admin=管理员, super_admin=超级管理员',
   `status`        varchar(255) DEFAULT 'active' COMMENT '账号状态：active=正常, disabled=禁用',
   `avatar`        varchar(255) DEFAULT NULL     COMMENT '头像路径（MinIO存储地址）',
   `register_time` datetime DEFAULT NULL         COMMENT '注册时间',
@@ -31,7 +31,7 @@ CREATE TABLE `db_account` (
 
 BEGIN;
 INSERT INTO `db_account` (`id`, `username`, `password`, `email`, `role`, `status`, `avatar`, `register_time`) VALUES
-(1, 'admin', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'admin@campus.com', 'admin', 'active', NULL, '2023-08-27 00:00:00'),
+(1, 'super_admin', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'super_admin@campus.com', 'super_admin', 'active', NULL, '2023-08-27 00:00:00'),
 (2, 'test', '$2a$10$FVnhxXODi7K0GjBpjKEdPuLUpRswYmeW8XR0zbYT3vhVmKn20HIIK', 'test@campus.com', 'user', 'active', NULL, '2023-08-27 00:18:20');
 COMMIT;
 
@@ -51,7 +51,7 @@ CREATE TABLE `db_account_details` (
 
 BEGIN;
 INSERT INTO `db_account_details` (`id`, `gender`, `phone`, `qq`, `wx`, `desc`) VALUES
-(1, 0, NULL, NULL, NULL, '系统管理员'),
+(1, 0, NULL, NULL, NULL, '超级管理员'),
 (2, 0, NULL, NULL, NULL, '测试用户');
 COMMIT;
 

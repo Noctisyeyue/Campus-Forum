@@ -59,18 +59,18 @@ public class SecurityConfiguration {
         return http
                 // 路径权限：公开接口、管理员接口、用户接口
                 .authorizeHttpRequests(conf -> conf
-                        .requestMatchers("/api/auth/**", "/error").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/images/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole(Const.ROLE_ADMIN)
-                        .anyRequest().hasAnyRole(Const.ROLE_DEFAULT, Const.ROLE_ADMIN)
+                        .requestMatchers("/api/auth/**", "/error").permitAll()                      // 公开，谁都能访问
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()                     // OPTIONS 预检请求放行
+                        .requestMatchers("/images/**").permitAll()                                  // 图片资源公开
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()           // API 文档公开
+                        .requestMatchers("/api/admin/**").hasAnyRole(Const.ROLE_ADMIN, Const.ROLE_SUPER_ADMIN)// 管理端：只有管理员
+                        .anyRequest().hasAnyRole(Const.ROLE_DEFAULT, Const.ROLE_ADMIN, Const.ROLE_SUPER_ADMIN)// 其他：登录就能访问
                 )
                 // 表单登录：Spring Security 自动处理 /api/auth/login 的 POST 请求
                 .formLogin(conf -> conf
-                        .loginProcessingUrl("/api/auth/login")
-                        .failureHandler(this::handleProcess)
-                        .successHandler(this::handleProcess)
+                        .loginProcessingUrl("/api/auth/login")      // 监听这个 URL 的 POST 请求
+                        .failureHandler(this::handleProcess)        // 登录失败 → 走 handleProcess
+                        .successHandler(this::handleProcess)        // 登录成功 → 走 handleProcess
                         .permitAll()
                 )
                 // 退出登录：将 Token 加入 Redis 黑名单
@@ -80,8 +80,8 @@ public class SecurityConfiguration {
                 )
                 // 异常处理：401 未登录、403 无权限
                 .exceptionHandling(conf -> conf
-                        .accessDeniedHandler(this::handleProcess)
-                        .authenticationEntryPoint(this::handleProcess)
+                        .accessDeniedHandler(this::handleProcess)       // 403：无权限
+                        .authenticationEntryPoint(this::handleProcess)  // 401：未登录
                 )
                 // 关闭 CSRF（前后端分离不需要）
                 .csrf(AbstractHttpConfigurer::disable)

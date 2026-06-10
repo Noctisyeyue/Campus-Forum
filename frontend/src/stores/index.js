@@ -38,9 +38,13 @@ export const useStore = defineStore('general', {
                 return `${axios.defaults.baseURL}/images${this.user.avatar}`
             return null
         },
-        /** 当前登录用户是否为管理员 */
+        /** 当前登录用户是否为管理员（含超级管理员） */
         isAdmin() {
-            return this.user.role === 'admin'
+            return this.user.role === 'admin' || this.user.role === 'super_admin'
+        },
+        /** 当前登录用户是否为超级管理员 */
+        isSuperAdmin() {
+            return this.user.role === 'super_admin'
         }
     },
     /** 方法 */

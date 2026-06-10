@@ -13,7 +13,9 @@
                     <div class="header-divider"></div>
                     <div class="header-profile">
                         <span class="header-profile-name">{{ store.user.username }}</span>
-                        <el-tag size="small" type="danger" effect="dark">管理员</el-tag>
+                        <el-tag size="small" :type="store.isSuperAdmin ? 'danger' : 'warning'" effect="dark">
+                        {{ store.isSuperAdmin ? '超级管理员' : '管理员' }}
+                    </el-tag>
                     </div>
                     <el-dropdown>
                         <el-avatar :src="store.avatarUrl" :size="34" class="header-avatar"
@@ -131,7 +133,7 @@ const loading = ref(true)
 get('/api/user/info', (data) => {
     store.user = data
     loading.value = false
-    if (data.role !== 'admin') {
+    if (data.role !== 'admin' && data.role !== 'super_admin') {
         ElMessage.warning('无权限访问管理后台')
         router.replace('/index')
     }

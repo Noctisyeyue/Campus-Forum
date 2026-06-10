@@ -86,7 +86,7 @@ function userLogin() {
   formRef.value.validate((isValid) => {
     if(isValid) {
       login(form.username, form.password, form.remember, (data) => {
-        if (data.role === 'admin') router.push('/admin')
+        if (data.role === 'admin' || data.role === 'super_admin') router.push('/admin')
         else router.push('/index')
     })
     }

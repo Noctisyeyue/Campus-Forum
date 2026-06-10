@@ -178,7 +178,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         topic.setAllowComment(1);
         // 管理员发帖直接发布，普通用户需要审核
         Account account = accountMapper.selectById(uid);
-        boolean isAdmin = account != null && "admin".equals(account.getRole());
+        boolean isAdmin = account != null
+                && (Const.ROLE_ADMIN.equals(account.getRole())
+                    || Const.ROLE_SUPER_ADMIN.equals(account.getRole()));
         topic.setStatus(isAdmin ? Const.TOPIC_STATUS_PUBLISHED : Const.TOPIC_STATUS_PENDING);
         if (isAdmin) {
             topic.setReviewTime(new Date());

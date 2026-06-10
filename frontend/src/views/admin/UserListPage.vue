@@ -39,10 +39,10 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="email" label="邮箱"/>
-                <el-table-column label="角色" width="90">
+                <el-table-column label="角色" width="110">
                     <template #default="{ row }">
-                        <el-tag :type="row.role === 'admin' ? 'danger' : 'info'" size="small" effect="light">
-                            {{ row.role === 'admin' ? '管理员' : '用户' }}
+                        <el-tag :type="roleTagType(row.role)" size="small" effect="light">
+                            {{ roleName(row.role) }}
                         </el-tag>
                     </template>
                 </el-table-column>
@@ -58,9 +58,16 @@
                         {{ new Date(row.registerTime).toLocaleString() }}
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="200">
+                <el-table-column label="操作" width="280">
                     <template #default="{ row }">
-                        <div class="action-cell" v-if="row.role !== 'admin'">
+                        <!-- super_admin 目标不能操作 -->
+                        <div v-if="row.role === 'super_admin'" class="text-secondary" style="font-size: 13px">—</div>
+                        <!-- 当前用户是 super_admin -->
+                        <div v-else-if="store.isSuperAdmin" class="action-cell">
+                            <el-button v-if="row.role === 'user'" type="primary" size="small" plain round
+                                       @click="confirmPromote(row)">提升为管理员</el-button>
+                            <el-button v-if="row.role === 'admin'" type="info" size="small" plain round
+                                       @click="confirmDemote(row)">降级为用户</el-button>
                             <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
                                        @click="confirmToggle(row)">
                                 {{ row.status === 'active' ? '禁用' : '启用' }}
@@ -68,6 +75,16 @@
                             <el-button type="warning" size="small" plain round
                                        @click="confirmReset(row.id)">重置密码</el-button>
                         </div>
+                        <!-- 当前用户是普通 admin，只能操作 user -->
+                        <div v-else-if="row.role === 'user'" class="action-cell">
+                            <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
+                                       @click="confirmToggle(row)">
+                                {{ row.status === 'active' ? '禁用' : '启用' }}
+                            </el-button>
+                            <el-button type="warning" size="small" plain round
+                                       @click="confirmReset(row.id)">重置密码</el-button>
+                        </div>
+                        <!-- admin 对 admin 无操作 -->
                         <div v-else class="text-secondary" style="font-size: 13px">—</div>
                     </template>
                 </el-table-column>
@@ -175,6 +192,74 @@ function resetPassword(id) {
     post(`/api/admin/users/${id}/reset-password`, null, () => {
         ElMessage.success('密码已重置为 123456')
     })
+}
+
+/**
+ * 确认提升用户为管理员，弹出二次确认框
+ * @param {Object} user - 用户行数据对象
+ */
+function confirmPromote(user) {
+    ElMessageBox.confirm(`确定将用户「${user.username}」提升为管理员吗？`, '提升角色', {
+        confirmButtonText: '确定提升',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => promoteUser(user)).catch(() => {})
+}
+
+/**
+ * 提升用户为管理员
+ * @param {Object} user - 用户行数据对象
+ */
+function promoteUser(user) {
+    post(`/api/admin/users/${user.id}/promote`, null, () => {
+        ElMessage.success('已提升为管理员')
+        loadUsers(page.value - 1)
+    })
+}
+
+/**
+ * 确认将管理员降级为用户，弹出二次确认框
+ * @param {Object} user - 用户行数据对象
+ */
+function confirmDemote(user) {
+    ElMessageBox.confirm(`确定将管理员「${user.username}」降级为普通用户吗？`, '降级角色', {
+        confirmButtonText: '确定降级',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => demoteUser(user)).catch(() => {})
+}
+
+/**
+ * 将管理员降级为普通用户
+ * @param {Object} user - 用户行数据对象
+ */
+function demoteUser(user) {
+    post(`/api/admin/users/${user.id}/demote`, null, () => {
+        ElMessage.success('已降级为普通用户')
+        loadUsers(page.value - 1)
+    })
+}
+
+/**
+ * 根据角色返回标签类型
+ * @param {string} role - 角色标识
+ * @return {string} Element Plus Tag 类型
+ */
+function roleTagType(role) {
+    if (role === 'super_admin') return 'danger'
+    if (role === 'admin') return 'warning'
+    return 'info'
+}
+
+/**
+ * 根据角色返回中文名称
+ * @param {string} role - 角色标识
+ * @return {string} 角色中文名称
+ */
+function roleName(role) {
+    if (role === 'super_admin') return '超级管理员'
+    if (role === 'admin') return '管理员'
+    return '用户'
 }
 
 /**

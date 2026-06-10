@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -66,8 +67,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         RestBean.forbidden("账号已被禁用，请联系管理员")));
                 return;
             }
-            // 把用户信息注入 Spring Security
-            UserDetails user = utils.toUser(jwt);
+            // 把用户信息注入 Spring Security（从数据库最新角色重建，不信任旧 JWT 中的 authorities）
+            UserDetails user = User
+                    .withUsername(account.getUsername())
+                    .password("******")
+                    .roles(account.getRole())
+                    .build();
             // 创建一个 Spring Security 的认证凭证
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(user,// 参数1：用户信息（UserDetails 对象）

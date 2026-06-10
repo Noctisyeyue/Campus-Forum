@@ -16,15 +16,15 @@
                 <el-descriptions-item label="用户名">{{ user.username }}</el-descriptions-item>
                 <el-descriptions-item label="邮箱">{{ user.email }}</el-descriptions-item>
                 <el-descriptions-item label="角色">
-                    <el-tag :type="user.role === 'admin' ? 'danger' : 'info'" size="small">
-                        {{ user.role === 'admin' ? '管理员' : '用户' }}
+                    <el-tag :type="user.role === 'super_admin' ? 'danger' : (user.role === 'admin' ? 'warning' : 'info')" size="small">
+                        {{ user.role === 'super_admin' ? '超级管理员' : (user.role === 'admin' ? '管理员' : '用户') }}
                     </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item label="注册时间">
                     {{ new Date(user.registerTime).toLocaleString() }}
                 </el-descriptions-item>
             </el-descriptions>
-            <div style="margin-top: 20px;display: flex;gap: 10px">
+            <div style="margin-top: 20px;display: flex;gap: 10px" v-if="canOperate">
                 <el-popconfirm :title="`确定${user.status === 'active' ? '禁用' : '启用'}该用户吗？`"
                                @confirm="toggleStatus">
                     <template #reference>
@@ -38,6 +38,18 @@
                         <el-button type="warning" plain>重置密码</el-button>
                     </template>
                 </el-popconfirm>
+                <el-popconfirm v-if="store.isSuperAdmin && user.role === 'user'"
+                               title="确定将该用户提升为管理员吗？" @confirm="promoteUser">
+                    <template #reference>
+                        <el-button type="primary" plain>提升为管理员</el-button>
+                    </template>
+                </el-popconfirm>
+                <el-popconfirm v-if="store.isSuperAdmin && user.role === 'admin'"
+                               title="确定将该管理员降级为普通用户吗？" @confirm="demoteUser">
+                    <template #reference>
+                        <el-button type="info" plain>降级为用户</el-button>
+                    </template>
+                </el-popconfirm>
             </div>
         </div>
     </div>
@@ -48,7 +60,7 @@ import {get, post} from "@/net"
 import {useRoute} from "vue-router"
 import router from "@/router"
 import {useStore} from "@/stores/index"
-import {ref} from "vue"
+import {computed, ref} from "vue"
 import {ElMessage} from "element-plus"
 import {ArrowLeft} from "@element-plus/icons-vue"
 
@@ -60,6 +72,16 @@ const user = ref(null)
 const loading = ref(true)
 /** 当前用户 ID */
 const uid = route.params.id
+
+/** 当前操作者是否可以操作目标用户 */
+const canOperate = computed(() => {
+    if (!user.value) return false
+    // 超级管理员不能被操作
+    if (user.value.role === 'super_admin') return false
+    // 普通管理员只能操作普通用户
+    if (!store.isSuperAdmin && user.value.role !== 'user') return false
+    return true
+})
 
 get(`/api/admin/users/${uid}`, data => {
     user.value = data
@@ -83,6 +105,26 @@ function toggleStatus() {
 function resetPassword() {
     post(`/api/admin/users/${uid}/reset-password`, null, () => {
         ElMessage.success('密码已重置为 123456')
+    })
+}
+
+/**
+ * 提升用户为管理员，成功后刷新用户详情
+ */
+function promoteUser() {
+    post(`/api/admin/users/${uid}/promote`, null, () => {
+        ElMessage.success('已提升为管理员')
+        get(`/api/admin/users/${uid}`, data => user.value = data)
+    })
+}
+
+/**
+ * 将管理员降级为普通用户，成功后刷新用户详情
+ */
+function demoteUser() {
+    post(`/api/admin/users/${uid}/demote`, null, () => {
+        ElMessage.success('已降级为普通用户')
+        get(`/api/admin/users/${uid}`, data => user.value = data)
     })
 }
 </script>

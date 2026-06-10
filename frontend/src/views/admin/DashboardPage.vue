@@ -199,7 +199,7 @@
                                 {{ item.email }}
                             </div>
                             <div class="ranking-metrics">
-                                <span>{{ item.role === 'admin' ? '管理员' : '普通用户' }}</span>
+                                <span>{{ item.role === 'super_admin' ? '超级管理员' : (item.role === 'admin' ? '管理员' : '普通用户') }}</span>
                                 <span>注册于 {{ formatTime(item.registerTime) }}</span>
                             </div>
                         </div>

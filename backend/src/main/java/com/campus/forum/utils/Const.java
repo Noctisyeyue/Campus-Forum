@@ -38,6 +38,8 @@ public final class Const {
     public final static String ROLE_DEFAULT = "user";
     /** 管理员角色标识 */
     public final static String ROLE_ADMIN = "admin";
+    /** 超级管理员角色标识 */
+    public final static String ROLE_SUPER_ADMIN = "super_admin";
 
     /** 天气接口缓存 Key */
     public final static String FORUM_WEATHER_CACHE = "weather:cache:";

@@ -95,21 +95,45 @@ public interface AccountService extends IService<Account>, UserDetailsService {
     /**
      * 管理员禁用用户
      *
-     * @param id 用户 ID
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
      */
-    void adminDisableUser(int id);
+    String adminDisableUser(int operatorId, int targetId);
 
     /**
      * 管理员启用用户
      *
-     * @param id 用户 ID
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
      */
-    void adminEnableUser(int id);
+    String adminEnableUser(int operatorId, int targetId);
 
     /**
      * 管理员重置用户密码为默认密码
      *
-     * @param id 用户 ID
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
      */
-    void adminResetPassword(int id);
+    String adminResetPassword(int operatorId, int targetId);
+
+    /**
+     * 超级管理员提升普通用户为管理员
+     *
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
+     */
+    String adminPromoteUser(int operatorId, int targetId);
+
+    /**
+     * 超级管理员将管理员降级为普通用户
+     *
+     * @param operatorId 操作者用户 ID
+     * @param targetId   目标用户 ID
+     * @return null 表示成功，否则返回错误信息
+     */
+    String adminDemoteUser(int operatorId, int targetId);
 }
