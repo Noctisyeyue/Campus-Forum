@@ -58,31 +58,38 @@
                         {{ new Date(row.registerTime).toLocaleString() }}
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="280">
+                <el-table-column label="操作" width="300">
                     <template #default="{ row }">
                         <!-- super_admin 目标不能操作 -->
                         <div v-if="row.role === 'super_admin'" class="text-secondary" style="font-size: 13px">—</div>
                         <!-- 当前用户是 super_admin -->
-                        <div v-else-if="store.isSuperAdmin" class="action-cell">
-                            <el-button v-if="row.role === 'user'" type="primary" size="small" plain round
-                                       @click="confirmPromote(row)">提升为管理员</el-button>
-                            <el-button v-if="row.role === 'admin'" type="info" size="small" plain round
-                                       @click="confirmDemote(row)">降级为用户</el-button>
-                            <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
-                                       @click="confirmToggle(row)">
-                                {{ row.status === 'active' ? '禁用' : '启用' }}
-                            </el-button>
-                            <el-button type="warning" size="small" plain round
-                                       @click="confirmReset(row.id)">重置密码</el-button>
+                        <div v-else-if="store.isSuperAdmin" class="action-row">
+                            <div class="action-role">
+                                <el-button v-if="row.role === 'user'" type="primary" size="small" plain round
+                                           @click="confirmPromote(row)">提升为管理员</el-button>
+                                <el-button v-if="row.role === 'admin'" type="info" size="small" plain round
+                                           @click="confirmDemote(row)">降级为用户</el-button>
+                            </div>
+                            <div class="action-common">
+                                <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
+                                           @click="confirmToggle(row)">
+                                    {{ row.status === 'active' ? '禁用' : '启用' }}
+                                </el-button>
+                                <el-button type="warning" size="small" plain round
+                                           @click="confirmReset(row.id)">重置密码</el-button>
+                            </div>
                         </div>
                         <!-- 当前用户是普通 admin，只能操作 user -->
-                        <div v-else-if="row.role === 'user'" class="action-cell">
-                            <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
-                                       @click="confirmToggle(row)">
-                                {{ row.status === 'active' ? '禁用' : '启用' }}
-                            </el-button>
-                            <el-button type="warning" size="small" plain round
-                                       @click="confirmReset(row.id)">重置密码</el-button>
+                        <div v-else-if="row.role === 'user'" class="action-row">
+                            <div class="action-role"></div>
+                            <div class="action-common">
+                                <el-button :type="row.status === 'active' ? 'danger' : 'success'" size="small" plain round
+                                           @click="confirmToggle(row)">
+                                    {{ row.status === 'active' ? '禁用' : '启用' }}
+                                </el-button>
+                                <el-button type="warning" size="small" plain round
+                                           @click="confirmReset(row.id)">重置密码</el-button>
+                            </div>
                         </div>
                         <!-- admin 对 admin 无操作 -->
                         <div v-else class="text-secondary" style="font-size: 13px">—</div>
@@ -333,9 +340,18 @@ watch(() => route.query, applyRouteQuery, { immediate: true })
     padding: 16px;
 }
 
-.action-cell {
+.action-row {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.action-role {
+    min-width: 108px;
+}
+
+.action-common {
+    display: flex;
     gap: 2px;
 }
 
