@@ -121,25 +121,23 @@ public class AdminTopicController {
     }
 
     /**
-     * 置顶帖子
+     * 置顶帖子，已置顶则返回错误
      * @param id 帖子ID
      * @return 操作结果
      */
     @PostMapping("/{id}/top")
     public RestBean<Void> topTopic(@PathVariable int id) {
-        topicService.adminTopTopic(id);
-        return RestBean.success();
+        return utils.messageHandle(() -> topicService.adminTopTopic(id));
     }
 
     /**
-     * 取消置顶
+     * 取消置顶，未置顶则返回错误
      * @param id 帖子ID
      * @return 操作结果
      */
     @PostMapping("/{id}/untop")
     public RestBean<Void> untopTopic(@PathVariable int id) {
-        topicService.adminUntopTopic(id);
-        return RestBean.success();
+        return utils.messageHandle(() -> topicService.adminUntopTopic(id));
     }
 
     /**

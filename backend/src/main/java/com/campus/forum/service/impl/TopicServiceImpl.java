@@ -979,25 +979,35 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 置顶帖子
+     * 置顶帖子，已置顶则返回错误信息
      * @param tid 帖子ID
+     * @return null 表示成功，否则返回错误信息
      */
     @Override
-    public void adminTopTopic(int tid) {
+    public String adminTopTopic(int tid) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return "帖子不存在";
+        if (topic.getTop() != null && topic.getTop() == 1) return "该帖子已置顶";
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
                 .set("top", 1));
+        return null;
     }
 
     /**
-     * 取消置顶
+     * 取消置顶，未置顶则返回错误信息
      * @param tid 帖子ID
+     * @return null 表示成功，否则返回错误信息
      */
     @Override
-    public void adminUntopTopic(int tid) {
+    public String adminUntopTopic(int tid) {
+        Topic topic = baseMapper.selectById(tid);
+        if (topic == null) return "帖子不存在";
+        if (topic.getTop() == null || topic.getTop() == 0) return "该帖子未置顶";
         baseMapper.update(null, Wrappers.<Topic>update()
                 .eq("id", tid)
                 .set("top", 0));
+        return null;
     }
 
     /**

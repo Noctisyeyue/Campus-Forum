@@ -249,18 +249,20 @@ public interface TopicService extends IService<Topic> {
     String adminDeleteTopic(int tid, int adminId);
 
     /**
-     * 置顶帖子
+     * 置顶帖子，已置顶则返回错误信息
      *
      * @param tid 帖子ID
+     * @return null 表示成功，否则返回错误信息
      */
-    void adminTopTopic(int tid);
+    String adminTopTopic(int tid);
 
     /**
-     * 取消置顶
+     * 取消置顶，未置顶则返回错误信息
      *
      * @param tid 帖子ID
+     * @return null 表示成功，否则返回错误信息
      */
-    void adminUntopTopic(int tid);
+    String adminUntopTopic(int tid);
 
     /**
      * 管理员编辑自己发布的帖子（标题、正文，活动帖子可同步更新扩展字段）
