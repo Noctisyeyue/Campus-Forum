@@ -96,8 +96,12 @@ function internalPost(url, data, headers, success, failure, error = defaultError
         if(data.code === 200) {
             success(data.data)
         } else if(data.code === 401) {
-            failure('登录状态已过期，请重新登录！')
-            deleteAccessToken(true)
+            if (url === '/api/auth/login') {
+                failure('用户名或密码错误', data.code, url)
+            } else {
+                failure('登录状态已过期，请重新登录！', data.code, url)
+                deleteAccessToken(true)
+            }
         } else {
             failure(data.message, data.code, url)
         }
