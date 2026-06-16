@@ -37,7 +37,7 @@
     <div style="margin-top: 10px;height: 440px;overflow: hidden;border-radius: 5px"
          v-loading="editor.uploading"
          element-loading-text="正在上传图片，请稍后...">
-      <quill-editor ref="quillRef" v-model:content="editor.text" style="height: calc(100% - 45px)"
+      <quill-editor v-model:content="editor.text" style="height: calc(100% - 45px)"
                     content-type="delta"
                     placeholder="今天想分享点什么呢？" :options="editorOption"/>
     </div>
@@ -55,7 +55,7 @@
 
 <script setup>
 import {Check, Document} from "@element-plus/icons-vue";
-import {computed, reactive, ref} from "vue";
+import {computed, reactive} from "vue";
 import {Delta, Quill, QuillEditor} from "@vueup/vue-quill";
 import { ImageExtend, QuillWatch } from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
@@ -67,9 +67,6 @@ import {useStore} from "@/stores/index";
 
 /** Pinia 全局状态 */
 const store = useStore()
-
-/** Quill 编辑器实例引用（用于上传失败时删除错误插入的图片节点） */
-const quillRef = ref(null)
 
 /** 组件属性定义 */
 const props = defineProps({
@@ -132,7 +129,11 @@ const editor = reactive({
     /** 是否正在上传图片 */
     uploading: false,
     /** 最近一次图片上传是否真正成功（用于区分 success 回调，避免失败时误提示成功） */
-    lastUploadOk: false
+    lastUploadOk: false,
+    /** 当前编辑器中已成功上传的图片数量（限制最多9张） */
+    imageCount: 0,
+    /** 本次上传是否因超过数量上限被拒绝（用于 success 回调区分超额场景） */
+    overLimit: false
 })
 
 /** 可选择的分类列表（排除"全部"和系统内置分类） */
@@ -147,6 +148,8 @@ function initEditor() {
         : new Delta()
     editor.title = props.defaultTitle
     editor.type = findTypeById(props.defaultType)
+    // 重置图片计数：编辑模式按已有内容里的图片数量初始化，新发帖归零
+    editor.imageCount = countImages(editor.text)
 }
 
 /**
@@ -171,6 +174,20 @@ function deltaToText(delta) {
 
 /** 当前内容纯文本字数 */
 const contentLength = computed(() => deltaToText(editor.text).length)
+
+/** 单帖最多上传图片数量 */
+const MAX_IMAGES = 9
+
+/**
+ * 统计 Quill Delta 中包含的图片数量（图片以 {insert: {image: ...}} 形式存在 ops 里）
+ *
+ * @param delta Quill Delta 对象
+ * @return 图片数量
+ */
+function countImages(delta) {
+    if(!delta || !delta.ops) return 0
+    return delta.ops.filter(op => op.insert && typeof op.insert === 'object' && op.insert.image).length
+}
 
 /**
  * 根据分类 ID 查找分类对象
@@ -226,9 +243,14 @@ const editorOption = {
                 "blockquote", "code-block", "link", "image",
                 { indent: '-1' }, { indent: '+1' }
             ],
-            /** 图片按钮点击时触发 ImageExtend 的图片选择 */
+            /** 图片按钮点击：先实时统计当前图片数量，满额则拦截提示，否则走库的上传流程 */
             handlers: {
                 'image': function () {
+                    editor.imageCount = countImages(editor.text)
+                    if(editor.imageCount >= MAX_IMAGES) {
+                        ElMessage.warning(`最多上传${MAX_IMAGES}张图片`)
+                        return
+                    }
                     QuillWatch.emit(this.quill.id)
                 }
             }
@@ -244,6 +266,7 @@ const editorOption = {
             response: (resp) => {
                 if(resp.code === 200 && resp.data) {
                     editor.lastUploadOk = true
+                    editor.imageCount = countImages(editor.text) + 1
                     return axios.defaults.baseURL + '/images' + resp.data
                 } else {
                     editor.lastUploadOk = false
@@ -263,21 +286,9 @@ const editorOption = {
                 if(editor.lastUploadOk) {
                     ElMessage.success('图片上传成功!')
                 } else {
-                    // 上传失败时，该库仍会 insertEmbed 一个 url 为 null 的图片，
-                    // Quill 无法渲染就退化成文字"image"（<p>image</p>），这里删除它
-                    const quill = quillRef.value && quillRef.value.getQuill && quillRef.value.getQuill()
-                    if(quill) {
-                        const root = quill.root
-                        // 1) 删除 src 为空或缺失的 img 节点
-                        root.querySelectorAll('img').forEach(img => {
-                            if(!img.getAttribute('src')) img.remove()
-                        })
-                        // 2) 删除内容恰好为"image"的退化段落
-                        root.querySelectorAll('p').forEach(p => {
-                            if(p.textContent.trim() === 'image') p.remove()
-                        })
-                        quill.update()
-                    }
+                    // 上传失败时该库仍会 insertEmbed 一个 url 为 null 的图片，退化成文字"image"，
+                    // 此处只提示，不做 DOM 删除（删除会破坏 Quill 的 Delta-DOM 一致性）
+                    ElMessage.warning('图片上传失败！')
                 }
                 editor.uploading = false
             },
