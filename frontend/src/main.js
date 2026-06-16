@@ -11,8 +11,11 @@ import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/assets/quill.css'
 import '@/assets/dark.css'
 
-// 后端接口地址
-axios.defaults.baseURL = 'http://localhost:8081'
+// 开发环境：指向本地后端
+// axios.defaults.baseURL = 'http://localhost:8081'
+
+// 生产环境：用相对路径，由 Nginx 反向代理到后端
+axios.defaults.baseURL = ''
 
 const app = createApp(App)
 
