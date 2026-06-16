@@ -37,7 +37,7 @@
     <div style="margin-top: 10px;height: 440px;overflow: hidden;border-radius: 5px"
          v-loading="editor.uploading"
          element-loading-text="正在上传图片，请稍后...">
-      <quill-editor v-model:content="editor.text" style="height: calc(100% - 45px)"
+      <quill-editor ref="quillRef" v-model:content="editor.text" style="height: calc(100% - 45px)"
                     content-type="delta"
                     placeholder="今天想分享点什么呢？" :options="editorOption"/>
     </div>
@@ -55,7 +55,7 @@
 
 <script setup>
 import {Check, Document} from "@element-plus/icons-vue";
-import {computed, reactive} from "vue";
+import {computed, reactive, ref} from "vue";
 import {Delta, Quill, QuillEditor} from "@vueup/vue-quill";
 import { ImageExtend, QuillWatch } from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
@@ -67,6 +67,9 @@ import {useStore} from "@/stores/index";
 
 /** Pinia 全局状态 */
 const store = useStore()
+
+/** Quill 编辑器实例引用（用于上传失败时通过 Quill API 删除脏图片，保持 Delta-DOM 一致） */
+const quillRef = ref(null)
 
 /** 组件属性定义 */
 const props = defineProps({
@@ -190,6 +193,26 @@ function countImages(delta) {
 }
 
 /**
+ * 通过 Quill API 删除编辑器末尾刚插入的脏内容（上传失败时库仍会插入 image/embed 或 [upload error] 文字）
+ *
+ * 优先按当前光标选区反推插入位置删除1个字符；若拿不到选区，则回退到删除编辑器最后一个 embed。
+ * 使用 Quill 官方 API（deleteText）保证 Delta 与 DOM 同步更新，不直接操作 DOM。
+ */
+function removeLastEmbed() {
+    const quill = quillRef.value && quillRef.value.getQuill && quillRef.value.getQuill()
+    if(!quill) return
+    const sel = quill.getSelection()
+    if(sel && sel.index > 0) {
+        // 刚插入的内容在当前光标的前一个位置
+        quill.deleteText(sel.index - 1, 1)
+    } else {
+        // 回退：删除编辑器最后一个 embed（图片/坏字符）
+        const length = quill.getLength()
+        if(length > 1) quill.deleteText(length - 2, 1)
+    }
+}
+
+/**
  * 根据分类 ID 查找分类对象
  *
  * @param id 分类 ID
@@ -260,6 +283,11 @@ const editorOption = {
             action:  axios.defaults.baseURL + '/api/image/cache',   // 上传接口地址
             name: 'file',                                            // 上传文件字段名
             size: 5,                                                 // 文件大小限制（MB）
+            /** 超过 size 限制时触发（库默认静默拦截，这里补上提示） */
+            sizeError: () => {
+                ElMessage.warning('图片不能大于5MB')
+                editor.uploading = false
+            },
             loading: true,                                           // 上传时显示loading
             accept: 'image/png, image/jpeg',                         // 允许的图片格式
             /** 上传成功后返回图片URL，失败时弹出后端返回的真实错误信息 */
@@ -286,14 +314,16 @@ const editorOption = {
                 if(editor.lastUploadOk) {
                     ElMessage.success('图片上传成功!')
                 } else {
-                    // 上传失败时该库仍会 insertEmbed 一个 url 为 null 的图片，退化成文字"image"，
-                    // 此处只提示，不做 DOM 删除（删除会破坏 Quill 的 Delta-DOM 一致性）
+                    // 上传失败时该库仍会 insertEmbed 一个 url 为 null 的图片（退化成文字"image"），
+                    // 通过 Quill API 删除刚插入的位置，保证 Delta 与 DOM 同步、不留脏数据
+                    removeLastEmbed()
                     ElMessage.warning('图片上传失败！')
                 }
                 editor.uploading = false
             },
-            /** 上传失败回调 */
+            /** 上传失败回调（HTTP 非 200，如限流/MinIO 故障，库会塞 [upload error] 文字） */
             error: () => {
+                removeLastEmbed()
                 ElMessage.warning('图片上传失败，请联系管理员!')
                 editor.uploading = false
             }
