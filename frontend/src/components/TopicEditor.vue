@@ -37,7 +37,7 @@
     <div style="margin-top: 10px;height: 440px;overflow: hidden;border-radius: 5px"
          v-loading="editor.uploading"
          element-loading-text="正在上传图片，请稍后...">
-      <quill-editor v-model:content="editor.text" style="height: calc(100% - 45px)"
+      <quill-editor ref="quillRef" v-model:content="editor.text" style="height: calc(100% - 45px)"
                     content-type="delta"
                     placeholder="今天想分享点什么呢？" :options="editorOption"/>
     </div>
@@ -55,7 +55,7 @@
 
 <script setup>
 import {Check, Document} from "@element-plus/icons-vue";
-import {computed, reactive} from "vue";
+import {computed, reactive, ref} from "vue";
 import {Delta, Quill, QuillEditor} from "@vueup/vue-quill";
 import { ImageExtend, QuillWatch } from "quill-image-super-solution-module";
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
@@ -67,6 +67,9 @@ import {useStore} from "@/stores/index";
 
 /** Pinia 全局状态 */
 const store = useStore()
+
+/** Quill 编辑器实例引用（用于上传失败时删除错误插入的图片节点） */
+const quillRef = ref(null)
 
 /** 组件属性定义 */
 const props = defineProps({
@@ -127,7 +130,9 @@ const editor = reactive({
     /** 是否加载中 */
     loading: false,
     /** 是否正在上传图片 */
-    uploading: false
+    uploading: false,
+    /** 最近一次图片上传是否真正成功（用于区分 success 回调，避免失败时误提示成功） */
+    lastUploadOk: false
 })
 
 /** 可选择的分类列表（排除"全部"和系统内置分类） */
@@ -235,11 +240,14 @@ const editorOption = {
             size: 5,                                                 // 文件大小限制（MB）
             loading: true,                                           // 上传时显示loading
             accept: 'image/png, image/jpeg',                         // 允许的图片格式
-            /** 上传成功后返回图片URL */
+            /** 上传成功后返回图片URL，失败时弹出后端返回的真实错误信息 */
             response: (resp) => {
-                if(resp.data) {
+                if(resp.code === 200 && resp.data) {
+                    editor.lastUploadOk = true
                     return axios.defaults.baseURL + '/images' + resp.data
                 } else {
+                    editor.lastUploadOk = false
+                    ElMessage.warning(resp.message || '图片上传失败！')
                     return null
                 }
             },
@@ -250,9 +258,27 @@ const editorOption = {
             },
             /** 上传开始回调 */
             start: () => editor.uploading = true,
-            /** 上传成功回调 */
+            /** 上传请求完成回调（该库不区分成功失败，此处用标志位判断真正结果） */
             success: () => {
-                ElMessage.success('图片上传成功!')
+                if(editor.lastUploadOk) {
+                    ElMessage.success('图片上传成功!')
+                } else {
+                    // 上传失败时，该库仍会 insertEmbed 一个 url 为 null 的图片，
+                    // Quill 无法渲染就退化成文字"image"（<p>image</p>），这里删除它
+                    const quill = quillRef.value && quillRef.value.getQuill && quillRef.value.getQuill()
+                    if(quill) {
+                        const root = quill.root
+                        // 1) 删除 src 为空或缺失的 img 节点
+                        root.querySelectorAll('img').forEach(img => {
+                            if(!img.getAttribute('src')) img.remove()
+                        })
+                        // 2) 删除内容恰好为"image"的退化段落
+                        root.querySelectorAll('p').forEach(p => {
+                            if(p.textContent.trim() === 'image') p.remove()
+                        })
+                        quill.update()
+                    }
+                }
                 editor.uploading = false
             },
             /** 上传失败回调 */
