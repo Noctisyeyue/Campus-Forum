@@ -46,7 +46,7 @@ public class AdminCommentController {
     }
 
     /**
-     * 删除评论（物理删除，级联清理关联举报）
+     * 删除评论（物理删除，不可恢复）
      * @param id 评论ID
      * @return 操作结果
      */

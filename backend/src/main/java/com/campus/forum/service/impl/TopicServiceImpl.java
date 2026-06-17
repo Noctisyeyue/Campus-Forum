@@ -1398,7 +1398,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 管理员删除评论（软删除，用户端不可见，管理端仍可查看）
+     * 管理员删除评论：物理删除，从数据库彻底移除，并关闭该评论的待处理举报、通知举报人
      *
      * @param id 评论ID
      * @return null 表示成功，非 null 为错误信息
@@ -1407,12 +1407,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     public String adminDeleteComment(int id) {
         TopicComment comment = commentMapper.selectById(id);
         if (comment == null) return "评论不存在";
-        if (Const.COMMENT_STATUS_DELETED.equals(comment.getStatus()))
-            return "该评论已被删除";
-        // 软删除：status 改为 deleted，用户端不可见，管理端仍可查看
-        commentMapper.update(null, Wrappers.<TopicComment>update()
-                .eq("id", id)
-                .set("status", Const.COMMENT_STATUS_DELETED));
+        // 物理删除：从数据库彻底移除（不可恢复）
+        commentMapper.deleteById(id);
         // 关闭该评论的所有 pending 举报并通知举报人
         var pendingReports = reportMapper.selectList(Wrappers.<Report>query()
                 .eq("target_type", Const.REPORT_TARGET_COMMENT)

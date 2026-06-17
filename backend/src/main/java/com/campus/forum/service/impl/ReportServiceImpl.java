@@ -130,13 +130,14 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         if (report == null) return "举报记录不存在";
         if (!Const.REPORT_STATUS_PENDING.equals(report.getStatus())) return "该举报已处理";
 
+        String targetType = report.getTargetType();
         if ("delete".equals(action)) {
-            String targetType = report.getTargetType();
             if (Const.REPORT_TARGET_TOPIC.equals(targetType)) {
                 String err = topicService.adminHideTopic(report.getTargetId(), "举报处理：因违反社区规范被下架");
                 if (err != null) return err;
             } else if (Const.REPORT_TARGET_COMMENT.equals(targetType)) {
-                topicService.adminDeleteComment(report.getTargetId());
+                String err = topicService.adminDeleteComment(report.getTargetId());
+                if (err != null) return err;
             }
             report.setStatus(Const.REPORT_STATUS_RESOLVED);
         } else if ("dismiss".equals(action)) {
@@ -150,32 +151,38 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
         report.setResolveTime(new Date());
         baseMapper.updateById(report);
 
-        String resultMsg = "delete".equals(action) ? "已处理（内容已下架/删除）" : "已驳回";
-        notificationService.addNotification(
-                report.getUid(),
-                "举报处理结果",
-                "您举报的" + (Const.REPORT_TARGET_TOPIC.equals(report.getTargetType()) ? "帖子" : "评论") + resultMsg,
-                "success",
-                null
-        );
-
-        // 批量关闭同一目标的其他 pending 举报
-        String batchStatus = "delete".equals(action) ? Const.REPORT_STATUS_RESOLVED : Const.REPORT_STATUS_DISMISSED;
-        var otherPending = baseMapper.selectList(Wrappers.<Report>query()
-                .eq("target_type", report.getTargetType())
-                .eq("target_id", report.getTargetId())
-                .eq("status", Const.REPORT_STATUS_PENDING));
-        for (Report other : otherPending) {
-            other.setStatus(batchStatus);
-            other.setAdminId(adminId);
-            other.setAdminNote(note);
-            other.setResolveTime(new Date());
-            baseMapper.updateById(other);
+        // 评论删除时，adminDeleteComment 内部已关闭该评论所有 pending 举报并通知举报人，
+        // 此处跳过重复的通知与批量关闭逻辑（基于前面已取出的局部变量判断，更稳定）
+        boolean skipNotify = "delete".equals(action)
+                && Const.REPORT_TARGET_COMMENT.equals(targetType);
+        if (!skipNotify) {
+            String resultMsg = "delete".equals(action) ? "已处理（内容已下架/删除）" : "已驳回";
             notificationService.addNotification(
-                    other.getUid(),
+                    report.getUid(),
                     "举报处理结果",
-                    "您举报的" + (Const.REPORT_TARGET_TOPIC.equals(other.getTargetType()) ? "帖子" : "评论") + resultMsg,
-                    "success", null);
+                    "您举报的" + (Const.REPORT_TARGET_TOPIC.equals(report.getTargetType()) ? "帖子" : "评论") + resultMsg,
+                    "success",
+                    null
+            );
+
+            // 批量关闭同一目标的其他 pending 举报
+            String batchStatus = "delete".equals(action) ? Const.REPORT_STATUS_RESOLVED : Const.REPORT_STATUS_DISMISSED;
+            var otherPending = baseMapper.selectList(Wrappers.<Report>query()
+                    .eq("target_type", report.getTargetType())
+                    .eq("target_id", report.getTargetId())
+                    .eq("status", Const.REPORT_STATUS_PENDING));
+            for (Report other : otherPending) {
+                other.setStatus(batchStatus);
+                other.setAdminId(adminId);
+                other.setAdminNote(note);
+                other.setResolveTime(new Date());
+                baseMapper.updateById(other);
+                notificationService.addNotification(
+                        other.getUid(),
+                        "举报处理结果",
+                        "您举报的" + (Const.REPORT_TARGET_TOPIC.equals(other.getTargetType()) ? "帖子" : "评论") + resultMsg,
+                        "success", null);
+            }
         }
 
         return null;

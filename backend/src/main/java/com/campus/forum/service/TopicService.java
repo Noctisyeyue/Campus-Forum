@@ -318,7 +318,7 @@ public interface TopicService extends IService<Topic> {
     PageResult<AdminCommentVO> adminListComments(int page, int pageSize, String status, String content, String author, String topicTitle, Integer tid);
 
     /**
-     * 删除评论（物理删除，级联清理关联举报）
+     * 删除评论（物理删除，并关闭相关待处理举报）
      *
      * @param id 评论ID
      * @return null 表示成功，非 null 为错误信息
