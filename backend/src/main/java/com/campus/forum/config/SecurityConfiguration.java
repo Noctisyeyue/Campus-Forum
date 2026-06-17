@@ -62,7 +62,14 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/auth/**", "/error").permitAll()                      // 公开，谁都能访问
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()                     // OPTIONS 预检请求放行
                         .requestMatchers("/images/**").permitAll()                                  // 图片资源公开
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()           // API 文档公开
+                        .requestMatchers(                                                                // API 文档与 knife4j 公开
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/doc.html",
+                                "/webjars/**",
+                                "/favicon.ico"
+                        ).permitAll()
                         .requestMatchers("/api/admin/**").hasAnyRole(Const.ROLE_ADMIN, Const.ROLE_SUPER_ADMIN)// 管理端：只有管理员
                         .anyRequest().hasAnyRole(Const.ROLE_DEFAULT, Const.ROLE_ADMIN, Const.ROLE_SUPER_ADMIN)// 其他：登录就能访问
                 )
